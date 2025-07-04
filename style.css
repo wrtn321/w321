@@ -68,9 +68,9 @@ body {
 }
 
 .login-form button .auth-button {
-    background-color: #d5fcb9;
+    background-color: #96e4f2;
 }
 
 .login-form button .auth-button:hover {
-    background-color: #b9fc8c;
+    background-color: #71d5e9;
 }
