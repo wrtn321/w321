@@ -31,13 +31,15 @@ body {
     flex-direction: column;
     gap: 20px;
 }
-@media (max-width: 600px) {
+
+@media (max-width: 400px) {
     .login-form {
-        min-width: unset; /* 작은 화면에서는 min-width를 제거합니다 */
+        max-width: unset; /* 작은 화면에서는 min-width를 제거합니다 */
         width: 95%; /* 작은 화면에서 더 많은 너비를 차지하도록 합니다 */
         padding: 20px; /* 작은 화면을 위해 패딩을 줄입니다 */
     }
 }
+
 .login-form h2 {
     text-align: center;
     color: #333;
