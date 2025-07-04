@@ -54,7 +54,7 @@ body {
 /* 로그인 버튼 스타일 */
 .login-form button {
     padding: 12px;
-    background-color: #4CAF50;
+    background-color: #fdc8c8;
     color: white;
     border: none;
     border-radius: 5px;
@@ -64,20 +64,13 @@ body {
 }
 
 .login-form button:hover {
-    background-color: #45a049;
+    background-color: #fcafaf;
 }
 
-.auth-links {
-    text-align: center;
-    margin-top: 10px;
+.auth-button {
+    background-color: ##d5fcb9;
 }
 
-.signup-link {
-    color: #4CAF50;
-    text-decoration: none;
-    font-size: 14px;
-}
-
-.signup-link:hover {
-    text-decoration: underline;
+.auth-button:hover {
+    background-color: #b9fc8c;
 }
