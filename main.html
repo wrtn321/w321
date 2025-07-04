@@ -2,9 +2,67 @@
 <html>
 <head>
     <title>메인페이지</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <h2>게시판</h2>
+
+    <!--헤더-->
+    <header class="main-header">
+    <h1>321</h1>
+    <a href="/logout" class="logout-button">로그아웃</a>
+    </header>
+
+    <!--메인컨텐츠-->
+    <main class="dashboard-container">
+        <section class="card">
+            <a href="/prompts" class="card-header-link">
+                <div class="card-header">
+                    <h2>📝 프롬프트</h2>
+                    <span>+</span>
+                </div>
+            </a>
+            <div class="card-body">
+                <p class="recent-item">최근 작업한 프롬프트 제목 1</p>
+                <p class="recent-item">최근 작업한 프롬프트 제목 2</p>
+                <p class="recent-item">최근 작업한 프롬프트 제목 3</p>
+            </div>
+             <div class="card-footer">
+                <button type="button" class="new-button">+ 새로 만들기</button>
+            </div>
+        </section>
+
+        <section class="card">
+            <a href="/chats" class="card-header-link">
+                <div class="card-header">
+                    <h2>💬 채팅백업</h2>
+                    <span>+</span>
+                </div>
+            </a>
+            <div class="card-body">
+                <p class="recent-item">최근 작업한 채팅백업 1</p>
+                <p class="recent-item">최근 작업한 채팅백업 1</p>
+                <p class="recent-item">최근 작업한 채팅백업 1</p>
+            </div>
+            <div class="card-footer">
+                <button type="button" class="new-button">+ 새로만들기</button>
+        </section>
+
+        <section class="card">
+            <a href="/chats" class="card-header-link">
+                <div class="card-header">
+                    <h2>📖 소설</h2>
+                    <span>+</span>
+                </div>
+            </a>
+            <div class="card-body">
+                <p class="recent-item">최근 작업한 소설 1</p>
+                <p class="recent-item">최근 작업한 소설 1</p>
+                <p class="recent-item">최근 작업한 소설 1</p>
+            </div>
+            <div class="card-footer">
+                <button type="button" class="new-button">+ 새로만들기</button>
+        </section>
+    </main>
 </body>
 </html>
