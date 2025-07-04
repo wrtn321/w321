@@ -1,3 +1,18 @@
+/* =======================================
+   추천 색상 팔레트 (CSS 변수 선언)
+   ======================================= */
+:root {
+    --primary-color: #FECDD3;       /* 부드러운 핑크 */
+    --primary-hover-color: #FBA1B1;   /* 더 진한 핑크 (호버용) */
+    --accent-color: #A7D8DE;        /* 차분한 민트 */
+    --accent-hover-color: #82C0C9;    /* 더 진한 민트 (호버용) */
+    --background-color: #F8FAFC;    /* 아주 연한 회색 (배경) */
+    --surface-color: #FFFFFF;       /* 흰색 (카드 배경) */
+    --text-primary-color: #334155;  /* 진한 회색 (주요 텍스트) */
+    --text-secondary-color: #94A3B8;/* 연한 회색 (보조 텍스트, 아이콘) */
+    --border-color: #E2E8F0;        /* 아주 연한 회색 (테두리) */
+}
+
 /* 전체 페이지 기본 설정 */
 * {
     margin: 0;
@@ -7,7 +22,7 @@
 
 body {
     font-family: Arial, sans-serif;
-    background-color: #f5f5f5;
+    background-color: var(--background-color);
     height: 100vh;
 }
 
@@ -21,7 +36,7 @@ body {
 
 /* 로그인 폼 스타일 */
 .login-form {
-    background-color: white;
+    background-color: var(--surface-color);
     padding: 40px;
     border-radius: 10px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
@@ -34,7 +49,7 @@ body {
 
 .login-form h2 {
     text-align: center;
-    color: #333;
+    color: var(--text-primary-color);
     margin-bottom: 10px;
     font-size: 24px;
 }
@@ -42,7 +57,7 @@ body {
 /* 입력 필드 스타일 */
 .login-form input {
     padding: 12px;
-    border: 2px solid #ddd;
+    border: 2px solid var(--border-color);
     border-radius: 5px;
     font-size: 16px;
     outline: none;
@@ -50,14 +65,14 @@ body {
 }
 
 .login-form input:focus {
-    border-color: #fcafaf;
+    border-color: var(--primary-color);
 }
 
 /* 로그인 버튼 스타일 */
 .login-form button {
     padding: 12px;
-    background-color: #fdc8c8;
-    color: white;
+    background-color: var(--primary-color);
+    color: var(--text-primary-color);
     border: none;
     border-radius: 5px;
     font-size: 16px;
@@ -66,15 +81,15 @@ body {
 }
 
 .login-form button:hover {
-    background-color: #fcafaf;
+    background-color: var(--primary-hover-color);
 }
 
 .login-form .auth-button {
-    background-color: #96e4f2;
+    background-color: var(--accent-color);
 }
 
 .login-form .auth-button:hover {
-    background-color: #71d5e9;
+    background-color: var(--accent-hover-color);
 }
 
 
@@ -88,14 +103,14 @@ body {
     width: 100%;
     height: 60px;
     padding: 0 20px;
-    background-color: #fdc8c8;
+    background-color: var(--primary-color);
     position: sticky;
     top: 0;
     z-index: 100;
 }
 
 .main-header h1{
-    color: #fff;
+    color: var(--text-primary-color);
     font-size: 24px;
     margin: 0;
 
@@ -103,7 +118,7 @@ body {
 
 .main-header a{
     text-decoration: none;
-    color: #fff;
+    color: var(--text-primary-color);
     font-size: 16px;
     font-weight: bold;
     padding: 8px 12px;
@@ -112,5 +127,121 @@ body {
 }
 
 .main-header a:hover{
-    background-color: rgba(255, 255, 255, 0.2);
+    background-color: rgba(255, 255, 255, 0.5);
+}
+
+
+/*메인컨텐츠*/
+.dashboard-container{
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    padding: 30px 20px;
+    gap: 20px;
+}
+
+.card{
+    background-color: var(--surface-color);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    flex-basis: 30%;
+    max-width: 350px;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.card-header-link{
+    display: block;
+    text-decoration: none;
+    color:inherit;
+    transition: background-color 0.2s;
+}
+
+.card-header{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.card-header h2{
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-primary-color);
+}
+
+.card-header span{
+    font-size: 20px;
+    font-weight: bold;
+    color: var(--text-secondary-color);
+    transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.card-header-link:hover{
+    background-color: var(--background-color);
+}
+
+.card-header-link:hover span{
+    color: var(--primary-color);
+    transform: translateX(5px);
+}
+
+
+/*컨텐츠칸*/
+.card-body{
+    padding: 10px 10px;
+    flex-grow: 1;
+}
+.recent-item{
+    display: block;
+    font-size: 16px;
+    padding: 10px;
+    margin: 0 10px;
+    color:var(--text-primary-color);
+    text-decoration: none;
+    border-radius: 5px;
+    transition: background-color 0.2s;
+}
+.recent-item:hover {
+    background-color: var(--primary-color);
+    color: var(--text-primary-color);
+}
+
+/*컨텐츠 푸터*/
+.card-footer{
+    padding: 15px;
+}
+.new-button{
+    width:100%;
+    padding: 12px;
+    color:white;
+    border:none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    background-color: var(--accent-color);
+    transition: background-color 0.2s;
+}
+.new-button:hover{
+    background-color: var(--accent-hover-color);
+}
+
+
+
+/*미디어쿼리*/
+
+@media(max-width: 768px){
+    .dashboard-container{
+        flex-direction: column;
+        gap:20px;
+        align-items: stretch;
+    }
+    .card{
+        flex-basis: auto;
+        max-width: 100%;
+    }
 }
