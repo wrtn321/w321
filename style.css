@@ -67,10 +67,10 @@ body {
     background-color: #fcafaf;
 }
 
-.login-form button .auth-button {
+.login-form .auth-button {
     background-color: #96e4f2;
 }
 
-.login-form button .auth-button:hover {
+.login-form .auth-button:hover {
     background-color: #71d5e9;
 }
