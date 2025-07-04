@@ -66,3 +66,18 @@ body {
 .login-form button:hover {
     background-color: #45a049;
 }
+
+.auth-links {
+    text-align: center;
+    margin-top: 10px;
+}
+
+.signup-link {
+    color: #4CAF50;
+    text-decoration: none;
+    font-size: 14px;
+}
+
+.signup-link:hover {
+    text-decoration: underline;
+}
