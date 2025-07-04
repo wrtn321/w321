@@ -30,6 +30,12 @@ body {
     flex-direction: column;
     gap: 20px;
 }
+.login-form h2 {
+    text-align: center;
+    color: #333;
+    margin-bottom: 10px;
+    font-size: 24px;
+}
 
 /* 입력 필드 스타일 */
 .login-form input {
