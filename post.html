@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>게시글 작성</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="editor-style.css">
+</head>
+<body>
+
+    <!-- 헤더는 목록으로 돌아가는 기능에만 집중 -->
+    <header class="main-header">
+        <a href="list.html" class="back-button">< 목록</a>
+        <div class="header-title"></div> 
+        <!-- 저장 버튼은 본문 영역으로 이동 -->
+    </header>
+
+    <!-- 메인 에디터 컨테이너 -->
+    <main class="editor-container">
+
+        <!-- 1. 제목 영역 -->
+        <div class="title-section">
+            <input type="text" class="title-input" placeholder="제목을 입력하세요" value="샘플 게시글 제목">
+            <div class="title-actions">
+                <button class="edit-btn">수정</button>
+                <button class="delete-btn">삭제</button>
+            </div>
+        </div>
+        
+        <!-- 2. 본문 영역 -->
+        <div class="content-section">
+            <!-- '전체 복사' 버튼을 본문 영역의 오른쪽 상단에 배치 -->
+            <button class="copy-all-btn">전체 복사</button>
+            <textarea class="content-textarea" placeholder="내용을 입력하세요...">여기는 샘플 본문 내용입니다.
+여러 줄의 텍스트가 이렇게 들어갈 수 있습니다.
+나중에 이 내용이 한 번에 복사될 거예요!</textarea>
+        </div>
+
+    </main>
+
+    <!-- JavaScript 파일 연결 -->
+    <script src="editor-script.js"></script>
+</body>
+</html>

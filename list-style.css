@@ -1,0 +1,176 @@
+/* =======================================
+   list-style.css - 목록 페이지 전용 스타일
+   ======================================= */
+
+/* 전체 페이지의 여백을 없애고, 박스 크기 계산법을 통일합니다. */
+* {
+    box-sizing: border-box;
+}
+
+/* ----------------------------------
+   1. 헤더 (기존 스타일 보강)
+   ---------------------------------- */
+.main-header {
+    /* flex를 이용해 자식 요소들을 정렬합니다. */
+    display: flex; 
+    justify-content: space-between; /* 양쪽 끝으로 벌리기 */
+    align-items: center; /* 세로 중앙 정렬 */
+    padding: 0 15px; /* 좌우 여백 */
+}
+
+.main-header .back-button {
+    font-size: 24px; /* < 크기 키우기 */
+    font-weight: bold;
+    text-decoration: none;
+    color: var(--text-primary-color);
+}
+
+
+/* ----------------------------------
+   2. 목록 페이지 컨테이너
+   ---------------------------------- */
+.list-container {
+    /* 최대 너비를 정해서 너무 넓어지지 않게 하고, 중앙 정렬 */
+    max-width: 800px;
+    margin: 20px auto; /* 위아래 20px, 좌우는 자동으로 중앙 정렬 */
+    padding: 0 15px; /* 모바일 화면을 위한 좌우 여백 */
+}
+
+
+/* ----------------------------------
+   3. 상단 액션 바
+   ---------------------------------- */
+.action-bar {
+    display: flex;
+    justify-content: space-between; /* 양쪽 끝으로 벌리기 */
+    align-items: center; /* 세로 중앙 정렬 */
+    margin-bottom: 25px; /* 액션바와 목록 사이의 간격 */
+    flex-wrap: wrap; /* 화면이 좁아지면 줄바꿈 허용 */
+    gap: 10px; /* 줄바꿈 시 아이템간 최소 간격 */
+}
+
+/* 경로 표시 (Breadcrumbs) */
+.breadcrumbs a, .breadcrumbs span {
+    color: var(--text-secondary-color); /* 연한 회색 */
+    text-decoration: none;
+    font-size: 16px;
+}
+
+.breadcrumbs a:hover {
+    text-decoration: underline; /* 마우스 올리면 밑줄 */
+}
+
+/* 액션 버튼 그룹 */
+.action-button button {
+    padding: 8px 12px;
+    border: 1px solid var(--border-color);
+    background-color: var(--surface-color); /* 흰색 배경 */
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background-color 0.2s, border-color 0.2s;
+}
+
+.action-button button:hover {
+    background-color: var(--background-color); /* 연한 회색 배경 */
+    border-color: var(--accent-color); /* 민트색 테두리 */
+}
+
+
+/* ----------------------------------
+   4. 게시글 리스트
+   ---------------------------------- */
+
+/* 고정/일반 리스트 영역 공통 스타일 */
+.pinned-list, .normal-list {
+    margin-bottom: 30px; /* 각 리스트 섹션 사이의 간격 */
+}
+
+/* "📌 고정됨" 같은 부제목 스타일 (나중에 추가할 경우 대비) */
+.pinned-list h2 {
+    font-size: 14px;
+    color: var(--text-secondary-color);
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 10px;
+}
+
+
+/* 목록 그룹 ul 스타일 */
+.item-list {
+    list-style: none; /* li 태그의 기본 점(•) 없애기 */
+    padding: 0;
+    margin: 0;
+}
+
+/* 목록 아이템 li 스타일 (가장 중요!) */
+.list-item {
+    display: flex;
+    align-items: center; /* 세로 중앙 정렬 */
+    padding: 15px 10px;
+    border-bottom: 1px solid var(--border-color); /* 각 아이템 구분선 */
+    transition: background-color 0.2s;
+    cursor: pointer; /* 클릭할 수 있다는 표시 */
+}
+
+/* 마지막 아이템의 아래 구분선은 없애서 깔끔하게 */
+.list-item:last-child {
+    border-bottom: none;
+}
+
+/* 마우스를 올리면 배경색 변경 */
+.list-item:hover {
+    background-color: var(--background-color);
+    border-radius: 8px;
+}
+
+/* 드래그 핸들 (⠿) 스타일 */
+.list-item .drag-handle {
+    color: var(--text-secondary-color);
+    padding: 0 10px;
+    cursor: grab; /* 잡을 수 있다는 표시 */
+}
+
+/* 아이콘 (📁, 📝) 스타일 */
+.list-item .item-icon {
+    font-size: 18px;
+    margin-right: 12px; /* 아이콘과 제목 사이 간격 */
+}
+
+/* 제목 스타일 */
+.list-item .item-title {
+    /* flex-grow: 1; 를 주면 남은 공간을 모두 차지해서
+       나중에 오른쪽에 날짜나 버튼을 추가할 때 유용합니다. */
+    flex-grow: 1; 
+    font-size: 16px;
+    color: var(--text-primary-color);
+}
+
+/* 폴더 아이템에만 적용할 특별 스타일 */
+.list-item.item-folder .item-title {
+    font-weight: 600; /* 폴더 이름은 약간 굵게 */
+}
+
+
+/* ----------------------------------
+   5. 게시글 고정 섹션이 비어있을 때 숨기기
+   ---------------------------------- */
+.pinned-list:empty {
+   display: none;
+}
+/* :empty 가상 클래스는 자식 요소(공백 포함)가 없을 때 요소를 숨겨줍니다.
+   나중에 JavaScript로 고정된 글이 없으면 li를 모두 지우면,
+   이 CSS 규칙에 의해 섹션 전체가 자동으로 사라집니다. */
+
+   /* SortableJS 드래그 효과 스타일 */
+
+/* 드래그하는 동안 원래 자리에 남는 유령 요소 스타일 */
+.sortable-ghost {
+    opacity: 0.4; /* 반투명하게 만들기 */
+    background-color: #c8ebfb; /* 파란색 계열 배경 */
+}
+
+/* 드래그 핸들 부분은 마우스가 올라갔을 때 잡을 수 있다는 표시를 더 확실하게 */
+.drag-handle:hover {
+    cursor: grab;
+}
