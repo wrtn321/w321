@@ -9,63 +9,67 @@
 
     <!--헤더-->
     <header class="main-header">
-    <h1>321</h1>
-    <a href="/logout" class="logout-button">로그아웃</a>
+        <h1>321</h1>
+        <!-- 로그아웃 버튼의 링크는 의미가 없으므로 '#'으로 바꾸거나, 
+             JavaScript로 제어함을 명시하기 위해 'javascript:void(0);' 사용 -->
+        <a href="javascript:void(0);" class="logout-button">로그아웃</a>
     </header>
 
     <!--메인컨텐츠-->
     <main class="dashboard-container">
+
+        <!-- 1. 프롬프트 카드 -->
         <section class="card">
-            <a href="/prompts" class="card-header-link">
+            <!-- 이제 이 링크는 실제로 list.html로 이동해야 합니다. -->
+            <a href="list.html" class="card-header-link">
                 <div class="card-header">
                     <h2>📝 프롬프트</h2>
                     <span>></span>
                 </div>
             </a>
+            <!-- card-body와 card-footer는 나중에 동적으로 채울 것이므로,
+                 지금은 구조만 남겨두거나 비워두는 것이 좋습니다. -->
             <div class="card-body">
-                <a href="/prompts/1" class="recent-item">최근 작업한 프롬프트 제목 1</a>
-                <a href="/prompts/2" class="recent-item">최근 작업한 프롬프트 제목 2</a>
-                <a href="/prompts/3" class="recent-item">최근 작업한 프롬프트 제목 3</a>
+                <!-- <a href="#" class="recent-item">최근 작업 1 (동적으로 생성됨)</a> -->
             </div>
              <div class="card-footer">
-                <button type="button" class="new-button">+ 새로 만들기</button>
+                <!-- 이 버튼을 누르면 list.html로 바로 이동하게 할 수도 있습니다. -->
+                <button type="button" class="new-button" onclick="window.location.href='list.html'">+ 새로 만들기</button>
             </div>
         </section>
 
+        <!-- 2. 채팅백업 카드 (아직 기능이 없으므로 링크 비활성화) -->
         <section class="card">
-            <a href="/chats" class="card-header-link">
+            <a href="#" class="card-header-link" onclick="alert('준비 중인 기능입니다.'); return false;">
                 <div class="card-header">
                     <h2>💬 채팅백업</h2>
                     <span>></span>
                 </div>
             </a>
             <div class="card-body">
-                <a href="/chats/1" class="recent-item">최근 작업한 채팅백업 1</a>
-                <a href="/chats/2" class="recent-item">최근 작업한 채팅백업 1</a>
-                <a href="/chats/3" class="recent-item">최근 작업한 채팅백업 1</a>
             </div>
             <div class="card-footer">
-                <button type="button" class="new-button">+ 새로만들기</button>
+                <button type="button" class="new-button" onclick="alert('준비 중인 기능입니다.');">+ 새로만들기</button>
             </div>
         </section>
 
+        <!-- 3. 소설 카드 (아직 기능이 없으므로 링크 비활성화) -->
         <section class="card">
-            <a href="/novel" class="card-header-link">
+             <a href="#" class="card-header-link" onclick="alert('준비 중인 기능입니다.'); return false;">
                 <div class="card-header">
                     <h2>📖 소설</h2>
                     <span>></span>
                 </div>
             </a>
             <div class="card-body">
-                <a href="/novel/1" class="recent-item">최근 작업한 소설 1</a>
-                <a href="/novel/2" class="recent-item">최근 작업한 소설 1</a>
-                <a href="/novel/3" class="recent-item">최근 작업한 소설 1</a>
             </div>
             <div class="card-footer">
-                <button type="button" class="new-button">+ 새로만들기</button>
+                <button type="button" class="new-button" onclick="alert('준비 중인 기능입니다.');">+ 새로만들기</button>
             </div>
         </section>
     </main>
+
+    <!-- script.js 연결 (로그인/로그아웃 처리를 위해 필요) -->
     <script src="script.js"></script>
 </body>
 </html>
