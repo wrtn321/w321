@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>콘텐츠</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="list-style.css">
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+</head>
+<body>
+
+    <!--헤더-->
+    <header class="main-header">
+        <a href="main.html" class="back-button"><</a> <!-- main.html로 돌아가기 -->
+        <h1>프롬프트</h1> <!-- 페이지 제목 명시 -->
+        <a href="index.html" class="logout-button">로그아웃</a> <!-- 로그아웃 버튼은 유지해도 좋습니다. -->
+    </header>
+
+    <!--게시글 리스트-->
+    <main class="list-container">
+        <!-- 액션바 -->
+        <section class="action-bar">
+            <div class="breadcrumbs">
+                <a href="#">📁프롬프트</a>
+                <span>></span>
+                <a href="#">1번폴더</a>
+            </div>
+            <div class="action-button">
+                <button class="new-folder-btn">+📁</button>
+                <button class="new-post-btn">+📝</button>
+            </div>
+        </section>
+        <!-- 게시글고정. 없을땐 안보이도록 -->
+        <section class="pinned-list">
+            <ul class="item-list"></ul>
+        </section>
+        <section class="normal-list">
+            <ul class="item-list"></ul>          
+        </section>
+    </main>
+    <script src="list-script.js"></script>
+</body>
+</html>
