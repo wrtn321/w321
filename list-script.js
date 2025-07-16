@@ -1,35 +1,63 @@
-// list-script.js (진짜진짜 최종 완성본!!!)
+// list-script.js (Firestore 최종 정리 버전)
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
 
-    // 1. 필요한 HTML 요소 찾아놓기
+    // =====================================================
+    // 1. Firebase Firestore DB 참조 및 전역 변수
+    // =====================================================
+    const db = firebase.firestore();
+    const postsCollection = db.collection('posts');
+    let posts = []; // 데이터를 담을 배열
+
+    // =====================================================
+    // 2. 필요한 HTML 요소 찾아놓기
+    // =====================================================
     const newPostBtn = document.querySelector('.new-post-btn');
     const newFolderBtn = document.querySelector('.new-folder-btn');
     const pinnedItemList = document.querySelector('.pinned-list .item-list');
     const normalItemList = document.querySelector('.normal-list .item-list');
 
-    // 2. 데이터 관리
-    let posts;
+    // =====================================================
+    // 3. 데이터 조작 함수 (Firestore와 통신)
+    // =====================================================
 
-    function loadPosts() {
-        const postsDataString = localStorage.getItem('myPosts');
-        if (postsDataString) {
-            posts = JSON.parse(postsDataString);
-        } else {
-            posts = [
-                { id: 'post-a1b2', type: 'post', title: '첫 번째 게시글', content: '첫 번째 게시글의 본문 내용입니다.' },
-                { id: 'folder-c3d4', type: 'folder', title: '중요한 폴더' },
-                { id: 'post-e5f6', type: 'post', title: '두 번째 게시글', content: '두 번째 글은 내용이 좀 더 깁니다. 안녕하세요.' },
-            ];
-            savePosts(); // 최초 실행 시 초기 데이터를 저장
+    // Firestore에서 모든 데이터를 불러와서 posts 배열에 채우는 함수
+    async function fetchPosts() {
+        try {
+            const snapshot = await postsCollection.orderBy('createdAt', 'desc').get(); // 최신순으로 정렬해서 가져오기
+            posts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            console.log('Firebase에서 데이터를 성공적으로 불러왔습니다:', posts);
+        } catch (error) {
+            console.error("데이터 불러오기 실패:", error);
         }
     }
 
-    function savePosts() {
-        localStorage.setItem('myPosts', JSON.stringify(posts));
+    // 새로운 데이터를 Firestore에 추가하는 함수
+    async function addDataToFirestore(data) {
+        try {
+            // Firestore에 데이터를 추가하고, 생성된 시간(timestamp)도 함께 기록
+            const docRef = await postsCollection.add({
+                ...data,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            console.log("새 문서가 추가되었습니다. ID:", docRef.id);
+        } catch (error) {
+            console.error("문서 추가 실패:", error);
+        }
+    }
+    
+    // 순서 변경 사항을 Firestore에 저장하는 함수 (나중에 구현)
+    async function updateOrderInFirestore() {
+        // 이 부분은 조금 복잡해서 다음 단계에서 진행합니다.
+        console.log("순서 변경사항을 저장해야 합니다:", posts.map(p => p.title));
     }
 
-    // 3. 화면 렌더링 및 이벤트 관련 함수
+
+    // =====================================================
+    // 4. 화면 렌더링 및 UI 관련 함수
+    // =====================================================
+
+    // 데이터를 기반으로 화면에 목록을 그리는 함수
     function renderList() {
         if (!normalItemList) return;
         normalItemList.innerHTML = '';
@@ -40,6 +68,7 @@ document.addEventListener('DOMContentLoaded', () => {
         addClickListenersToListItems();
     }
 
+    // 새로운 li 요소를 생성하는 공장 함수
     function createListItem(itemData) {
         const li = document.createElement('li');
         li.classList.add('list-item');
@@ -56,86 +85,85 @@ document.addEventListener('DOMContentLoaded', () => {
         return li;
     }
 
+    // 목록 아이템에 클릭 이벤트를 추가하는 함수
     function addClickListenersToListItems() {
-    const listItems = document.querySelectorAll('.list-container .list-item');
+        const listItems = document.querySelectorAll('.list-container .list-item');
+        listItems.forEach(item => {
+            const newItem = item.cloneNode(true);
+            item.parentNode.replaceChild(newItem, item);
 
-    listItems.forEach(item => {
-        // --- ▼▼▼ 핵심 수정 부분 ▼▼▼ ---
-        // 1. 기존의 item을 복제해서 깨끗한 새 item을 만듭니다.
-        //    이렇게 하면 기존에 달려있던 모든 이벤트 리스너가 사라집니다.
-        const newItem = item.cloneNode(true);
-        
-        // 2. 원래 있던 item을 깨끗한 새 item으로 교체합니다.
-        item.parentNode.replaceChild(newItem, item);
-        // --- ▲▲▲ 여기까지 ▲▲▲ ---
-
-
-        // 3. 이제 '깨끗한' newItem에 클릭 이벤트를 딱 한 번만 추가합니다.
-        newItem.addEventListener('click', () => {
-            if (newItem.classList.contains('item-folder')) {
-                alert('폴더 열기 기능은 준비 중입니다!');
-                return;
-            }
-
-            const itemId = newItem.dataset.id;
-            const postData = posts.find(post => post.id === itemId);
-
-            if (postData) {
-                localStorage.setItem('currentPost', JSON.stringify(postData));
-                window.location.href = 'post.html';
-            } else {
-                // 이 메시지가 이제는 절대 뜨면 안 됩니다.
-                console.error('클릭된 아이템의 데이터를 찾을 수 없습니다. ID:', itemId);
-            }
+            newItem.addEventListener('click', () => {
+                if (newItem.classList.contains('item-folder')) {
+                    alert('폴더 열기 기능은 준비 중입니다!');
+                    return;
+                }
+                const itemId = newItem.dataset.id;
+                const postData = posts.find(post => post.id === itemId);
+                if (postData) {
+                    localStorage.setItem('currentPost', JSON.stringify(postData));
+                    window.location.href = 'post.html';
+                }
+            });
         });
-    });
-}
+    }
 
-    // 4. 기능 실행 및 이벤트 리스너 연결
+    // =====================================================
+    // 5. 기능 실행 및 이벤트 리스너 연결
+    // =====================================================
+
+    // 새 글 만들기
     if (newPostBtn) {
-        newPostBtn.addEventListener('click', () => {
+        newPostBtn.addEventListener('click', async () => {
             const title = prompt('새 게시글의 제목을 입력하세요.');
             if (title) {
-                const newPost = {
-                    id: 'post-' + new Date().getTime(),
-                    type: 'post', title: title, content: ''
+                const newPostData = {
+                    type: 'post',
+                    title: title,
+                    content: ''
                 };
-                posts.unshift(newPost);
-                savePosts();
-                renderList();
+                await addDataToFirestore(newPostData); // Firestore에 데이터 추가
+                await fetchPosts(); // DB에서 최신 데이터 다시 불러오기
+                renderList(); // 화면 다시 그리기
             }
         });
     }
 
+    // 새 폴더 만들기
     if (newFolderBtn) {
-        newFolderBtn.addEventListener('click', () => {
+        newFolderBtn.addEventListener('click', async () => {
             const title = prompt('새 폴더의 이름을 입력하세요.');
             if (title) {
-                const newFolder = {
-                    id: 'folder-' + new Date().getTime(), type: 'folder', title: title
+                const newFolderData = {
+                    type: 'folder',
+                    title: title
                 };
-                posts.unshift(newFolder);
-                savePosts();
+                await addDataToFirestore(newFolderData);
+                await fetchPosts();
                 renderList();
             }
         });
     }
 
+    // SortableJS 기능 활성화
     if (normalItemList) {
         new Sortable(normalItemList, {
-            handle: '.drag-handle', animation: 150, ghostClass: 'sortable-ghost',
-            onEnd: function (evt) {
+            handle: '.drag-handle',
+            animation: 150,
+            ghostClass: 'sortable-ghost',
+            onEnd: async function (evt) {
                 const newOrderIds = Array.from(evt.to.children).map(li => li.dataset.id);
                 posts.sort((a, b) => newOrderIds.indexOf(a.id) - newOrderIds.indexOf(b.id));
-                savePosts();
-                // 순서 변경 후에는 렌더링을 다시 할 필요는 없지만,
-                // 만약의 사태를 대비해 클릭 리스너는 한번 더 붙여주는 것이 안전할 수 있습니다.
-                addClickListenersToListItems();
+                // 지금은 순서 변경을 Firestore에 저장하지는 않습니다.
+                // 이 기능은 다음 단계에서 구현합니다!
+                await updateOrderInFirestore();
             }
         });
     }
-    
-    // 5. 최초 실행
-    loadPosts();
+
+    // =====================================================
+    // 6. 최초 실행
+    // =====================================================
+    await fetchPosts();
     renderList();
+
 });
