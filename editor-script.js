@@ -20,32 +20,41 @@ document.addEventListener('DOMContentLoaded', () => {
     const count = contentTextarea.value.length; // .length가 공백 포함 글자 수를 세어줍니다.
     charCounter.textContent = count; // 화면에 숫자만 표시
 }
+
+    // 높이를 자동으로 조절하는 함수
+function autoResizeTextarea() {
+    // 일단 높이를 초기화해서, 글을 지웠을 때도 높이가 줄어들게 만듭니다.
+    contentTextarea.style.height = 'auto'; 
+    
+    // 스크롤이 생기지 않을 만큼의 실제 내용 높이(scrollHeight)를 측정해서
+    // textarea의 보이는 높이(height)로 설정해줍니다.
+    contentTextarea.style.height = contentTextarea.scrollHeight + 'px';
+}
+
+
     function loadPostData() {
         const postDataString = localStorage.getItem('currentPost');
         if (postDataString) {
             const postData = JSON.parse(postDataString);
-            
-            // 전역 변수에 현재 게시글 ID 저장!
-            currentPostId = postData.id; 
-            
+            currentPostId = postData.id;
             titleInput.value = postData.title;
             contentTextarea.value = postData.content;
-            
-            // 여기서 삭제하지 않아야 수정/삭제 시 ID를 사용할 수 있습니다.
-            // localStorage.removeItem('currentPost'); 
         } else {
             titleInput.placeholder = "새 글 제목을 입력하세요";
-            // 새 글일 경우 버튼 일부를 숨기는 것도 좋은 방법입니다.
             editBtn.style.display = 'none';
             deleteBtn.style.display = 'none';
         }
         updateCharCount();
+        autoResizeTextarea();
     }
 
     loadPostData();
 
     // 텍스트 입력시마다 글자수 업데이트
     contentTextarea.addEventListener('input', updateCharCount);
+    // 사용자가 입력할 때마다 높이도 자동으로 조절
+    contentTextarea.addEventListener('input', autoResizeTextarea);
+
 
     // 3. '수정' 버튼 기능 (실제 저장 로직 추가)
     editBtn.addEventListener('click', async () => {
