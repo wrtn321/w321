@@ -2,15 +2,15 @@
    추천 색상 팔레트 (CSS 변수 선언)
    ======================================= */
 :root {
-    --primary-color: #FECDD3;       /* 부드러운 핑크 */
-    --primary-hover-color: #FBA1B1;   /* 더 진한 핑크 (호버용) */
-    --accent-color: #A7D8DE;        /* 차분한 민트 */
-    --accent-hover-color: #82C0C9;    /* 더 진한 민트 (호버용) */
-    --background-color: #F8FAFC;    /* 아주 연한 회색 (배경) */
-    --surface-color: #FFFFFF;       /* 흰색 (카드 배경) */
-    --text-primary-color: #334155;  /* 진한 회색 (주요 텍스트) */
-    --text-secondary-color: #94A3B8;/* 연한 회색 (보조 텍스트, 아이콘) */
-    --border-color: #E2E8F0;        /* 아주 연한 회색 (테두리) */
+    --primary-color: #bbd4ff;       /* 부드러운 핑크 */
+    --primary-hover-color: #7a9eff;    /* 더 진한 핑크 (호버용) */
+    --accent-color: #b7b7b7;        /* 차분한 민트 */
+    --accent-hover-color: #8a8a8a;     /* 더 진한 민트 (호버용) */
+    --background-color: #F9FAFB;    /* 아주 연한 회색 (배경) */
+    --surface-color: #FFFFFF;        /* 흰색 (카드 배경) */
+    --text-primary-color: #111827;  /* 진한 회색 (주요 텍스트) */
+    --text-secondary-color: #9CA3AF;/* 연한 회색 (보조 텍스트, 아이콘) */
+    --border-color: #E5E7EB;       /* 아주 연한 회색 (테두리) */
 }
 
 /* 전체 페이지 기본 설정 */
