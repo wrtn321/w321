@@ -59,18 +59,30 @@
     margin-top: 15px;
 }
 
+/* 새로 추가된 wrapper의 스타일 */
+.textarea-wrapper {
+    border: 1px solid var(--border-color); /* 테두리는 이제 wrapper의 몫 */
+    border-radius: 8px; /* 둥근 모서리도 wrapper의 몫 */
+    padding: 20px; /* 안쪽 여백도 wrapper가 가져갑니다 */
+    background-color: var(--surface-color);
+}
+
 .content-textarea {
     width: 100%;
-    height: 60vh;
-    padding: 20px;
-    /* 이제 오른쪽 패딩이 많이 필요 없어요 */
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    background-color: var(--surface-color);
-    font-size: 16px; /* 폰트 크기 조정 */
-    line-height: 1.7;
+    /* height는 JS가 조절하므로 최소 높이만 남깁니다 */
+    min-height: 60vh; 
+    
+    /* 👇 아래 스타일들은 삭제하거나 값을 초기화합니다 */
+    padding: 0;         /* 패딩 제거 */
+    border: none;       /* 테두리 제거 */
+    border-radius: 0;   /* 둥근 모서리 제거 */
+    background-color: transparent; /* 배경색 투명하게 */
     outline: none;
-    resize: vertical;
+    resize: none; /* 이제 크기 조절 핸들도 필요 없습니다 */
+    
+    /* 👇 아래 스타일은 그대로 둡니다 */
+    font-size: 16px;
+    line-height: 1.7;
     font-family: inherit;
 }
 
