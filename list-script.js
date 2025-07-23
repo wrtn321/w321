@@ -1,43 +1,73 @@
-// list-script.js (Firestore 최종 정리 버전)
-
 document.addEventListener('DOMContentLoaded', async () => {
 
     // =====================================================
-    // 1. Firebase Firestore DB 참조 및 전역 변수
+    // 1. 전역 변수 및 설정
     // =====================================================
     const db = firebase.firestore();
     const postsCollection = db.collection('posts');
+    let currentCategory = ''; // 현재 어떤 카테고리 페이지인지 저장
     let posts = []; // 데이터를 담을 배열
+
+    // 카테고리 영어 이름과 한글 이름을 연결
+    const categoryNames = {
+        prompt: '프롬프트',
+        chat: '채팅백업',
+        novel: '소설'
+    };
 
     // =====================================================
     // 2. 필요한 HTML 요소 찾아놓기
     // =====================================================
+    const listTitle = document.getElementById('list-title');
     const newPostBtn = document.querySelector('.new-post-btn');
-    const newFolderBtn = document.querySelector('.new-folder-btn');
-    const pinnedItemList = document.querySelector('.pinned-list .item-list');
+    // ... (다른 요소들은 필요시 추가) ...
     const normalItemList = document.querySelector('.normal-list .item-list');
 
     // =====================================================
-    // 3. 데이터 조작 함수 (Firestore와 통신)
+    // 3. 페이지 초기화 함수
+    // =====================================================
+    function initializePage() {
+        // 1. 주소창의 URL에서 'category' 꼬리표(파라미터) 값을 읽어온다.
+        const params = new URLSearchParams(window.location.search);
+        const categoryParam = params.get('category');
+
+        // 2. 유효한 카테고리가 있으면 설정, 없으면 메인으로 돌려보낸다.
+        if (categoryParam && categoryNames[categoryParam]) {
+            currentCategory = categoryParam;
+            // 페이지 제목을 카테고리에 맞게 변경
+            listTitle.textContent = categoryNames[currentCategory];
+        } else {
+            alert('잘못된 접근입니다.');
+            window.location.href = 'main.html';
+        }
+    }
+
+    // =====================================================
+    // 4. 데이터 조작 함수 (Firestore와 통신)
     // =====================================================
 
-    // Firestore에서 모든 데이터를 불러와서 posts 배열에 채우는 함수
+    // Firestore에서 '현재 카테고리'에 맞는 데이터만 불러오는 함수
     async function fetchPosts() {
         try {
-            const snapshot = await postsCollection.orderBy('createdAt', 'desc').get(); // 최신순으로 정렬해서 가져오기
+            // where절을 추가해서 현재 카테고리와 일치하는 문서만 가져옴!
+            const snapshot = await postsCollection
+                .where('category', '==', currentCategory)
+                .orderBy('createdAt', 'desc')
+                .get();
+                
             posts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            console.log('Firebase에서 데이터를 성공적으로 불러왔습니다:', posts);
+            console.log(`'${currentCategory}' 카테고리 데이터 로딩 성공:`, posts);
         } catch (error) {
             console.error("데이터 불러오기 실패:", error);
         }
     }
 
-    // 새로운 데이터를 Firestore에 추가하는 함수
+    // 새로운 데이터를 Firestore에 추가하는 함수 (category 필드 추가!)
     async function addDataToFirestore(data) {
         try {
-            // Firestore에 데이터를 추가하고, 생성된 시간(timestamp)도 함께 기록
             const docRef = await postsCollection.add({
                 ...data,
+                category: currentCategory, // 현재 카테고리 정보 추가!
                 createdAt: firebase.firestore.FieldValue.serverTimestamp()
             });
             console.log("새 문서가 추가되었습니다. ID:", docRef.id);
@@ -46,21 +76,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
     
-    // 순서 변경 사항을 Firestore에 저장하는 함수 (나중에 구현)
-    async function updateOrderInFirestore() {
-        // 이 부분은 조금 복잡해서 다음 단계에서 진행합니다.
-        console.log("순서 변경사항을 저장해야 합니다:", posts.map(p => p.title));
-    }
-
-
     // =====================================================
-    // 4. 화면 렌더링 및 UI 관련 함수
+    // 5. 화면 렌더링 및 UI 관련 함수 (기존과 거의 동일)
     // =====================================================
-
-    // 데이터를 기반으로 화면에 목록을 그리는 함수
     function renderList() {
         if (!normalItemList) return;
-        normalItemList.innerHTML = '';
+        normalItemList.innerHTML = ''; // 목록 비우기
         posts.forEach(itemData => {
             const listItemElement = createListItem(itemData);
             normalItemList.append(listItemElement);
@@ -68,8 +89,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         addClickListenersToListItems();
     }
 
-    // 새로운 li 요소를 생성하는 공장 함수
     function createListItem(itemData) {
+        // ... (이 함수는 기존과 완전히 동일) ...
         const li = document.createElement('li');
         li.classList.add('list-item');
         li.dataset.id = itemData.id;
@@ -85,85 +106,46 @@ document.addEventListener('DOMContentLoaded', async () => {
         return li;
     }
 
-    // 목록 아이템에 클릭 이벤트를 추가하는 함수
     function addClickListenersToListItems() {
-        const listItems = document.querySelectorAll('.list-container .list-item');
-        listItems.forEach(item => {
-            const newItem = item.cloneNode(true);
-            item.parentNode.replaceChild(newItem, item);
-
-            newItem.addEventListener('click', () => {
-                if (newItem.classList.contains('item-folder')) {
-                    alert('폴더 열기 기능은 준비 중입니다!');
-                    return;
-                }
-                const itemId = newItem.dataset.id;
-                const postData = posts.find(post => post.id === itemId);
-                if (postData) {
-                    localStorage.setItem('currentPost', JSON.stringify(postData));
-                    window.location.href = 'post.html';
+        // ... (이 함수는 기존과 거의 동일) ...
+        document.querySelectorAll('.list-container .list-item').forEach(item => {
+            item.addEventListener('click', (e) => {
+                // 핸들을 클릭한게 아니면 페이지 이동
+                if (!e.target.classList.contains('drag-handle')) {
+                    const itemId = item.dataset.id;
+                    const postData = posts.find(post => post.id === itemId);
+                    if (postData) {
+                        localStorage.setItem('currentPost', JSON.stringify(postData));
+                        window.location.href = 'post.html';
+                    }
                 }
             });
         });
     }
 
     // =====================================================
-    // 5. 기능 실행 및 이벤트 리스너 연결
+    // 6. 이벤트 리스너 연결
     // =====================================================
 
-    // 새 글 만들기
+    // 새 글 만들기 버튼
     if (newPostBtn) {
         newPostBtn.addEventListener('click', async () => {
             const title = prompt('새 게시글의 제목을 입력하세요.');
             if (title) {
-                const newPostData = {
-                    type: 'post',
-                    title: title,
-                    content: ''
-                };
-                await addDataToFirestore(newPostData); // Firestore에 데이터 추가
-                await fetchPosts(); // DB에서 최신 데이터 다시 불러오기
-                renderList(); // 화면 다시 그리기
-            }
-        });
-    }
-
-    // 새 폴더 만들기
-    if (newFolderBtn) {
-        newFolderBtn.addEventListener('click', async () => {
-            const title = prompt('새 폴더의 이름을 입력하세요.');
-            if (title) {
-                const newFolderData = {
-                    type: 'folder',
-                    title: title
-                };
-                await addDataToFirestore(newFolderData);
+                const newPostData = { type: 'post', title: title, content: '' };
+                await addDataToFirestore(newPostData);
                 await fetchPosts();
                 renderList();
             }
         });
     }
 
-    // SortableJS 기능 활성화
-    if (normalItemList) {
-        new Sortable(normalItemList, {
-            handle: '.drag-handle',
-            animation: 150,
-            ghostClass: 'sortable-ghost',
-            onEnd: async function (evt) {
-                const newOrderIds = Array.from(evt.to.children).map(li => li.dataset.id);
-                posts.sort((a, b) => newOrderIds.indexOf(a.id) - newOrderIds.indexOf(b.id));
-                // 지금은 순서 변경을 Firestore에 저장하지는 않습니다.
-                // 이 기능은 다음 단계에서 구현합니다!
-                await updateOrderInFirestore();
-            }
-        });
-    }
+    // (폴더 만들기 기능 등 다른 리스너는 여기에 추가)
 
     // =====================================================
-    // 6. 최초 실행
+    // 7. 최초 실행
     // =====================================================
-    await fetchPosts();
-    renderList();
-
+    initializePage();   // 페이지 정보 설정 먼저!
+    await fetchPosts(); // 그 다음 데이터 불러오기
+    renderList();       // 마지막으로 화면에 그리기
 });
