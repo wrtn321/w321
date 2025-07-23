@@ -32,18 +32,19 @@
     
     <!-- 2. 본문 영역 -->
     <div class="content-section">
-        <!-- 여기 있던 '전체 복사' 버튼은 위로 이동했습니다. -->
         <textarea class="content-textarea" placeholder="내용을 입력하세요..."></textarea>
     </div>
-
+    <!-- 3. 글자수 세기 -->
+    <div class="editor-info">
+        <span id="char-counter">0</span>
+    </div>
     </main>
+    <footer class="site-footer">
+    <p>© 2025. 삼이일. All rights reserved.</p>
+    </footer>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
     <script src="firebase-init.js"></script>
     <script src="editor-script.js"></script>
-
-    <footer class="site-footer">
-    <p>© 2025. 삼이일. All rights reserved.</p>
-    </footer>
 </body>
 </html>

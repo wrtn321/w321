@@ -73,3 +73,17 @@
     resize: vertical;
     font-family: inherit;
 }
+
+/* ----------------------------------
+   3. 에디터 정보 영역 (글자 수 카운터 등)
+   ---------------------------------- */
+.editor-info {
+    margin-top: 10px; /* 본문 입력창과의 간격 */
+    padding: 0 5px;   /* 좌우에 미세한 여백 */
+    text-align: left; /* 왼쪽 정렬 */
+}
+
+#char-counter {
+    font-size: 14px;
+    color: var(--text-secondary-color); /* 연한 회색 글씨 */
+}
