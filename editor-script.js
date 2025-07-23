@@ -8,12 +8,18 @@ document.addEventListener('DOMContentLoaded', () => {
     // 1. 필요한 HTML 요소들을 미리 찾아놓습니다.
     const titleInput = document.querySelector('.title-input');
     const contentTextarea = document.querySelector('.content-textarea');
-    // 클래스 이름이 바뀌었으므로, 새로운 클래스 이름으로 선택합니다.
     const editBtn = document.querySelector('.edit-btn');
     const deleteBtn = document.querySelector('.delete-btn');
     const copyBtn = document.querySelector('.copy-btn'); // copyAllBtn -> copyBtn
+    const charCounter = document.getElementById('char-counter'); //글자수
 
     // 2. localStorage에서 데이터 불러와서 채워넣는 함수 수정
+
+    //글자수
+    function updateCharCount() {
+    const count = contentTextarea.value.length; // .length가 공백 포함 글자 수를 세어줍니다.
+    charCounter.textContent = count; // 화면에 숫자만 표시
+}
     function loadPostData() {
         const postDataString = localStorage.getItem('currentPost');
         if (postDataString) {
@@ -33,9 +39,13 @@ document.addEventListener('DOMContentLoaded', () => {
             editBtn.style.display = 'none';
             deleteBtn.style.display = 'none';
         }
+        updateCharCount();
     }
 
     loadPostData();
+
+    // 텍스트 입력시마다 글자수 업데이트
+    contentTextarea.addEventListener('input', updateCharCount);
 
     // 3. '수정' 버튼 기능 (실제 저장 로직 추가)
     editBtn.addEventListener('click', async () => {
