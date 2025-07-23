@@ -12,6 +12,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const deleteBtn = document.querySelector('.delete-btn');
     const copyBtn = document.querySelector('.copy-btn'); // copyAllBtn -> copyBtn
     const charCounter = document.getElementById('char-counter'); //글자수
+    const toastNotification = document.getElementById('toast-notification'); 
+    const toastMessage = toastNotification.querySelector('.toast-message'); 
+    let toastTimer; // 타이머를 제어할 변수 추가
+
 
     // 2. localStorage에서 데이터 불러와서 채워넣는 함수 수정
 
@@ -93,23 +97,43 @@ function autoResizeTextarea() {
     });
 
 
-    // '전체 복사' 버튼 기능 (선택자만 변경)
-copyBtn.addEventListener('click', () => { // copyAllBtn -> copyBtn
+    // '전체 복사' 버튼 기능 -> 토스트 알림 방식으로 변경!
+copyBtn.addEventListener('click', () => {
     const content = contentTextarea.value;
 
     if (!content) {
-        alert('복사할 내용이 없습니다.');
+        // 복사할 내용이 없을 때도 토스트 알림을 띄워줍니다.
+        showToast('복사할 내용이 없습니다.');
         return;
     }
 
     navigator.clipboard.writeText(content)
         .then(() => {
-            alert('본문이 클립보드에 복사되었습니다!');
+            // 성공했을 때 띄울 메시지
+            showToast('본문이 클립보드에 복사되었습니다!');
         })
         .catch(err => {
             console.error('복사 실패:', err);
-            alert('복사에 실패했습니다. 다시 시도해주세요.');
+            // 실패했을 때 띄울 메시지
+            showToast('복사에 실패했습니다.');
         });
 });
+
+// 토스트 알림을 실제로 보여주는 공장 함수
+function showToast(message) {
+    // 만약 이미 떠 있는 알림이 있다면, 이전 타이머를 취소합니다.
+    clearTimeout(toastTimer);
+
+    // 1. 메시지 설정
+    toastMessage.textContent = message;
+
+    // 2. 알림 보여주기 (show 클래스 추가)
+    toastNotification.classList.add('show');
+
+    // 3. 약 3초 후에 알림 숨기기
+    toastTimer = setTimeout(() => {
+        toastNotification.classList.remove('show');
+    }, 3000); // 3000ms = 3초
+}
 
 }); // DOMContentLoaded 이벤트 리스너 끝
