@@ -116,6 +116,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     const postData = posts.find(post => post.id === itemId);
                     if (postData) {
                         localStorage.setItem('currentPost', JSON.stringify(postData));
+                        localStorage.setItem('currentCategory', currentCategory);
                         window.location.href = 'post.html';
                     }
                 }

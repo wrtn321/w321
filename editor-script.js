@@ -6,6 +6,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentPostId = null; // 현재 보고 있는 게시글의 ID를 저장할 변수
 
     // 1. 필요한 HTML 요소들을 미리 찾아놓습니다.
+    const backToListBtn = document.getElementById('back-to-list-btn');
     const titleInput = document.querySelector('.title-input');
     const contentTextarea = document.querySelector('.content-textarea');
     const editBtn = document.querySelector('.edit-btn');
@@ -37,6 +38,10 @@ function autoResizeTextarea() {
 
 
     function loadPostData() {
+        const category = localStorage.getItem('currentCategory');
+         if (category) {
+        backToListBtn.href = `list.html?category=${category}`;
+        }
         const postDataString = localStorage.getItem('currentPost');
         if (postDataString) {
             const postData = JSON.parse(postDataString);
