@@ -7,14 +7,14 @@
 }
 
 /* ----------------------------------
-   1. 제목 섹션
+   1. 제목 및 아이콘 버튼 영역
    ---------------------------------- */
 .title-section {
     display: flex;
-    align-items: center; /* 세로 중앙 정렬 (중요!) */
+    align-items: center;
     border-bottom: 1px solid var(--border-color);
     padding: 10px 0;
-    gap: 8px; /* 제목과 버튼 그룹 사이의 간격 추가 */
+    gap: 8px; 
 }
 
 .title-input {
@@ -22,37 +22,37 @@
     border: none;
     background-color: transparent;
     padding: 10px;
-    font-size: 28px;
+    font-size: 24px; /* 모바일도 고려해서 살짝 줄임 */
     font-weight: bold;
     outline: none;
+    /* 최소 너비를 지정해서 아이콘이 밀려나지 않게 함 */
+    min-width: 0; 
 }
 
-/* 버튼들을 감싸는 div 추가 (선택사항이지만 관리에 용이) */
 .title-actions {
-    display: flex; /* 버튼들을 가로로 나란히 정렬 */
-    gap: 8px; /* 버튼들 사이의 간격 */
+    display: flex;
+    gap: 8px;
 }
 
-.title-actions button {
-    /* margin-left: 8px; 를 gap으로 대체 */
-    padding: 6px 12px;
+/* 모든 아이콘 버튼의 공통 스타일 */
+.action-btn {
+    padding: 8px;
     background-color: transparent;
-    border: 1px solid var(--border-color);
-    border-radius: 6px;
-    color: var(--text-secondary-color);
+    border: none;
+    border-radius: 8px;
     cursor: pointer;
     transition: all 0.2s;
-    white-space: nowrap; /* 버튼 이름이 줄바꿈되지 않도록 */
+    font-size: 22px; /* 아이콘 크기 키우기 */
+    line-height: 1; /* 아이콘이 수직 중앙에 오도록 함 */
 }
 
-.title-actions button:hover {
+/* 아이콘 버튼에 마우스를 올렸을 때 */
+.action-btn:hover {
     background-color: var(--background-color);
-    color: var(--text-primary-color);
 }
-
 
 /* ----------------------------------
-   2. 본문 섹션
+   2. 본문 영역
    ---------------------------------- */
 .content-section {
     position: relative;
@@ -63,36 +63,13 @@
     width: 100%;
     height: 60vh;
     padding: 20px;
-    /* 복사 버튼이 들어갈 공간을 위해 오른쪽 패딩을 더 줍니다 */
-    padding-right: 90px;
+    /* 이제 오른쪽 패딩이 많이 필요 없어요 */
     border: 1px solid var(--border-color);
     border-radius: 8px;
     background-color: var(--surface-color);
-    font-size: 18px;
+    font-size: 16px; /* 폰트 크기 조정 */
     line-height: 1.7;
     outline: none;
     resize: vertical;
     font-family: inherit;
-}
-
-/* '전체 복사' 버튼 스타일 수정 */
-.copy-all-btn {
-    position: absolute;
-    top: 15px;      /* 위에서 15px */
-    right: 15px;    /* 오른쪽에서 15px */
-
-    background-color: var(--accent-color); /* 눈에 잘 띄는 민트색으로 변경 */
-    color: var(--text-primary-color);
-    border: none;
-    border-radius: 6px;
-    padding: 5px 10px;  /* 패딩을 살짝 줄여서 작게 만들기 */
-    font-size: 12px;    /* 폰트 크기 작게 유지 */
-    font-weight: bold;
-    cursor: pointer;
-    transition: background-color 0.2s; /* 호버 효과를 위한 transition */
-}
-
-/* 호버 효과 추가 */
-.copy-all-btn:hover {
-    background-color: var(--accent-hover-color);
 }

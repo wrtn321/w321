@@ -19,23 +19,22 @@
     <!-- 메인 에디터 컨테이너 -->
     <main class="editor-container">
 
-        <!-- 1. 제목 영역 -->
-        <div class="title-section">
-            <input type="text" class="title-input" placeholder="제목을 입력하세요" value="샘플 게시글 제목">
-            <div class="title-actions">
-                <button class="edit-btn">수정</button>
-                <button class="delete-btn">삭제</button>
-            </div>
+    <!-- 1. 제목 및 아이콘 버튼 영역 -->
+    <div class="title-section">
+        <input type="text" class="title-input" placeholder="제목을 입력하세요">
+        <div class="title-actions">
+            <!-- 아이콘으로 변경된 버튼들! -->
+            <button class="action-btn copy-btn" title="전체 복사">📋</button>
+            <button class="action-btn edit-btn" title="저장">💾</button>
+            <button class="action-btn delete-btn" title="삭제">🗑️</button>
         </div>
-        
-        <!-- 2. 본문 영역 -->
-        <div class="content-section">
-            <!-- '전체 복사' 버튼을 본문 영역의 오른쪽 상단에 배치 -->
-            <button class="copy-all-btn">전체 복사</button>
-            <textarea class="content-textarea" placeholder="내용을 입력하세요...">여기는 샘플 본문 내용입니다.
-여러 줄의 텍스트가 이렇게 들어갈 수 있습니다.
-나중에 이 내용이 한 번에 복사될 거예요!</textarea>
-        </div>
+    </div>
+    
+    <!-- 2. 본문 영역 -->
+    <div class="content-section">
+        <!-- 여기 있던 '전체 복사' 버튼은 위로 이동했습니다. -->
+        <textarea class="content-textarea" placeholder="내용을 입력하세요..."></textarea>
+    </div>
 
     </main>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>

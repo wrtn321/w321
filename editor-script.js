@@ -5,12 +5,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const db = firebase.firestore(); // v8 문법 기준
     let currentPostId = null; // 현재 보고 있는 게시글의 ID를 저장할 변수
 
-    // ... HTML 요소 찾아놓기 ...
+    // 1. 필요한 HTML 요소들을 미리 찾아놓습니다.
     const titleInput = document.querySelector('.title-input');
     const contentTextarea = document.querySelector('.content-textarea');
+    // 클래스 이름이 바뀌었으므로, 새로운 클래스 이름으로 선택합니다.
     const editBtn = document.querySelector('.edit-btn');
     const deleteBtn = document.querySelector('.delete-btn');
-    // ...
+    const copyBtn = document.querySelector('.copy-btn'); // copyAllBtn -> copyBtn
 
     // 2. localStorage에서 데이터 불러와서 채워넣는 함수 수정
     function loadPostData() {
@@ -73,23 +74,23 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
 
-    // '전체 복사' 버튼 기능
-    copyAllBtn.addEventListener('click', () => {
-        const content = contentTextarea.value;
+    // '전체 복사' 버튼 기능 (선택자만 변경)
+copyBtn.addEventListener('click', () => { // copyAllBtn -> copyBtn
+    const content = contentTextarea.value;
 
-        if (!content) {
-            alert('복사할 내용이 없습니다.');
-            return;
-        }
+    if (!content) {
+        alert('복사할 내용이 없습니다.');
+        return;
+    }
 
-        navigator.clipboard.writeText(content)
-            .then(() => {
-                alert('본문이 클립보드에 복사되었습니다!');
-            })
-            .catch(err => {
-                console.error('복사 실패:', err);
-                alert('복사에 실패했습니다. 다시 시도해주세요.');
-            });
-    });
+    navigator.clipboard.writeText(content)
+        .then(() => {
+            alert('본문이 클립보드에 복사되었습니다!');
+        })
+        .catch(err => {
+            console.error('복사 실패:', err);
+            alert('복사에 실패했습니다. 다시 시도해주세요.');
+        });
+});
 
 }); // DOMContentLoaded 이벤트 리스너 끝
