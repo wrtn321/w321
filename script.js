@@ -23,7 +23,7 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log('로그아웃 상태');
             // 만약 인증 페이지가 아닌 다른 페이지에 있다면, 로그인 페이지로 쫓아낸다.
             if (mainHeader) {
-                window.location.href = 'index.html';
+                window.location.href = '/index.html';
             }
         }
     });
