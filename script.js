@@ -16,14 +16,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (user) { // 로그인 상태일 때
             if (isAuthPage) { // 로그인 페이지에 있다면
-                window.location.href = '/main.html'; // 메인으로 보낸다
+                window.location.href = 'main.html'; // 메인으로 보낸다
             }
         } else { // 로그아웃 상태일 때
             // main.html 뿐만 아니라, list.html, post.html 같은 모든 내부 페이지를 포함해야 함
             // 따라서 각 파일(list-script.js, editor-script.js)에 있는 보호 코드가 이 역할을 담당.
             // 여기서는 main.html만 체크해도 충분.
             if (isProtectedPage) {
-                window.location.href = '/index.html'; // 로그인 페이지로 보낸다
+                window.location.href = 'index.html'; // 로그인 페이지로 보낸다
             }
         }
     });
