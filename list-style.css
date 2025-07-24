@@ -107,7 +107,7 @@
 .list-item {
     display: flex;
     align-items: center; /* 세로 중앙 정렬 */
-    padding: 15px 10px;
+    padding: 15px 0px;
     border-bottom: 1px solid var(--border-color); /* 각 아이템 구분선 */
     transition: background-color 0.2s;
     cursor: pointer; /* 클릭할 수 있다는 표시 */
@@ -127,7 +127,7 @@
 /* 드래그 핸들 (⠿) 스타일 */
 .list-item .drag-handle {
     color: var(--text-secondary-color);
-    padding: 0 10px;
+    padding: 0 10px 0 0;
     cursor: grab; /* 잡을 수 있다는 표시 */
 }
 
