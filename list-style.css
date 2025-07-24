@@ -149,3 +149,19 @@
 .drag-handle:hover {
     cursor: grab;
 }
+
+/* =======================================
+   계층 구조 리스트 스타일
+   ======================================= */
+
+/* 폴더 안의 리스트 (자식 리스트) 스타일 */
+.child-list {
+    list-style: none;
+    padding-left: 30px; /* ★★★ 들여쓰기 효과 ★★★ */
+    margin: 0;
+}
+
+/* 자식 리스트가 숨겨진 상태 */
+.child-list.is-collapsed {
+    display: none;
+}
