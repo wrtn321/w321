@@ -1,6 +1,16 @@
 // editor-script.js
 
 document.addEventListener('DOMContentLoaded', () => {
+
+    // 👇 ===== 페이지 보호 코드 추가! =====
+    const auth = firebase.auth();
+    auth.onAuthStateChanged(user => {
+        if (!user) {
+            console.log('권한 없음. 로그인 페이지로 이동합니다.');
+            window.location.href = 'index.html';
+        }
+    });
+
     // 1. Firebase DB 참조 및 전역 변수 설정
     const db = firebase.firestore(); // v8 문법 기준
     let currentPostId = null; // 현재 보고 있는 게시글의 ID를 저장할 변수

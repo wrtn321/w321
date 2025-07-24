@@ -1,5 +1,14 @@
 document.addEventListener('DOMContentLoaded', async () => {
 
+
+    const auth = firebase.auth();
+    auth.onAuthStateChanged(user => {
+        if (!user) {
+            console.log('권한 없음. 로그인 페이지로 이동합니다.');
+            window.location.href = 'index.html';
+        }
+    });
+    
     // =====================================================
     // 1. 전역 변수 및 설정
     // =====================================================
