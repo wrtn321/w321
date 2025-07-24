@@ -1,5 +1,17 @@
 /* editor-style.css */
 
+body.sticky-footer-layout > .main-header {
+    background-color: transparent; /* 배경색을 없애서 본문과 어우러지게 */
+    border-bottom: 1px solid var(--border-color); /* 구분선 추가 */
+    padding: 10px 15px; /* editor-container의 padding과 동일하게 맞춤! */
+    color: var(--text-secondary-color);
+}
+
+body.sticky-footer-layout > .main-header a {
+    color: var(--text-secondary-color); /* 링크 색상도 통일 */
+    font-weight: normal; /* 너무 굵지 않게 */
+}
+
 .editor-container {
     max-width: 800px;
     margin: 20px auto;
