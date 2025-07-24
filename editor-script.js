@@ -26,7 +26,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 기능 함수들
     const updateCharCount = () => { charCounter.textContent = contentTextarea.value.length; };
-    const autoResizeTextarea = () => { contentTextarea.style.height = 'auto'; contentTextarea.style.height = contentTextarea.scrollHeight + 'px'; };
+    const autoResizeTextarea = () => {
+    contentTextarea.style.height = 'auto';
+    // scrollHeight에 border 두께(2px)를 더해서 오차를 보정합니다.
+    contentTextarea.style.height = (contentTextarea.scrollHeight + 2) + 'px';
+};
     const showToast = message => {
         clearTimeout(toastTimer);
         toastMessage.textContent = message;

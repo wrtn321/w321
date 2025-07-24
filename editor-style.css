@@ -72,19 +72,15 @@ body.sticky-footer-layout > .main-header a {
     margin-top: 15px;
 }
 
-/* 새로 추가된 wrapper의 스타일 */
-.textarea-wrapper {
-    border: 1px solid var(--border-color); /* 테두리는 이제 wrapper의 몫 */
-    border-radius: 8px; /* 둥근 모서리도 wrapper의 몫 */
-    padding: 20px; /* 안쪽 여백도 wrapper가 가져갑니다 */
-    background-color: var(--surface-color);
-}
 
 .content-textarea {
     width: 100%;
     /* height는 JS가 조절하므로 최소 높이만 남깁니다 */
     min-height: 60vh; 
-    
+    padding: 20px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background-color: var(--surface-color);
     /* 👇 아래 스타일들은 삭제하거나 값을 초기화합니다 */
     padding: 0;         /* 패딩 제거 */
     border: none;       /* 테두리 제거 */
