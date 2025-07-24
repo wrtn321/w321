@@ -57,32 +57,49 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Firestore에서 '현재 카테고리'에 맞는 데이터만 불러오는 함수
     async function fetchPosts() {
-        try {
-            // where절을 추가해서 현재 카테고리와 일치하는 문서만 가져옴!
-            const snapshot = await postsCollection
-                .where('category', '==', currentCategory)
-                .orderBy('createdAt', 'desc')
-                .get();
-                
-            posts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            console.log(`'${currentCategory}' 카테고리 데이터 로딩 성공:`, posts);
-        } catch (error) {
-            console.error("데이터 불러오기 실패:", error);
-        }
+    const user = firebase.auth().currentUser;
+
+    if (!user) {
+        console.log('로그인되어 있지 않아 데이터를 불러올 수 없습니다.');
+        posts = []; // 데이터 배열을 비웁니다.
+        renderList(); // 화면을 비웁니다.
+        return;
+    }
+
+    try {
+        const snapshot = await postsCollection
+            .where('userId', '==', user.uid) // 👈 [핵심!] 내 userId와 일치하는 글만
+            .where('category', '==', currentCategory)
+            .orderBy('createdAt', 'desc')
+            .get();
+            
+        posts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        console.log(`'${currentCategory}' 카테고리 데이터 로딩 성공:`, posts);
+    } catch (error) {
+        console.error("데이터 불러오기 실패:", error);
+    }
     }
 
     // 새로운 데이터를 Firestore에 추가하는 함수 (category 필드 추가!)
     async function addDataToFirestore(data) {
-        try {
-            const docRef = await postsCollection.add({
-                ...data,
-                category: currentCategory, // 현재 카테고리 정보 추가!
-                createdAt: firebase.firestore.FieldValue.serverTimestamp()
-            });
-            console.log("새 문서가 추가되었습니다. ID:", docRef.id);
-        } catch (error) {
-            console.error("문서 추가 실패:", error);
-        }
+    const user = firebase.auth().currentUser; // 현재 로그인한 사용자 정보 가져오기
+
+    if (!user) {
+        console.error('사용자가 로그인되어 있지 않아 글을 저장할 수 없습니다.');
+        return; // 사용자가 없으면 함수 종료
+    }
+
+    try {
+        const docRef = await postsCollection.add({
+            ...data,
+            category: currentCategory,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+            userId: user.uid // 👈 [핵심!] 사용자의 고유 ID를 함께 저장
+        });
+        console.log("새 문서가 추가되었습니다. ID:", docRef.id);
+    } catch (error) {
+        console.error("문서 추가 실패:", error);
+    }
     }
     
     // =====================================================
