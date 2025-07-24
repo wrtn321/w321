@@ -65,7 +65,7 @@ body.sticky-footer-layout main {
 }
 
 /* 폼 공통 스타일 - 기존 login-form 대체 */
-.auth-form {
+.auth-form:not([hidden]) { 
     display: flex;
     flex-direction: column;
     gap: 20px;
