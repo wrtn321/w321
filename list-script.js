@@ -1,23 +1,6 @@
-// list-script.js (깨끗하게 정리된 버전)
-
-document.addEventListener('DOMContentLoaded', async () => {
+document.addEventListener('DOMContentLoaded', () => {
     const auth = firebase.auth();
     const db = firebase.firestore();
-
-    // 페이지 보호 및 로그아웃 기능
-    auth.onAuthStateChanged(user => {
-        if (!user) {
-            window.location.href = 'index.html';
-        }
-    });
-
-    const logoutButton = document.querySelector('.logout-button');
-    if (logoutButton) {
-        logoutButton.addEventListener('click', e => {
-            e.preventDefault();
-            auth.signOut().catch(error => console.error('로그아웃 에러:', error));
-        });
-    }
 
     // 전역 변수 및 요소
     const postsCollection = db.collection('posts');
@@ -28,7 +11,32 @@ document.addEventListener('DOMContentLoaded', async () => {
     const newPostBtn = document.querySelector('.new-post-btn');
     const normalItemList = document.querySelector('.normal-list .item-list');
 
-    // 페이지 초기화
+    // =====================================================
+    // 모든 로직의 시작점: 로그인 상태가 확인된 후에 실행!
+    // =====================================================
+    auth.onAuthStateChanged(async user => {
+        if (user) {
+            initializePage();
+            await fetchPosts(user.uid);
+            renderList();
+        } else {
+            // 슬래시 제거!
+            window.location.href = 'index.html';
+        }
+    });
+
+
+    // 로그아웃 버튼 기능
+    const logoutButton = document.querySelector('.logout-button');
+    if (logoutButton) {
+        logoutButton.addEventListener('click', e => {
+            e.preventDefault();
+            auth.signOut().catch(error => console.error('로그아웃 에러:', error));
+        });
+    }
+
+
+    // 페이지 초기화 함수
     function initializePage() {
         const params = new URLSearchParams(window.location.search);
         const categoryParam = params.get('category');
@@ -37,28 +45,30 @@ document.addEventListener('DOMContentLoaded', async () => {
             listTitle.textContent = categoryNames[currentCategory];
         } else {
             alert('잘못된 접근입니다.');
+            // 슬래시 제거!
             window.location.href = 'main.html';
         }
     }
 
-    // 데이터 가져오기
-    async function fetchPosts() {
-        const user = auth.currentUser;
-        if (!user) return;
+    // 데이터 가져오기 함수 (userId를 인자로 받음)
+    async function fetchPosts(userId) {
         try {
             const snapshot = await postsCollection
-                .where('userId', '==', user.uid)
+                .where('userId', '==', userId)
                 .where('category', '==', currentCategory)
                 .orderBy('createdAt', 'desc')
                 .get();
             posts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            renderList();
+            console.log(`'${currentCategory}' 카테고리 데이터 로딩 성공:`, posts);
         } catch (error) {
             console.error("데이터 불러오기 실패:", error);
+            if (error.code === 'failed-precondition') {
+                console.error("Firestore 복합 색인이 필요할 수 있습니다. 오류 메시지의 링크를 확인하세요.");
+            }
         }
     }
 
-    // 데이터 추가하기
+    // 데이터 추가하기 함수 (기존과 동일)
     async function addDataToFirestore(data) {
         const user = auth.currentUser;
         if (!user) return;
@@ -74,7 +84,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    // 화면 렌더링
+    // 화면 렌더링 함수 (기존과 동일)
     function renderList() {
         if (!normalItemList) return;
         normalItemList.innerHTML = '';
@@ -82,7 +92,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         addClickListenersToListItems();
     }
 
-    // 리스트 아이템 생성
+    // 리스트 아이템 생성 함수 (기존과 동일)
     function createListItem(itemData) {
         const li = document.createElement('li');
         li.classList.add('list-item');
@@ -93,7 +103,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         return li;
     }
 
-    // 클릭 리스너 추가
+    // 클릭 리스너 추가 함수
     function addClickListenersToListItems() {
         document.querySelectorAll('.list-container .list-item').forEach(item => {
             item.addEventListener('click', e => {
@@ -102,6 +112,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (post) {
                     localStorage.setItem('currentPost', JSON.stringify(post));
                     localStorage.setItem('currentCategory', currentCategory);
+                    // 슬래시 제거!
                     window.location.href = 'post.html';
                 }
             });
@@ -114,12 +125,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             const title = prompt('새 게시글의 제목을 입력하세요.');
             if (title) {
                 await addDataToFirestore({ type: 'post', title: title, content: '' });
-                await fetchPosts();
+                await fetchPosts(auth.currentUser.uid);
+                renderList();
             }
         });
     }
-
-    // 최초 실행
-    initializePage();
-    await fetchPosts();
 });
