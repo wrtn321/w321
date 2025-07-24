@@ -5,6 +5,7 @@ javascript랑 firebase
 
 1. vercel같은 배포 알아보기
    - gitignore써보기
+   - 폴더도좀정리해라
   
 2. 목록
    - 프롬프트 메모할 부분
