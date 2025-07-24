@@ -43,7 +43,7 @@ body.sticky-footer-layout main {
 .site-footer {
     background-color: var(--background-color); /* 배경색과 동일하게 */
     border-top: 1px solid var(--border-color); /* 상단에 얇은 구분선 추가 */
-    padding: 20px 0; /* 위아래 여백 */
+    padding: 50px 0; /* 위아래 여백 */
     text-align: center; /* 텍스트 중앙 정렬 */
     color: var(--text-secondary-color); /* 연한 회색 글씨 */
     font-size: 14px;
