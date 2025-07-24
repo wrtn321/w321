@@ -163,7 +163,7 @@ body.sticky-footer-layout > .main-header a {
 }
 
 /* =======================================
-   읽기 모드(View Mode) 전용 스타일 추가
+   읽기 모드(View Mode) 전용 스타일 수정
    ======================================= */
 
 /* 읽기 모드 제목 h2 스타일 */
@@ -171,23 +171,19 @@ body.sticky-footer-layout > .main-header a {
     flex-grow: 1;
     font-size: 24px;
     font-weight: bold;
-    padding: 10px;
+    padding: 10px 0; /* 위아래 여백만 주고 좌우는 없애서 자연스럽게 */
     margin: 0;
     min-width: 0;
-    /* h2 태그의 기본 마진을 없애고 input과 비슷하게 맞춤 */
 }
 
 /* 읽기 모드 본문 div 스타일 */
 .view-content {
     width: 100%;
-    min-height: 60vh;
-    padding: 20px;
+    min-height: 60vh; 
+    padding: 20px 5px; /* 패딩을 조정해 답답한 느낌을 없앱니다. */
     font-size: 16px;
     line-height: 1.7;
-    white-space: pre-wrap; /* 중요! 줄바꿈과 공백을 그대로 보여줌 */
-    word-wrap: break-word; /* 긴 단어가 영역을 넘어갈 때 줄바꿈 */
-    background-color: var(--surface-color);
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
+    white-space: pre-wrap; /* 줄바꿈과 공백 표시는 매우 중요하므로 유지! */
+    word-wrap: break-word; /* 긴 단어 자동 줄바꿈도 유지! */
 }
 
