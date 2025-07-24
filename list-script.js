@@ -2,6 +2,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 
     const auth = firebase.auth();
+
+    // 로그아웃 버튼 기능
+    const logoutButton = document.querySelector('.logout-button');
+    if (logoutButton) {
+        logoutButton.addEventListener('click', (e) => {
+            e.preventDefault();
+            auth.signOut().catch(error => console.error('로그아웃 에러:', error));
+        });
+    }
+
     auth.onAuthStateChanged(user => {
         if (!user) {
             console.log('권한 없음. 로그인 페이지로 이동합니다.');
