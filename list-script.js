@@ -11,7 +11,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const newPostBtn = document.querySelector('.new-post-btn');
     const newFolderBtn = document.querySelector('.new-folder-btn');
     const normalItemList = document.querySelector('.normal-list .item-list');
-    let isDragging = false; // ★★★ 드래그 상태를 추적할 깃발 변수 ★★★
 
     // 토스트 알림 함수
     const toastNotification = document.getElementById('toast-notification');
@@ -25,22 +24,14 @@ document.addEventListener('DOMContentLoaded', () => {
         toastTimer = setTimeout(() => { toastNotification.classList.remove('show'); }, 3000);
     };
 
-    // =====================================================
-    // 모든 로직의 시작점
-    // =====================================================
     auth.onAuthStateChanged(async user => {
         if (user) {
             initializePage();
             await fetchPosts(user.uid);
             renderList();
-        } else {
-            window.location.href = 'index.html';
-        }
+        } else { window.location.href = 'index.html'; }
     });
 
-    // ... (로그아웃, 페이지 초기화, 데이터 가져오기, 데이터 추가하기 함수는 이전과 동일)
-    
-    // 페이지 초기화 함수
     function initializePage() {
         const params = new URLSearchParams(window.location.search);
         const categoryParam = params.get('category');
@@ -53,25 +44,17 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // 데이터 가져오기 함수
     async function fetchPosts(userId) {
         try {
-            const snapshot = await postsCollection
-                .where('userId', '==', userId)
-                .where('category', '==', currentCategory)
-                .orderBy('order', 'asc')
-                .get();
+            const snapshot = await postsCollection.where('userId', '==', userId).where('category', '==', currentCategory).get();
             posts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
             console.log(`'${currentCategory}' 카테고리 데이터 로딩 성공:`, posts);
         } catch (error) {
             console.error("데이터 불러오기 실패:", error);
-            if (error.code === 'failed-precondition') {
-                alert("Firestore 색인이 필요합니다. 개발자 콘솔(F12)의 에러 메시지에 있는 링크를 클릭하여 색인을 생성해주세요.");
-            }
+            if (error.code === 'failed-precondition') { alert("Firestore 색인이 필요합니다. 개발자 콘솔(F12)의 에러 메시지에 있는 링크를 클릭하여 색인을 생성해주세요."); }
         }
     }
 
-    // 데이터 추가하기 함수
     async function addDataToFirestore(data, parentId = 'root') {
         const user = auth.currentUser;
         if (!user) return;
@@ -82,11 +65,6 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (error) { console.error("문서 추가 실패:", error); }
     }
 
-
-    // =====================================================
-    // 렌더링 관련 함수들
-    // =====================================================
-    
     function renderList() {
         if (!normalItemList) return;
         normalItemList.innerHTML = '';
@@ -95,7 +73,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const tree = [];
         Object.values(itemsById).forEach(item => {
             const parent = itemsById[item.parentId];
-            if (item.parentId && parent) {
+            if (item.parentId !== 'root' && parent) {
                 parent.children.push(item);
             } else {
                 tree.push(item);
@@ -106,49 +84,56 @@ document.addEventListener('DOMContentLoaded', () => {
         initializeSortable(normalItemList);
     }
 
+    // ★★★ 시작: renderItem 함수가 완전히 새로워졌습니다. ★★★
     function renderItem(itemData, parentElement, level) {
         const li = document.createElement('li');
         li.className = 'list-item';
         li.dataset.id = itemData.id;
-        li.dataset.level = level;
-        const icon = itemData.type === 'folder' ? '📁' : '📝';
-        li.innerHTML = `<span class="drag-handle">⠿</span><span class="item-icon">${icon}</span><span class="item-title">${itemData.title}</span>`;
+
+        const wrapper = document.createElement('div');
+        wrapper.className = 'item-content-wrapper';
+
+        const iconType = itemData.type === 'folder' ? '📁' : '📝';
+        wrapper.innerHTML = `<span class="drag-handle">⠿</span><span class="item-icon">${iconType}</span><span class="item-title">${itemData.title}</span>`;
+        li.appendChild(wrapper);
         parentElement.appendChild(li);
 
         if (itemData.type === 'folder') {
             li.classList.add('item-folder');
-            const ul = document.createElement('ul');
-            ul.className = 'child-list is-collapsed';
-            ul.dataset.parentId = itemData.id;
-            parentElement.appendChild(ul);
-            initializeSortable(ul);
+            const childUl = document.createElement('ul');
+            childUl.className = 'child-list is-collapsed';
+            childUl.dataset.parentId = itemData.id;
+            li.appendChild(childUl); // ★★★ 이제 ul은 li의 자식입니다. ★★★
+
+            initializeSortable(childUl);
+
             if (itemData.children.length > 0) {
-                itemData.children.sort((a, b) => a.order - b.order).forEach(child => renderItem(child, ul, level + 1));
+                itemData.children.sort((a, b) => a.order - b.order).forEach(child => {
+                    renderItem(child, childUl, level + 1);
+                });
             }
         }
     }
+    // ★★★ 끝: renderItem 함수 ★★★
 
-    // =====================================================
-    // 이벤트 리스너 관련 함수들
-    // =====================================================
-    
+
     function addClickListenersToListItems() {
-        document.querySelectorAll('.list-container .list-item').forEach(item => {
-            item.addEventListener('click', e => {
-                if (isDragging || e.target.classList.contains('drag-handle') || e.target.tagName === 'INPUT') { // ★★★ isDragging 체크 추가 ★★★
-                    return;
-                }
-                const itemIsFolder = item.classList.contains('item-folder');
-                if (itemIsFolder) {
-                    const childList = item.nextElementSibling;
-                    if (childList && childList.tagName === 'UL') {
+        document.querySelectorAll('.list-container .item-content-wrapper').forEach(wrapper => {
+            // ★★★ 클릭 이벤트 대상을 li가 아닌 wrapper로 변경 ★★★
+            wrapper.addEventListener('click', e => {
+                const li = wrapper.closest('.list-item');
+                if (!li || e.target.classList.contains('drag-handle') || e.target.tagName === 'INPUT') return;
+
+                if (li.classList.contains('item-folder')) {
+                    const childList = li.querySelector('.child-list'); // ★★★ 이제 자식 ul을 querySelector로 찾습니다. ★★★
+                    if (childList) {
                         childList.classList.toggle('is-collapsed');
-                        item.classList.toggle('is-expanded');
-                        const iconElement = item.querySelector('.item-icon');
-                        iconElement.textContent = item.classList.contains('is-expanded') ? '📂' : '📁';
+                        li.classList.toggle('is-expanded');
+                        const iconElement = wrapper.querySelector('.item-icon');
+                        iconElement.textContent = li.classList.contains('is-expanded') ? '📂' : '📁';
                     }
                 } else {
-                    const post = posts.find(p => p.id === item.dataset.id);
+                    const post = posts.find(p => p.id === li.dataset.id);
                     if (post) {
                         localStorage.setItem('currentPost', JSON.stringify(post));
                         localStorage.setItem('currentCategory', currentCategory);
@@ -157,10 +142,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
 
-            item.addEventListener('dblclick', e => {
+            wrapper.addEventListener('dblclick', e => {
                 e.preventDefault();
-                const titleSpan = item.querySelector('.item-title');
-                if (!titleSpan || item.querySelector('.title-input')) return;
+                const li = wrapper.closest('.list-item');
+                const titleSpan = wrapper.querySelector('.item-title');
+                if (!titleSpan || wrapper.querySelector('.title-input')) return;
+                
                 const currentTitle = titleSpan.textContent;
                 const input = document.createElement('input');
                 input.type = 'text';
@@ -175,13 +162,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     const newTitle = input.value.trim();
                     if (save && newTitle && newTitle !== currentTitle) {
                         try {
-                            await postsCollection.doc(item.dataset.id).update({ title: newTitle });
+                            await postsCollection.doc(li.dataset.id).update({ title: newTitle });
                             titleSpan.textContent = newTitle;
                             showToast('이름이 변경되었습니다.');
                         } catch (error) { console.error('이름 변경 실패:', error); showToast('이름 변경에 실패했습니다.'); }
-                    } else {
-                        titleSpan.textContent = currentTitle;
-                    }
+                    } else { titleSpan.textContent = currentTitle; }
                     input.remove();
                     titleSpan.style.display = 'inline';
                 };
@@ -207,7 +192,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     if (newPostBtn) {
         newPostBtn.addEventListener('click', async () => {
-            const title = prompt('새 게시글의 제목을 입력하세요.');
+            const title = prompt('새 게시글의 이름을 입력하세요.');
             if (title) {
                 await addDataToFirestore({ type: 'post', title: title, content: '' });
                 await fetchPosts(auth.currentUser.uid);
@@ -216,16 +201,12 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // =====================================================
-    // SortableJS 관련 함수들
-    // =====================================================
     function initializeSortable(targetUl) {
         if (!targetUl) return;
         new Sortable(targetUl, {
             group: 'nested',
             handle: '.drag-handle',
             animation: 150,
-            onStart: () => { isDragging = true; }, // ★★★ 드래그 시작 시 깃발 올리기 ★★★
             onAdd: async (evt) => {
                 const docId = evt.item.dataset.id;
                 const newParentId = evt.to.dataset.parentId || 'root';
@@ -234,21 +215,21 @@ document.addEventListener('DOMContentLoaded', () => {
                     await updateOrder(evt.to);
                     showToast('폴더로 이동했습니다.');
                 } catch (error) { console.error("폴더 이동 실패:", error); showToast('이동에 실패했습니다.'); }
-                isDragging = false; // ★★★ 이벤트 종료 시 깃발 내리기 ★★★
             },
             onEnd: async (evt) => {
                 if (evt.oldIndex !== evt.newIndex) {
                     await updateOrder(evt.from);
                 }
-                isDragging = false; // ★★★ 이벤트 종료 시 깃발 내리기 ★★★
             }
         });
     }
 
     async function updateOrder(listElement) {
-        const items = listElement.querySelectorAll(':scope > .list-item');
+        // ★★★ 이제 li는 ul의 직접적인 자식입니다. ★★★
+        const items = listElement.children;
         const batch = db.batch();
-        items.forEach((item, index) => {
+        // HTMLCollection을 배열로 변환하여 forEach 사용
+        Array.from(items).forEach((item, index) => {
             const docId = item.dataset.id;
             if (docId) {
                 const docRef = postsCollection.doc(docId);
