@@ -19,12 +19,11 @@ document.addEventListener('DOMContentLoaded', () => {
             initializePage();
             await fetchPosts(user.uid);
             renderList();
+            initializeSortable(); // 목록이 그려진 후 드래그 기능 활성화
         } else {
-            // 슬래시 제거!
             window.location.href = 'index.html';
         }
     });
-
 
     // 로그아웃 버튼 기능
     const logoutButton = document.querySelector('.logout-button');
@@ -35,7 +34,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-
     // 페이지 초기화 함수
     function initializePage() {
         const params = new URLSearchParams(window.location.search);
@@ -45,30 +43,29 @@ document.addEventListener('DOMContentLoaded', () => {
             listTitle.textContent = categoryNames[currentCategory];
         } else {
             alert('잘못된 접근입니다.');
-            // 슬래시 제거!
             window.location.href = 'main.html';
         }
     }
 
-    // 데이터 가져오기 함수 (userId를 인자로 받음)
+    // 데이터 가져오기 함수 (order 기준 정렬)
     async function fetchPosts(userId) {
         try {
             const snapshot = await postsCollection
                 .where('userId', '==', userId)
                 .where('category', '==', currentCategory)
-                .orderBy('createdAt', 'desc')
+                .orderBy('order', 'asc')
                 .get();
             posts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
             console.log(`'${currentCategory}' 카테고리 데이터 로딩 성공:`, posts);
         } catch (error) {
             console.error("데이터 불러오기 실패:", error);
             if (error.code === 'failed-precondition') {
-                console.error("Firestore 복합 색인이 필요할 수 있습니다. 오류 메시지의 링크를 확인하세요.");
+                alert("Firestore 색인이 필요합니다. 개발자 콘솔(F12)의 에러 메시지에 있는 링크를 클릭하여 색인을 생성해주세요.");
             }
         }
     }
 
-    // 데이터 추가하기 함수 (기존과 동일)
+    // 데이터 추가하기 함수 (order 값 포함)
     async function addDataToFirestore(data) {
         const user = auth.currentUser;
         if (!user) return;
@@ -77,14 +74,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 ...data,
                 category: currentCategory,
                 createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                userId: user.uid
+                userId: user.uid,
+                order: posts.length // 현재 목록의 맨 뒤 순서로 order 값 지정
             });
         } catch (error) {
             console.error("문서 추가 실패:", error);
         }
     }
 
-    // 화면 렌더링 함수 (기존과 동일)
+    // 화면 렌더링 함수
     function renderList() {
         if (!normalItemList) return;
         normalItemList.innerHTML = '';
@@ -92,7 +90,7 @@ document.addEventListener('DOMContentLoaded', () => {
         addClickListenersToListItems();
     }
 
-    // 리스트 아이템 생성 함수 (기존과 동일)
+    // 리스트 아이템 생성 함수
     function createListItem(itemData) {
         const li = document.createElement('li');
         li.classList.add('list-item');
@@ -112,10 +110,22 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (post) {
                     localStorage.setItem('currentPost', JSON.stringify(post));
                     localStorage.setItem('currentCategory', currentCategory);
-                    // 슬래시 제거!
                     window.location.href = 'post.html';
                 }
             });
+        });
+    }
+
+    // 새 폴더 만들기 버튼
+    const newFolderBtn = document.querySelector('.new-folder-btn');
+    if (newFolderBtn) {
+        newFolderBtn.addEventListener('click', async () => {
+            const title = prompt('새 폴더의 이름을 입력하세요.');
+            if (title) {
+                await addDataToFirestore({ type: 'folder', title: title, content: '' });
+                await fetchPosts(auth.currentUser.uid);
+                renderList();
+            }
         });
     }
 
@@ -127,6 +137,44 @@ document.addEventListener('DOMContentLoaded', () => {
                 await addDataToFirestore({ type: 'post', title: title, content: '' });
                 await fetchPosts(auth.currentUser.uid);
                 renderList();
+            }
+        });
+    }
+
+    // ★★★ 이 함수 전체를 DOMContentLoaded 안으로 옮겼습니다! ★★★
+    // =====================================================
+    // SortableJS 초기화 및 순서 저장 함수
+    // =====================================================
+    function initializeSortable() {
+        if (!normalItemList) return;
+
+        new Sortable(normalItemList, {
+            handle: '.drag-handle',
+            animation: 150,
+
+            onEnd: async (evt) => {
+                console.log('드래그가 끝났습니다. 순서를 저장합니다.');
+                const items = normalItemList.querySelectorAll('.list-item');
+                const batch = db.batch();
+
+                items.forEach((item, index) => {
+                    const docId = item.dataset.id;
+                    if (docId) {
+                        const docRef = postsCollection.doc(docId);
+                        batch.update(docRef, { order: index });
+                    }
+                });
+
+                try {
+                    await batch.commit();
+                    console.log('순서가 성공적으로 저장되었습니다.');
+                    // 로컬 데이터와 화면의 순서는 이미 드래그로 변경되었으므로
+                    // 여기서는 Firestore에 바뀐 순서만 저장해주는 역할에 집중합니다.
+                    // 만약을 위해 fetchPosts를 다시 호출해 서버와 데이터를 동기화할 수 있습니다.
+                    await fetchPosts(auth.currentUser.uid);
+                } catch (error) {
+                    console.error('순서 저장에 실패했습니다:', error);
+                }
             }
         });
     }
