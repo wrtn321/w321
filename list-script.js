@@ -67,19 +67,29 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 데이터 추가하기 함수 (order 값 포함)
     async function addDataToFirestore(data) {
-        const user = auth.currentUser;
-        if (!user) return;
-        try {
-            await postsCollection.add({
-                ...data,
-                category: currentCategory,
-                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                userId: user.uid,
-                order: posts.length // 현재 목록의 맨 뒤 순서로 order 값 지정
-            });
-        } catch (error) {
-            console.error("문서 추가 실패:", error);
-        }
+    const user = auth.currentUser;
+    if (!user) return;
+
+    // ★★★ 시작: 새로운 order 값을 계산하는 로직 ★★★
+    let newOrder = 0; // 기본값은 0
+    if (posts.length > 0) {
+        // posts 배열에 있는 모든 order 값들 중에서 가장 큰 값을 찾는다.
+        const maxOrder = Math.max(...posts.map(p => p.order || 0));
+        newOrder = maxOrder + 1;
+    }
+    // ★★★ 끝: 새로운 order 값을 계산하는 로직 ★★★
+
+    try {
+        await postsCollection.add({
+            ...data,
+            category: currentCategory,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+            userId: user.uid,
+            order: newOrder // ★★★ 계산된 newOrder 값을 사용 ★★★
+        });
+    } catch (error) {
+        console.error("문서 추가 실패:", error);
+    }
     }
 
     // 화면 렌더링 함수
