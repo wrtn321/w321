@@ -244,6 +244,40 @@ body.sticky-footer-layout main {
     color: var(--text-primary-color);
 }
 
+/* =======================================
+   토스트(Toast) 알림 스타일
+   ======================================= */
+
+#toast-notification {
+    /* 화면 하단 중앙에 고정시키기 */
+    position: fixed;
+    left: 50%;
+    bottom: 30px;
+    transform: translateX(-50%); /* X축으로 자신의 절반만큼 왼쪽으로 이동해 완벽한 중앙 정렬 */
+
+    /* 디자인 */
+    background-color: rgba(0, 0, 0, 0.75); /* 살짝 투명한 검은색 배경 */
+    color: white;
+    padding: 12px 20px;
+    border-radius: 25px; /* 동글동글한 알약 모양 */
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+
+    /* 처음에는 숨겨두기 */
+    opacity: 0;
+    visibility: hidden;
+    z-index: 1000; /* 다른 모든 요소들 위에 보이도록 */
+
+    /* 나타나고 사라질 때 부드러운 애니메이션 효과 */
+    transition: opacity 0.5s, visibility 0.5s, bottom 0.5s;
+}
+
+/* JavaScript가 .show 클래스를 추가하면 이 스타일이 적용됨 */
+#toast-notification.show {
+    opacity: 1;
+    visibility: visible;
+    bottom: 50px; /* 살짝 위로 떠오르는 효과 */
+}
+
 /*컨텐츠 푸터*/
 .card-footer{
     padding: 15px;
