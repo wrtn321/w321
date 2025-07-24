@@ -81,15 +81,6 @@ body.sticky-footer-layout > .main-header a {
     border: 1px solid var(--border-color);
     border-radius: 8px;
     background-color: var(--surface-color);
-    /* 👇 아래 스타일들은 삭제하거나 값을 초기화합니다 */
-    padding: 0;         /* 패딩 제거 */
-    border: none;       /* 테두리 제거 */
-    border-radius: 0;   /* 둥근 모서리 제거 */
-    background-color: transparent; /* 배경색 투명하게 */
-    outline: none;
-    resize: none; /* 이제 크기 조절 핸들도 필요 없습니다 */
-    
-    /* 👇 아래 스타일은 그대로 둡니다 */
     font-size: 16px;
     line-height: 1.7;
     font-family: inherit;
