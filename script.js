@@ -104,15 +104,31 @@ function setupAuthPage(auth) {
 function setupMainPage(auth) {
     const logoutButton = document.querySelector('.logout-button');
 
-    // ===== 로그아웃 버튼 기능 구현! =====
+    logoutButton.addEventListener('click', (e) => {
+        e.preventDefault();
+        alert('로그아웃 기능도 곧 만들 거예요!');
+    });
+
+    // ... '+ 새로 만들기' 버튼 기능
+}
+
+/**
+ * 메인 페이지 (main.html) 기능 설정
+ * @param {firebase.auth.Auth} auth - Firebase Auth 서비스 인스턴스
+ */
+function setupMainPage(auth) {
+    const logoutButton = document.querySelector('.logout-button');
+
+    // ===== 최종 버전 로그아웃 버튼 기능! =====
     logoutButton.addEventListener('click', e => {
         e.preventDefault();
         
         auth.signOut()
             .then(() => {
-                // 로그아웃은 성공하면 onAuthStateChanged 감시자가 알아서 index.html로 보내주므로
-                // 여기서도 특별히 할 일이 없습니다.
-                console.log('로그아웃 성공');
+                // 로그아웃이 성공적으로 완료된 후에 실행됩니다.
+                console.log('로그아웃 성공. 로그인 페이지로 이동합니다.');
+                // 이제 여기서 직접 페이지를 이동시킵니다.
+                window.location.href = '/index.html'; // 404 방지를 위해 절대 경로 사용!
             })
             .catch(error => {
                 console.error('로그아웃 에러:', error);
@@ -120,13 +136,11 @@ function setupMainPage(auth) {
             });
     });
 
-    // '+ 새로 만들기' 버튼 기능
+    // '+ 새로 만들기' 버튼 기능 (이 부분은 기존과 동일)
     document.querySelectorAll('.new-button').forEach(button => {
         button.addEventListener('click', (e) => {
             const category = e.target.dataset.category;
             if (category) {
-                // 새 글을 만들기 위해 list 페이지로 이동
-                // 카테고리 정보를 쿼리 스트링으로 넘겨준다.
                 window.location.href = `list.html?category=${category}&new=true`;
             }
         });
