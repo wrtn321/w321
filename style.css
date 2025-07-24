@@ -47,70 +47,80 @@ body.sticky-footer-layout main {
     margin-top: auto; /* flex-grow와 함께 푸터를 아래로 밀어내는 핵심! */
 }
 
-/* 로그인 컨테이너 - 전체 화면 중앙 정렬 */
-.login-container {
+/* 인증 페이지 컨테이너 - 기존 login-container 대체 */
+.auth-container {
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 100dvh;
+    flex-grow: 1; /* 푸터를 아래로 밀기 위해 추가 */
 }
 
-/* 로그인 폼 스타일 */
-.login-form {
+.auth-form-wrapper {
     background-color: var(--surface-color);
     padding: 40px;
     border-radius: 10px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     width: 90%;
-    max-width: 350px;
+    max-width: 400px;
+}
+
+/* 폼 공통 스타일 - 기존 login-form 대체 */
+.auth-form {
     display: flex;
     flex-direction: column;
     gap: 20px;
 }
 
-.login-form h2 {
+.auth-form h2 {
     text-align: center;
     color: var(--text-primary-color);
     margin-bottom: 10px;
     font-size: 24px;
 }
 
-/* 입력 필드 스타일 */
-.login-form input {
+.auth-form input {
     padding: 12px;
-    border: 2px solid var(--border-color);
+    border: 1px solid var(--border-color);
     border-radius: 5px;
     font-size: 16px;
     outline: none;
     transition: border-color 0.3s;
 }
 
-.login-form input:focus {
+.auth-form input:focus {
     border-color: var(--primary-color);
 }
 
-/* 로그인 버튼 스타일 */
-.login-form button {
+.auth-form button {
     padding: 12px;
     background-color: var(--primary-color);
-    color: var(--text-primary-color);
+    color: white; /* 텍스트 색상을 흰색으로 변경하여 가독성 확보 */
     border: none;
     border-radius: 5px;
     font-size: 16px;
     cursor: pointer;
     transition: background-color 0.3s;
+    margin-top: 10px;
 }
 
-.login-form button:hover {
+.auth-form button:hover {
     background-color: var(--primary-hover-color);
 }
 
-.login-form .auth-button {
-    background-color: var(--accent-color);
+/* 폼 전환 텍스트 스타일 */
+.form-toggle-text {
+    text-align: center;
+    font-size: 14px;
+    color: var(--text-secondary-color);
 }
 
-.login-form .auth-button:hover {
-    background-color: var(--accent-hover-color);
+.form-toggle-text a {
+    color: var(--primary-color);
+    text-decoration: none;
+    font-weight: 500;
+}
+.form-toggle-text a:hover {
+    text-decoration: underline;
 }
 
 
