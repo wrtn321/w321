@@ -7,7 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // 페이지 보호
     auth.onAuthStateChanged(user => {
         if (!user) {
-            window.location.href = '/index.html';
+            window.location.href = 'index.html';
         }
     });
 
@@ -38,7 +38,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function loadPostData() {
         const category = localStorage.getItem('currentCategory');
         if (category) {
-            backToListBtn.href = `/list.html?category=${category}`;
+            backToListBtn.href = `list.html?category=${category}`;
         }
         const postDataString = localStorage.getItem('currentPost');
         if (postDataString) {

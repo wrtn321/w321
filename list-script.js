@@ -7,7 +7,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // 페이지 보호 및 로그아웃 기능
     auth.onAuthStateChanged(user => {
         if (!user) {
-            window.location.href = '/index.html';
+            window.location.href = 'index.html';
         }
     });
 
@@ -37,7 +37,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             listTitle.textContent = categoryNames[currentCategory];
         } else {
             alert('잘못된 접근입니다.');
-            window.location.href = '/main.html';
+            window.location.href = 'main.html';
         }
     }
 
@@ -102,7 +102,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (post) {
                     localStorage.setItem('currentPost', JSON.stringify(post));
                     localStorage.setItem('currentCategory', currentCategory);
-                    window.location.href = '/post.html';
+                    window.location.href = 'post.html';
                 }
             });
         });

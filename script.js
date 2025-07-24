@@ -12,11 +12,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (user) { // 로그인 상태
             if (isAuthPage) { // 로그인 페이지에 있다면
-                window.location.href = '/main.html'; // 메인으로 보낸다
+                window.location.href = 'main.html'; // 메인으로 보낸다
             }
         } else { // 로그아웃 상태
             if (isMainPage) { // 메인 페이지에 있다면
-                window.location.href = '/index.html'; // 로그인 페이지로 보낸다
+                window.location.href = 'index.html'; // 로그인 페이지로 보낸다
             }
         }
     });
@@ -100,7 +100,7 @@ function setupMainPage(auth) {
         button.addEventListener('click', (e) => {
             const category = e.target.dataset.category;
             if (category) {
-                window.location.href = `/list.html?category=${category}`;
+                window.location.href = `list.html?category=${category}`;
             }
         });
     });
