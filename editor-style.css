@@ -161,3 +161,33 @@ body.sticky-footer-layout > .main-header a {
         font-size: 15px;
     }
 }
+
+/* =======================================
+   읽기 모드(View Mode) 전용 스타일 추가
+   ======================================= */
+
+/* 읽기 모드 제목 h2 스타일 */
+.view-title {
+    flex-grow: 1;
+    font-size: 24px;
+    font-weight: bold;
+    padding: 10px;
+    margin: 0;
+    min-width: 0;
+    /* h2 태그의 기본 마진을 없애고 input과 비슷하게 맞춤 */
+}
+
+/* 읽기 모드 본문 div 스타일 */
+.view-content {
+    width: 100%;
+    min-height: 60vh;
+    padding: 20px;
+    font-size: 16px;
+    line-height: 1.7;
+    white-space: pre-wrap; /* 중요! 줄바꿈과 공백을 그대로 보여줌 */
+    word-wrap: break-word; /* 긴 단어가 영역을 넘어갈 때 줄바꿈 */
+    background-color: var(--surface-color);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+}
+

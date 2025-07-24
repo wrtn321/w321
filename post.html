@@ -12,41 +12,65 @@
     <!-- 헤더는 목록으로 돌아가는 기능에만 집중 -->
     <header class="main-header">
         <a href="list.html" id="back-to-list-btn" class="back-button">< 목록</a>
-        <div class="header-title"></div> 
-        <!-- 저장 버튼은 본문 영역으로 이동 -->
+        <!-- 제목과 버튼들은 메인 컨테이너로 이동 -->
     </header>
 
     <!-- 메인 에디터 컨테이너 -->
     <main class="editor-container">
 
-    <!-- 1. 제목 및 아이콘 버튼 영역 -->
-    <div class="title-section">
-        <input type="text" class="title-input" placeholder="제목을 입력하세요">
-        <div class="title-actions">
-            <!-- 아이콘으로 변경된 버튼들! -->
-            <button class="action-btn copy-btn" title="전체 복사">📋</button>
-            <button class="action-btn edit-btn" title="저장">💾</button>
-            <button class="action-btn delete-btn" title="삭제">🗑️</button>
+        <!-- ======================================= -->
+        <!-- 읽기 모드 (View Mode) 에서 보일 요소들   -->
+        <!-- ======================================= -->
+        <div id="view-mode-elements">
+            <!-- 제목 (읽기 전용) -->
+            <div class="title-section">
+                <h2 class="view-title">제목이 로드됩니다...</h2>
+                <div class="title-actions">
+                    <button id="view-copy-btn" class="action-btn" title="전체 복사">📋</button>
+                    <button id="view-edit-btn" class="action-btn" title="수정">✏️</button> <!-- 아이콘 변경 -->
+                    <button id="view-delete-btn" class="action-btn" title="삭제">🗑️</button>
+                </div>
+            </div>
+            <!-- 본문 (읽기 전용) -->
+            <div class="content-section">
+                <div class="view-content"></div>
+            </div>
         </div>
-    </div>
-    
-    <!-- 2. 본문 영역 -->
-    <div class="content-section">
-        <textarea class="content-textarea" placeholder="내용을 입력하세요..."></textarea>
-    </div>
-    <!-- 3. 글자수 세기 -->
-    <div class="editor-info">
-        <span id="char-counter">0</span>
-    </div>
+
+        <!-- ======================================= -->
+        <!-- 수정 모드 (Edit Mode) 에서 보일 요소들   -->
+        <!-- ======================================= -->
+        <div id="edit-mode-elements" hidden> <!-- 처음엔 숨겨둠 -->
+             <!-- 제목 (입력창) -->
+            <div class="title-section">
+                <input type="text" class="title-input" placeholder="제목을 입력하세요">
+                <div class="title-actions">
+                    <button id="edit-save-btn" class="action-btn" title="저장">💾</button>
+                    <button id="edit-cancel-btn" class="action-btn" title="취소">❌</button>
+                </div>
+            </div>
+            <!-- 본문 (입력창) -->
+            <div class="content-section">
+                <textarea class="content-textarea" placeholder="내용을 입력하세요..."></textarea>
+            </div>
+            <!-- 글자수 세기 -->
+            <div class="editor-info">
+                <span id="char-counter">0</span>
+            </div>
+        </div>
     </main>
+    
     <footer class="site-footer">
-    <p>© 2025. 삼이일. All rights reserved.</p>
+        <p>© 2025. 삼이일. All rights reserved.</p>
     </footer>
+
     <div id="toast-notification">
         <p class="toast-message"></p>
     </div>
+
+    <!-- Firebase SDK 등 스크립트 태그들은 그대로 유지 -->
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script> <!-- Auth SDK 추가! -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
     <script src="firebase-init.js"></script>
     <script src="editor-script.js"></script>
