@@ -87,10 +87,9 @@
 .list-item {
     display: flex;
     align-items: center; /* 세로 중앙 정렬 */
-    padding: 15px 0px;
+    padding: 5px 0px;
     border-bottom: 1px solid var(--border-color); /* 각 아이템 구분선 */
     transition: background-color 0.2s;
-    cursor: pointer; /* 클릭할 수 있다는 표시 */
 }
 
 /* 마지막 아이템의 아래 구분선은 없애서 깔끔하게 */
@@ -102,6 +101,7 @@
 .list-item:hover {
     background-color: var(--background-color);
     border-radius: 8px;
+    cursor: pointer;
 }
 
 /* 드래그 핸들 (⠿) 스타일 */
@@ -179,5 +179,9 @@
 .item-content-wrapper {
     display: flex;
     align-items: center;
+    width: 100%; /* 너비를 100%로 꽉 채웁니다. */
+    flex-grow: 1; /* 혹시 모를 상황을 대비해 flex 아이템으로서 성장하도록 설정 */
+    padding: 5px 10px; /* 클릭 영역에 여유 공간을 줍니다. */
+    border-radius: 6px; /* 경계선을 둥글게 만듭니다. */
+    transition: background-color 0.2s; /* 부드러운 효과 */
 }
-
