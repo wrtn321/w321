@@ -1,0 +1,153 @@
+/* editor-style.css */
+
+body.sticky-footer-layout > .main-header {
+    background-color: transparent; /* 배경색을 없애서 본문과 어우러지게 */
+    border-bottom: 1px solid var(--border-color); /* 구분선 추가 */
+    padding: 10px 15px; /* editor-container의 padding과 동일하게 맞춤! */
+    color: var(--text-secondary-color);
+}
+
+body.sticky-footer-layout > .main-header a {
+    color: var(--text-secondary-color); /* 링크 색상도 통일 */
+    font-weight: normal; /* 너무 굵지 않게 */
+}
+
+.editor-container {
+    max-width: 800px;
+    width: 100%;
+    margin: 20px auto;
+    padding: 0 15px;
+}
+
+/* ----------------------------------
+   1. 제목 및 아이콘 버튼 영역
+   ---------------------------------- */
+.title-section {
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid var(--border-color);
+    padding: 10px 0;
+}
+
+.title-input {
+    flex-grow: 1; 
+    border: none;
+    background-color: transparent;
+    padding: 10px;
+    font-size: 24px; /* 모바일도 고려해서 살짝 줄임 */
+    font-weight: bold;
+    outline: none;
+    /* 최소 너비를 지정해서 아이콘이 밀려나지 않게 함 */
+    min-width: 0; 
+}
+
+.title-actions {
+    display: flex;
+    gap: 8px;
+}
+
+/* 모든 아이콘 버튼의 공통 스타일 */
+.action-btn {
+    padding: 8px;
+    background-color: transparent;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 22px; /* 아이콘 크기 키우기 */
+    line-height: 1; /* 아이콘이 수직 중앙에 오도록 함 */
+}
+
+/* 아이콘 버튼에 마우스를 올렸을 때 */
+.action-btn:hover {
+    background-color: var(--background-color);
+}
+
+/* ----------------------------------
+   2. 본문 영역
+   ---------------------------------- */
+.content-section {
+    position: relative;
+    margin-top: 15px;
+}
+
+
+.content-textarea {
+    width: 100%;
+    /* height는 JS가 조절하므로 최소 높이만 남깁니다 */
+    min-height: 60vh; 
+    padding: 20px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background-color: var(--surface-color);
+    font-size: 16px;
+    line-height: 1.7;
+    font-family: inherit;
+}
+
+/* ----------------------------------
+   3. 에디터 정보 영역 (글자 수 카운터 등)
+   ---------------------------------- */
+.editor-info {
+    margin-top: 10px; /* 본문 입력창과의 간격 */
+    padding: 0 5px;   /* 좌우에 미세한 여백 */
+    text-align: right;
+}
+
+#char-counter {
+    font-size: 14px;
+    color: var(--text-secondary-color); /* 연한 회색 글씨 */
+}
+
+
+
+@media (max-width: 420px) {
+
+    /* 1. 제목과 아이콘 영역을 위아래로 쌓이게 변경 */
+    .title-section {
+        flex-direction: column; /* 가로 정렬(row)에서 세로 정렬(column)으로 변경 */
+        align-items: flex-start; /* 왼쪽 정렬로 초기화 */
+    }
+
+    /* 2. 제목 입력창은 꽉 차게 */
+    .title-input {
+        width: 100%;
+        font-size: 22px; /* 작은 화면에서는 제목 폰트 살짝 줄이기 */
+    }
+
+    /* 3. 아이콘 버튼들은 오른쪽으로 정렬 */
+    .title-actions {
+        align-self: flex-end; /* 그룹 전체를 오른쪽 끝으로 이동 */
+    }
+
+    /* 4. 본문 입력창 폰트도 살짝 줄여주기 */
+    .content-textarea {
+        font-size: 15px;
+    }
+}
+
+/* =======================================
+   읽기 모드(View Mode) 전용 스타일 수정
+   ======================================= */
+
+/* 읽기 모드 제목 h2 스타일 */
+.view-title {
+    flex-grow: 1;
+    font-size: 24px;
+    font-weight: bold;
+    padding: 10px 0; /* 위아래 여백만 주고 좌우는 없애서 자연스럽게 */
+    margin: 0;
+    min-width: 0;
+}
+
+/* 읽기 모드 본문 div 스타일 */
+.view-content {
+    width: 100%;
+    min-height: 60vh; 
+    padding: 20px 5px; /* 패딩을 조정해 답답한 느낌을 없앱니다. */
+    font-size: 16px;
+    line-height: 1.7;
+    white-space: pre-wrap; /* 줄바꿈과 공백 표시는 매우 중요하므로 유지! */
+    word-wrap: break-word; /* 긴 단어 자동 줄바꿈도 유지! */
+}
+
