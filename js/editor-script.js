@@ -123,7 +123,7 @@ document.addEventListener('DOMContentLoaded', () => {
             currentPost = JSON.parse(postDataString);
             
             viewTitle.textContent = currentPost.title;
-            viewContent.textContent = currentPost.content;
+            viewContent.innerHTML = marked.parse(currentPost.content || '');
 
             toggleMode('view');
         } else {
