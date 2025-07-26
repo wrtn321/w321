@@ -153,3 +153,67 @@ body.sticky-footer-layout > .main-header a {
     word-wrap: break-word; /* 긴 단어 자동 줄바꿈도 유지! */
 }
 
+/* =======================================
+   마크다운 렌더링 결과물 스타일
+   ======================================= */
+
+/* 스타일은 .view-content 안에서만 적용되도록 한정합니다. */
+.view-content h1,
+.view-content h2,
+.view-content h3,
+.view-content h4,
+.view-content h5,
+.view-content h6 {
+    margin-top: 24px;
+    margin-bottom: 16px;
+    font-weight: 600;
+    line-height: 1.25;
+}
+
+.view-content h1 { font-size: 2em; }
+.view-content h2 { font-size: 1.5em; }
+.view-content h3 { font-size: 1.25em; }
+
+.view-content p {
+    margin-bottom: 16px;
+}
+
+.view-content ul,
+.view-content ol {
+    padding-left: 2em;
+    margin-bottom: 16px;
+}
+
+.view-content blockquote {
+    margin: 0 0 16px 0;
+    padding: 0 1em;
+    color: var(--text-secondary-color);
+    border-left: 0.25em solid var(--border-color);
+}
+
+.view-content pre {
+    background-color: #f6f8fa; /* 연한 회색 배경 */
+    border-radius: 6px;
+    padding: 16px;
+    margin-bottom: 16px;
+    overflow-x: auto; /* 코드가 길면 가로 스크롤 생성 */
+}
+
+.view-content code {
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
+    font-size: 85%;
+}
+
+.view-content pre code {
+    /* 코드 블럭 안의 코드는 배경색이 없도록 함 */
+    background-color: transparent;
+    padding: 0;
+}
+
+.view-content hr {
+    height: 0.25em;
+    padding: 0;
+    margin: 24px 0;
+    background-color: var(--border-color);
+    border: 0;
+}
