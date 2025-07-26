@@ -148,7 +148,7 @@ body.sticky-footer-layout > .main-header a {
     min-height: 60vh; 
     padding: 20px 5px; /* 패딩을 조정해 답답한 느낌을 없앱니다. */
     font-size: 16px;
-    line-height: 1.7;
+    line-height: 1;
     white-space: pre-wrap; /* 줄바꿈과 공백 표시는 매우 중요하므로 유지! */
     word-wrap: break-word; /* 긴 단어 자동 줄바꿈도 유지! */
 }
@@ -165,7 +165,6 @@ body.sticky-footer-layout > .main-header a {
 .view-content h5,
 .view-content h6 {
     font-weight: 600;
-    line-height: 1.25;
 }
 
 .view-content h1 { font-size: 1.5em; }
@@ -181,23 +180,29 @@ body.sticky-footer-layout > .main-header a {
 }
 
 .view-content li {
-    margin-bottom: 0;      /* ★★★ 3. 항목 사이의 간격을 없앱니다. */
+    display: inline; /* 이거 바꿔야댐 */
+    margin-bottom: 0px; /* 원하는 만큼 간격을 조절하세요. 0에 가까울수록 좁아집니다. */
+}
+
+.view-content li p:last-child {
+    margin-bottom: 0;
 }
 
 .view-content blockquote {
     margin: 0 0 16px 0;
     padding: 0 1em;
-    color: #f6f8fa;
+    color: var(--text-secondary-color);
     border-left: 0.25em solid var(--border-color);
-    background-color: black;
 }
 
 .view-content pre {
-    background-color: #f6f8fa; /* 연한 회색 배경 */
+    background-color: #636363;
+    color: #fff; /* 연한 회색 배경 */
     border-radius: 6px;
     padding: 16px;
     margin-bottom: 16px;
-    overflow-x: auto; /* 코드가 길면 가로 스크롤 생성 */
+    white-space: pre-wrap;    /* 1. 공백/들여쓰기는 유지하되, 필요하면 자동 줄바꿈 허용 */
+    overflow-x: hidden; 
 }
 
 .view-content code {
@@ -219,26 +224,4 @@ body.sticky-footer-layout > .main-header a {
     border: 0;
 }
 
-/* editor-style.css의 마크다운 스타일 섹션에 추가하거나 수정하세요. */
 
-/* 리스트 전체(ul, ol)의 위아래 여백과 왼쪽 들여쓰기 설정 */
-.view-content ul,
-.view-content ol {
-    padding-left: 2em; /* 들여쓰기 수준 */
-    margin-top: 0;     /* 리스트 시작 전 여백 제거 */
-    margin-bottom: 16px; /* 리스트 끝난 후 여백 */
-}
-
-/* ★★★ 바로 이 부분이 핵심입니다! ★★★ */
-/* 각 리스트 항목(li) 사이의 간격을 조절합니다. */
-.view-content li {
-    margin-bottom: 4px; /* 원하는 만큼 간격을 조절하세요. 0에 가까울수록 좁아집니다. */
-}
-
-/* 
-  매우 중요한 마무리 작업!
-  리스트 항목 안에 <p> 태그가 생길 경우, 불필요한 이중 여백을 제거합니다.
-*/
-.view-content li p:last-child {
-    margin-bottom: 0;
-}
