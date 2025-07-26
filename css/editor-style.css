@@ -84,6 +84,7 @@ body.sticky-footer-layout > .main-header a {
     line-height: 1.7;
     font-family: inherit;
     touch-action: pan-y;
+    overflow-y: hidden;
 }
 
 /* ----------------------------------
