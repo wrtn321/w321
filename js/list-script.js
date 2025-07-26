@@ -24,6 +24,29 @@ document.addEventListener('DOMContentLoaded', () => {
         toastTimer = setTimeout(() => { toastNotification.classList.remove('show'); }, 3000);
     };
 
+    // =====================================================
+    // 로그아웃 버튼 기능 추가
+    // =====================================================
+    const logoutButton = document.querySelector('.logout-button');
+    if (logoutButton) {
+        logoutButton.addEventListener('click', e => {
+            // a 태그의 기본 동작(페이지 이동)을 막습니다.
+            e.preventDefault(); 
+            
+            auth.signOut()
+                .then(() => {
+                    // 로그아웃이 성공했다는 답장을 받은 후에 페이지를 이동합니다.
+                    console.log('로그아웃 성공! 로그인 페이지로 이동합니다.');
+                    window.location.href = 'index.html';
+                })
+                .catch(error => {
+                    console.error('로그아웃 에러:', error);
+                    // 에러가 발생하더라도 사용자에게 알려주는 것이 좋습니다.
+                    alert('로그아웃 중 문제가 발생했습니다.');
+                });
+        });
+    }
+
     auth.onAuthStateChanged(async user => {
         if (user) {
             initializePage();
