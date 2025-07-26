@@ -67,15 +67,40 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // 데이터 가져오기 함수 (최적화 버전)
     async function fetchPosts(userId) {
-        try {
-            const snapshot = await postsCollection.where('userId', '==', userId).where('category', '==', currentCategory).get();
-            posts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            console.log(`'${currentCategory}' 카테고리 데이터 로딩 성공:`, posts);
-        } catch (error) {
-            console.error("데이터 불러오기 실패:", error);
-            if (error.code === 'failed-precondition') { alert("Firestore 색인이 필요합니다. 개발자 콘솔(F12)의 에러 메시지에 있는 링크를 클릭하여 색인을 생성해주세요."); }
+    try {
+        // 1. 폴더와 파일을 가져오는 두 개의 요청을 동시에 보냅니다.
+        const folderQuery = postsCollection
+            .where('userId', '==', userId)
+            .where('category', '==', currentCategory)
+            .where('type', '==', 'folder') // '폴더'만 가져오기
+            .get();
+
+        const postQuery = postsCollection
+            .where('userId', '==', userId)
+            .where('category', '==', currentCategory)
+            .where('type', '==', 'post') // '게시글'만 가져오기
+            .get();
+
+        // 2. 두 요청이 모두 끝날 때까지 기다립니다.
+        const [folderSnapshot, postSnapshot] = await Promise.all([folderQuery, postQuery]);
+
+        // 3. 결과를 하나의 배열로 합칩니다.
+        const folderData = folderSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        const postData = postSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+        posts = [...folderData, ...postData]; // 폴더와 게시글 데이터를 합침
+
+        console.log(`'${currentCategory}' 카테고리 데이터 로딩 성공 (최적화):`, posts);
+
+    } catch (error) {
+        console.error("데이터 불러오기 실패:", error);
+        // ★★★ 중요: Firestore 색인 생성 에러 메시지 ★★★
+        if (error.code === 'failed-precondition') {
+            alert("Firestore에 새로운 색인이 필요합니다. 지금 바로 생성해주세요! 개발자 도구(F12)의 콘솔 창에 보이는 에러 메시지 안의 링크를 클릭하면 됩니다.");
         }
+    }
     }
 
     async function addDataToFirestore(data, parentId = 'root') {
