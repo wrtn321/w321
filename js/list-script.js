@@ -225,26 +225,39 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function initializeSortable(targetUl) {
-        if (!targetUl) return;
-        new Sortable(targetUl, {
-            group: 'nested',
-            handle: '.drag-handle',
-            animation: 150,
-            onAdd: async (evt) => {
-                const docId = evt.item.dataset.id;
-                const newParentId = evt.to.dataset.parentId || 'root';
-                try {
-                    await postsCollection.doc(docId).update({ parentId: newParentId });
-                    await updateOrder(evt.to);
-                    showToast('폴더로 이동했습니다.');
-                } catch (error) { console.error("폴더 이동 실패:", error); showToast('이동에 실패했습니다.'); }
-            },
-            onEnd: async (evt) => {
-                if (evt.oldIndex !== evt.newIndex) {
-                    await updateOrder(evt.from);
-                }
+    if (!targetUl) return;
+    new Sortable(targetUl, {
+        group: 'nested',    // 같은 그룹끼리 이동 가능
+        handle: '.drag-handle', // 이 핸들을 잡고 드래그
+        animation: 150,
+        filter: '.is-expanded', // ★★★핵심 1: 'is-expanded' 클래스가 있는 항목은 드래그할 수 없게 만듭니다. (열린 폴더 고정)
+
+        // 다른 리스트에 아이템이 추가되었을 때 발생하는 이벤트
+        onAdd: async (evt) => {
+            const docId = evt.item.dataset.id;
+            // ★★★핵심 2: 드롭된 위치(ul)의 부모(li)를 찾아 폴더 ID를 가져옵니다.
+            const newParentLi = evt.to.closest('.list-item');
+            const newParentId = newParentLi ? newParentLi.dataset.id : 'root';
+            
+            try {
+                // Firestore에 부모 ID를 업데이트
+                await postsCollection.doc(docId).update({ parentId: newParentId });
+                // 순서도 함께 업데이트
+                await updateOrder(evt.to); 
+                showToast('폴더로 이동했습니다.');
+            } catch (error) {
+                console.error("폴더 이동 실패:", error);
+                showToast('이동에 실패했습니다.');
             }
-        });
+        },
+        // 같은 리스트 내에서 순서만 바뀔 때 발생하는 이벤트
+        onEnd: async (evt) => {
+            // 순서가 실제로 바뀌었을 때만 저장
+            if (evt.oldIndex !== evt.newIndex) {
+                await updateOrder(evt.from);
+            }
+        }
+    });
     }
 
     async function updateOrder(listElement) {
