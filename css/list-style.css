@@ -78,7 +78,7 @@
 .list-item {
     display: flex;
     align-items: center;
-    padding: 5px 0; /* 상하 여백 약간 조정 */
+    padding: 3px 0; /* 상하 여백 약간 조정 */
     border-bottom: 1px solid var(--border-color);
 }
 
@@ -92,7 +92,7 @@
     display: flex;
     align-items: center;
     width: 100%;
-    padding: 5px 10px;
+    padding: 8px 10px;
     border-radius: 6px;
     transition: background-color 0.2s;
 }
