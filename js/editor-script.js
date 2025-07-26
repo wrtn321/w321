@@ -90,33 +90,51 @@ document.addEventListener('DOMContentLoaded', () => {
     // 페이지 로드 시 데이터 처리
     // =====================================================
     function loadPostData() {
-        // 목록 페이지로 돌아갈 링크 설정
-        const category = localStorage.getItem('currentCategory');
-        if (category) {
-            backToListBtn.href = `list.html?category=${category}`;
-        }
+    const params = new URLSearchParams(window.location.search);
+    const isNewPost = params.get('new') === 'true';
+    const categoryFromURL = params.get('category');
 
-        // 로컬 스토리지에서 게시글 데이터 가져오기
+    // "목록으로" 버튼의 링크를 먼저 설정합니다.
+    const categoryForLink = localStorage.getItem('currentCategory') || categoryFromURL;
+    if (categoryForLink) {
+        backToListBtn.href = `list.html?category=${categoryForLink}`;
+    }
+
+    // ★★★ 새 글 작성 모드인지, 기존 글 수정 모드인지 확인 ★★★
+    if (isNewPost && categoryFromURL) {
+        // [새 글 작성 모드]
+        console.log("새 글 작성 모드로 시작합니다. 카테고리:", categoryFromURL);
+        
+        // 임시 게시글 객체를 만듭니다. (ID가 없는 상태)
+        currentPost = {
+            title: '',
+            content: '',
+            category: categoryFromURL,
+            // id는 아직 없습니다. 저장 시 생성됩니다.
+        };
+
+        // 읽기 모드 화면을 건너뛰고 바로 수정 모드로 진입!
+        toggleMode('edit');
+        
+    } else {
+        // [기존 글 수정 모드] (기존 로직과 동일)
         const postDataString = localStorage.getItem('currentPost');
         if (postDataString) {
             currentPost = JSON.parse(postDataString);
             
-            // 읽기 모드 요소에 데이터 채우기
             viewTitle.textContent = currentPost.title;
             viewContent.textContent = currentPost.content;
 
-            // 페이지를 읽기 모드로 시작
             toggleMode('view');
-
         } else {
-            // 게시글 데이터가 없는 경우 (예: 에러)
-            alert("게시글을 불러오는 데 실패했습니다.");
+            alert("게시글 정보를 찾을 수 없습니다. 메인 페이지로 이동합니다.");
             window.location.href = 'main.html';
         }
-        updateCharCount();
-        autoResizeTextarea();
     }
-
+    // 이 함수들은 모드와 상관없이 한 번 실행해주는 것이 좋습니다.
+    updateCharCount();
+    autoResizeTextarea();
+}
     // =====================================================
     // 이벤트 리스너 연결
     // =====================================================
@@ -133,33 +151,58 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // ---- 기능 버튼 ----
     editSaveBtn.addEventListener('click', async () => {
-        if (!currentPost.id) return;
+    const user = auth.currentUser;
+    if (!user) {
+        showToast('로그인 정보가 없습니다. 다시 로그인해주세요.');
+        return;
+    }
 
-        const updatedData = {
-            title: titleInput.value,
-            content: contentTextarea.value
-        };
+    const dataToSave = {
+        title: titleInput.value.trim() || "제목 없음", // 제목이 비어있으면 "제목 없음"으로 저장
+        content: contentTextarea.value,
+        category: currentPost.category // 카테고리 정보는 항상 포함
+    };
 
-        try {
-            await db.collection('posts').doc(currentPost.id).update(updatedData);
+    try {
+        if (currentPost.id) {
+            // [수정] currentPost에 ID가 있으면 update
+            await db.collection('posts').doc(currentPost.id).update(dataToSave);
             
-            // 로컬 데이터도 업데이트
-            currentPost.title = updatedData.title;
-            currentPost.content = updatedData.content;
-            
-            // 읽기 모드 화면도 업데이트
-            viewTitle.textContent = updatedData.title;
-            viewContent.textContent = updatedData.content;
+            currentPost.title = dataToSave.title;
+            currentPost.content = dataToSave.content;
 
-            // 로컬 스토리지 데이터도 업데이트 (사용자가 새로고침해도 유지되도록)
-            localStorage.setItem('currentPost', JSON.stringify(currentPost));
+        } else {
+            // [새로 추가] currentPost에 ID가 없으면 add
+            const docRef = await db.collection('posts').add({
+                ...dataToSave,
+                userId: user.uid,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                // 새 글의 순서는 목록 페이지에서 관리하게 되므로 여기서는 추가하지 않음
+                // 또는 기본값 0을 부여할 수 있음
+                order: 0,
+            });
             
-            showToast('저장되었습니다.');
-            toggleMode('view'); // 저장 후 읽기 모드로 전환
-        } catch (error) {
-            console.error("수정 실패:", error);
-            showToast('저장에 실패했습니다.');
+            // ★★★ 새로 받은 ID를 currentPost 객체에 저장! ★★★
+            currentPost.id = docRef.id;
+            currentPost.title = dataToSave.title;
+            currentPost.content = dataToSave.content;
+            console.log("새 문서가 생성되었습니다. ID:", currentPost.id);
         }
+        
+        // 읽기 모드 화면도 업데이트
+        viewTitle.textContent = currentPost.title;
+        viewContent.textContent = currentPost.content;
+
+        // localStorage에 현재 상태 저장 (새로고침 대비)
+        localStorage.setItem('currentPost', JSON.stringify(currentPost));
+        
+        showToast('저장되었습니다.');
+        toggleMode('view'); // 저장 후 읽기 모드로 전환
+
+    } catch (error) {
+        console.error("저장 실패:", error);
+        showToast('저장에 실패했습니다.');
+    }
     });
 
     viewDeleteBtn.addEventListener('click', async () => {

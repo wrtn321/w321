@@ -95,12 +95,16 @@ function setupMainPage(auth) {
         });
     }
 
-    // '+ 새로 만들기' 버튼 기능
+    // ★★★ '+ 새로 만들기' 버튼 기능 (핵심 수정!) ★★★
     document.querySelectorAll('.new-button').forEach(button => {
         button.addEventListener('click', (e) => {
-            const category = e.target.dataset.category;
+            // 버튼이 가지고 있는 data-category 값을 가져옵니다.
+            const category = button.closest('.card').querySelector('a').href.split('=')[1];
+
             if (category) {
-                window.location.href = `list.html?category=${category}`;
+                // list.html 대신, post.html로 직접 이동합니다.
+                // URL에 ?category=... 와 &new=true 신호를 함께 보냅니다.
+                window.location.href = `post.html?category=${category}&new=true`;
             }
         });
     });
