@@ -191,7 +191,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // 읽기 모드 화면도 업데이트
         viewTitle.textContent = currentPost.title;
-        viewContent.textContent = currentPost.content;
+        viewContent.innerHTML = marked.parse(currentPost.content || '');
 
         // localStorage에 현재 상태 저장 (새로고침 대비)
         localStorage.setItem('currentPost', JSON.stringify(currentPost));
