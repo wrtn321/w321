@@ -1,9 +1,9 @@
 #!/bin/bash
 
-echo "Creating firebase-init.js file..."
+echo "Writing to existing firebase-init.js file..."
 
-# Netlify/Vercel의 환경 변수를 읽어서 firebase-init.js 파일을 생성합니다.
-# 각 줄 끝에 있는 역슬래시(\)는 "명령어가 아직 끝나지 않고 다음 줄로 이어집니다" 라는 뜻입니다.
+# 기존 echo 명령어에서, 파일 경로 앞에 있는 > 기호를 유지하는 것이 중요합니다.
+# > 기호는 "파일을 새로 만들거나, 있으면 덮어쓴다"는 의미입니다.
 
 echo "const firebaseConfig = { \
   apiKey: \"${FIREBASE_API_KEY}\", \
@@ -16,4 +16,4 @@ echo "const firebaseConfig = { \
 \
 firebase.initializeApp(firebaseConfig);" > firebase-init.js
 
-echo "firebase-init.js file created successfully."
+echo "firebase-init.js file updated successfully."
