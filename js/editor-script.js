@@ -67,8 +67,17 @@ document.addEventListener('DOMContentLoaded', () => {
     
     const updateCharCount = () => { charCounter.textContent = contentTextarea.value.length; };
     const autoResizeTextarea = () => {
-        contentTextarea.style.height = 'auto';
-        contentTextarea.style.height = (contentTextarea.scrollHeight + 2) + 'px';
+    // 1. 현재 스크롤 위치를 기억합니다.
+    const scrollPosition = window.scrollY;
+
+    // 2. 높이를 'auto'로 초기화하여 실제 필요한 높이를 계산하게 합니다.
+    contentTextarea.style.height = 'auto';
+    
+    // 3. 계산된 높이(scrollHeight)로 실제 높이를 설정합니다.
+    contentTextarea.style.height = (contentTextarea.scrollHeight) + 'px';
+
+    // 4. 기억해둔 스크롤 위치로 되돌립니다.
+    window.scrollTo(0, scrollPosition);
     };
     const showToast = message => {
         clearTimeout(toastTimer);
