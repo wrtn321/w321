@@ -1,8 +1,0 @@
-# Firebase 설정 파일
-firebase-init.js
-
-# Node.js 관련 폴더
-node_modules/
-
-# 환경 변수 파일
-.env
