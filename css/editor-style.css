@@ -164,31 +164,32 @@ body.sticky-footer-layout > .main-header a {
 .view-content h4,
 .view-content h5,
 .view-content h6 {
-    margin-top: 24px;
-    margin-bottom: 16px;
     font-weight: 600;
     line-height: 1.25;
 }
 
-.view-content h1 { font-size: 2em; }
-.view-content h2 { font-size: 1.5em; }
-.view-content h3 { font-size: 1.25em; }
-
-.view-content p {
-    margin-bottom: 16px;
-}
+.view-content h1 { font-size: 1.5em; }
+.view-content h2 { font-size: 1.3em; }
+.view-content h3 { font-size: 1em; }
 
 .view-content ul,
 .view-content ol {
-    padding-left: 2em;
+    list-style-type: none; /* ★★★ 1. 앞에 붙는 점(•)이나 숫자를 없앱니다. */
+    padding-left: 0;       /* ★★★ 2. 왼쪽 들여쓰기를 완전히 제거합니다. */
+    margin-top: 0;
     margin-bottom: 16px;
+}
+
+.view-content li {
+    margin-bottom: 0;      /* ★★★ 3. 항목 사이의 간격을 없앱니다. */
 }
 
 .view-content blockquote {
     margin: 0 0 16px 0;
     padding: 0 1em;
-    color: var(--text-secondary-color);
+    color: #f6f8fa;
     border-left: 0.25em solid var(--border-color);
+    background-color: black;
 }
 
 .view-content pre {
@@ -216,4 +217,28 @@ body.sticky-footer-layout > .main-header a {
     margin: 24px 0;
     background-color: var(--border-color);
     border: 0;
+}
+
+/* editor-style.css의 마크다운 스타일 섹션에 추가하거나 수정하세요. */
+
+/* 리스트 전체(ul, ol)의 위아래 여백과 왼쪽 들여쓰기 설정 */
+.view-content ul,
+.view-content ol {
+    padding-left: 2em; /* 들여쓰기 수준 */
+    margin-top: 0;     /* 리스트 시작 전 여백 제거 */
+    margin-bottom: 16px; /* 리스트 끝난 후 여백 */
+}
+
+/* ★★★ 바로 이 부분이 핵심입니다! ★★★ */
+/* 각 리스트 항목(li) 사이의 간격을 조절합니다. */
+.view-content li {
+    margin-bottom: 4px; /* 원하는 만큼 간격을 조절하세요. 0에 가까울수록 좁아집니다. */
+}
+
+/* 
+  매우 중요한 마무리 작업!
+  리스트 항목 안에 <p> 태그가 생길 경우, 불필요한 이중 여백을 제거합니다.
+*/
+.view-content li p:last-child {
+    margin-bottom: 0;
 }
