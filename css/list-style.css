@@ -99,7 +99,7 @@
 
 /* 마우스를 올리면 배경색 변경 */
 .list-item:hover {
-    background-color: #f6f6f6);
+    background-color: #eaeaea;
     border-radius: 8px;
     cursor: pointer;
 }
