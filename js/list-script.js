@@ -2,19 +2,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const auth = firebase.auth();
     const db = firebase.firestore();
 
-    // 전역 변수 및 요소
     const postsCollection = db.collection('posts');
     let currentCategory = '';
-    let posts = []; // 모든 게시물을 여기에 평평하게 저장합니다.
+    let posts = [];
     const categoryNames = { prompt: '프롬프트', chat: '채팅백업', novel: '소설' };
 
-    // DOM 요소
     const listTitle = document.getElementById('list-title');
     const newPostBtn = document.querySelector('.new-post-btn');
     const newFolderBtn = document.querySelector('.new-folder-btn');
     const normalItemList = document.querySelector('.normal-list .item-list');
+    const logoutButton = document.querySelector('.logout-button');
 
-    // 토스트 알림 함수
     const toastNotification = document.getElementById('toast-notification');
     const toastMessage = toastNotification ? toastNotification.querySelector('.toast-message') : null;
     let toastTimer;
@@ -26,32 +24,21 @@ document.addEventListener('DOMContentLoaded', () => {
         toastTimer = setTimeout(() => { toastNotification.classList.remove('show'); }, 3000);
     };
 
-    // 로그아웃 버튼 기능
-    const logoutButton = document.querySelector('.logout-button');
-    if (logoutButton) {
-        logoutButton.addEventListener('click', e => {
-            e.preventDefault();
-            auth.signOut().then(() => {
-                window.location.href = 'index.html';
-            }).catch(error => {
-                console.error('로그아웃 에러:', error);
-                alert('로그아웃 중 문제가 발생했습니다.');
-            });
-        });
-    }
+    // ===============================================
+    // 페이지 초기화 및 데이터 로딩
+    // ===============================================
 
-    // 인증 상태 확인 및 페이지 초기화
     auth.onAuthStateChanged(async user => {
         if (user) {
             initializePage();
             await fetchPosts(user.uid);
             renderList();
+            addEventListeners(); // ★★★ 모든 이벤트 리스너를 한 곳에서 관리
         } else {
             window.location.href = 'index.html';
         }
     });
 
-    // 페이지 카테고리 설정
     function initializePage() {
         const params = new URLSearchParams(window.location.search);
         const categoryParam = params.get('category');
@@ -64,16 +51,15 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Firestore에서 데이터 불러오기
     async function fetchPosts(userId) {
         try {
             const snapshot = await postsCollection
                 .where('userId', '==', userId)
                 .where('category', '==', currentCategory)
-                .orderBy('order') // 순서대로 정렬해서 가져옵니다.
+                // ★ 이제 order 뿐만 아니라 parentId도 쿼리에 필요할 수 있습니다.
+                // 만약 색인 오류가 발생하면 콘솔의 링크를 통해 색인을 추가해주세요.
                 .get();
             posts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            console.log(`'${currentCategory}' 카테고리 데이터 로딩 성공:`, posts);
         } catch (error) {
             console.error("데이터 불러오기 실패:", error);
             if (error.code === 'failed-precondition') {
@@ -82,215 +68,239 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // 새 항목(폴더/파일) Firestore에 추가
-    async function addDataToFirestore(data) {
-        const user = auth.currentUser;
-        if (!user) return;
+    // ===============================================
+    // ★★★ 핵심 수정: 화면 그리기 (Render)
+    // ===============================================
 
-        // 새 항목은 항상 목록의 맨 뒤에 추가됩니다.
-        const newOrder = posts.length > 0 ? Math.max(...posts.map(p => p.order || 0)) + 1 : 0;
-
-        try {
-            await postsCollection.add({
-                ...data,
-                category: currentCategory,
-                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                userId: user.uid,
-                order: newOrder,
-                parentId: 'root' // 모든 항목은 이제 'root'를 부모로 가집니다.
-            });
-        } catch (error) {
-            console.error("문서 추가 실패:", error);
-        }
-    }
-
-    // 화면에 목록 그리기 (매우 단순화됨)
     function renderList() {
         if (!normalItemList) return;
-        normalItemList.innerHTML = ''; // 목록 비우기
+        normalItemList.innerHTML = '';
 
-        // 1. 최상위(루트) 아이템들만 찾아서 먼저 그립니다.
-    const rootItems = posts.filter(p => p.parentId === 'root').sort((a,b) => a.order - b.order);
+        const rootItems = posts
+            .filter(p => !p.parentId || p.parentId === 'root') // parentId가 없거나 'root'인 아이템
+            .sort((a, b) => (a.order || 0) - (b.order || 0));
 
-    rootItems.forEach(item => {
-        renderItem(item, normalItemList);
-    });
-
-    addClickListenersToListItems(); // 클릭 리스너는 전체적으로 한 번만 추가
-    initializeSortable(normalItemList); // SortableJS도 루트 리스트에 적용
+        rootItems.forEach(item => {
+            renderItem(item, normalItemList);
+        });
+        
+        // ★ 모든 하위 리스트에도 Sortable을 적용합니다.
+        document.querySelectorAll('.sub-list').forEach(subList => {
+            initializeSortable(subList);
+        });
+        initializeSortable(normalItemList);
     }
 
-    // renderItem 함수를 수정합니다.
     function renderItem(itemData, parentElement) {
-    const li = document.createElement('li');
-    li.className = 'list-item';
-    li.dataset.id = itemData.id;
-    li.dataset.parentId = itemData.parentId || 'root'; // parentId 데이터도 심어둠
+        const li = document.createElement('li');
+        li.className = 'list-item';
+        li.dataset.id = itemData.id;
 
-    const wrapper = document.createElement('div');
-    wrapper.className = 'item-content-wrapper';
+        const wrapper = document.createElement('div');
+        wrapper.className = 'item-content-wrapper';
+        
+        let iconHtml = itemData.type === 'folder' ?
+            '<span class="folder-toggle-icon">▶</span> 📁' :
+            '📝';
 
-    let iconType = itemData.type === 'folder' ? '📁' : '📝';
+        wrapper.innerHTML = `
+            <span class="drag-handle">⠿</span>
+            <span class="item-icon">${iconHtml}</span>
+            <span class="item-title">${itemData.title}</span>
+            ${itemData.type === 'folder' ? '<button class="delete-folder-btn">🗑️</button>' : ''}
+        `;
+        
+        li.appendChild(wrapper);
+
+        if (itemData.type === 'folder') {
+            li.classList.add('item-folder');
+            const subList = document.createElement('ul');
+            subList.className = 'sub-list item-list';
+            li.appendChild(subList);
+        }
+        parentElement.appendChild(li);
+    }
     
-    // 폴더인 경우, 열고 닫힘 상태를 표시할 아이콘을 추가합니다.
-    if (itemData.type === 'folder') {
-        li.classList.add('item-folder');
-        iconType = `<span class="folder-toggle-icon">▶</span> ${iconType}`;
-    }
+    // ===============================================
+    // ★★★ 핵심 수정: 모든 이벤트 리스너 통합 관리
+    // ===============================================
 
-    wrapper.innerHTML = `<span class="drag-handle">⠿</span><span class="item-icon">${iconType}</span><span class="item-title">${itemData.title}</span>`;
-    
-    // 삭제 버튼 추가 (폴더에만)
-    if (itemData.type === 'folder') {
-        const deleteBtn = document.createElement('button');
-        deleteBtn.className = 'delete-folder-btn';
-        deleteBtn.textContent = '🗑️';
-        wrapper.appendChild(deleteBtn);
-    }
-    
-    li.appendChild(wrapper);
+    function addEventListeners() {
+        // 로그아웃 버튼
+        logoutButton.addEventListener('click', e => {
+            e.preventDefault();
+            auth.signOut().then(() => window.location.href = 'index.html');
+        });
 
-    // 2. 폴더인 경우, 자식들을 담을 '주머니(sub-list)'를 만들어 숨겨둡니다.
-    if (itemData.type === 'folder') {
-        const subList = document.createElement('ul');
-        subList.className = 'sub-list item-list'; // item-list 클래스를 같이 써서 드래그&드롭을 가능하게 함
-        li.appendChild(subList);
-        initializeSortable(subList); // 자식 리스트에도 SortableJS 적용
-    }
+        // 새 폴더 버튼
+        newFolderBtn.addEventListener('click', () => handleNewItem('folder'));
+        // 새 파일 버튼
+        newPostBtn.addEventListener('click', () => handleNewItem('post'));
+        
+        // ★ 이벤트 위임(Event Delegation)으로 목록의 모든 클릭을 한 번에 처리!
+        normalItemList.addEventListener('click', e => {
+            const wrapper = e.target.closest('.item-content-wrapper');
+            if (!wrapper) return;
 
-    parentElement.appendChild(li);
-    }
-
-    // 클릭 이벤트 리스너 추가 (매우 단순화됨)
-    function addClickListenersToListItems() {
-    document.querySelectorAll('.list-container .item-content-wrapper').forEach(wrapper => {
-        // 기존의 클릭 이벤트 리스너를 지우고 새로 만듭니다.
-        // 참고: 실제 프로젝트에서는 이벤트 위임(event delegation)을 쓰는 것이 더 효율적입니다.
-
-        wrapper.addEventListener('click', e => {
             const li = wrapper.closest('.list-item');
             if (!li) return;
 
-            // 폴더를 클릭했을 때
+            // 휴지통 버튼을 클릭한 경우
+            if (e.target.classList.contains('delete-folder-btn')) {
+                e.stopPropagation(); // ★ 이벤트 전파를 막아 폴더가 열리지 않게 함!
+                if (confirm('폴더를 삭제하시겠습니까?\n(안에 있는 파일은 밖으로 이동됩니다)')) {
+                    deleteFolder(li.dataset.id);
+                }
+                return;
+            }
+            
+            // 폴더를 클릭한 경우
             if (li.classList.contains('item-folder')) {
-                // li에 'open' 클래스를 토글(넣었다 뺐다)합니다.
-                li.classList.toggle('open');
-                
-                const subList = li.querySelector('.sub-list');
-                
-                // 만약 폴더가 열렸고, 아직 자식들을 그리지 않았다면
-                if (li.classList.contains('open') && subList.children.length === 0) {
-                    const children = posts.filter(p => p.parentId === li.dataset.id).sort((a,b) => a.order - b.order);
-                    children.forEach(child => {
-                        renderItem(child, subList); // 자식들을 그려줍니다.
-                    });
-                }
-
-            } else { // 파일을 클릭했을 때 (기존과 동일)
-                const post = posts.find(p => p.id === li.dataset.id);
-                if (post) {
-                    localStorage.setItem('currentPost', JSON.stringify(post));
-                    localStorage.setItem('currentCategory', currentCategory);
-                    window.location.href = 'post.html';
-                }
+                handleFolderClick(li);
+            } 
+            // 파일을 클릭한 경우
+            else {
+                handleFileClick(li);
             }
+        });
+    }
+
+    // ===============================================
+    // 이벤트 핸들러 함수들
+    // ===============================================
+
+    async function handleNewItem(type) {
+        const title = prompt(`새 ${type === 'folder' ? '폴더' : '게시글'}의 이름을 입력하세요.`);
+        if (!title) return;
+
+        const user = auth.currentUser;
+        if (!user) return;
+
+        // 새 항목은 항상 루트 목록의 맨 뒤에 추가됩니다.
+        const rootPosts = posts.filter(p => !p.parentId || p.parentId === 'root');
+        const newOrder = rootPosts.length > 0 ? Math.max(...rootPosts.map(p => p.order || 0)) + 1 : 0;
+
+        await postsCollection.add({
+            type: type,
+            title: title,
+            content: '',
+            category: currentCategory,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+            userId: user.uid,
+            order: newOrder,
+            parentId: 'root'
+        });
+        
+        await fetchPosts(user.uid);
+        renderList();
+    }
+
+    function handleFolderClick(liElement) {
+        liElement.classList.toggle('open');
+        const subList = liElement.querySelector('.sub-list');
+        
+        // 폴더가 열렸고, 아직 자식들을 그리지 않았다면
+        if (liElement.classList.contains('open') && subList.children.length === 0) {
+            const children = posts
+                .filter(p => p.parentId === liElement.dataset.id)
+                .sort((a, b) => (a.order || 0) - (b.order || 0));
+            
+            children.forEach(child => {
+                renderItem(child, subList);
             });
-
-            // 이름 변경을 위한 더블클릭 이벤트는 그대로 유지합니다.
-            wrapper.addEventListener('dblclick', e => {
-                e.preventDefault();
-                // (기존 이름 변경 로직과 동일하므로 생략)
-                const li = wrapper.closest('.list-item');
-                const titleSpan = wrapper.querySelector('.item-title');
-                if (!titleSpan || wrapper.querySelector('.title-input')) return;
-                
-                const currentTitle = titleSpan.textContent;
-                const input = document.createElement('input');
-                input.type = 'text';
-                input.className = 'title-input';
-                input.value = currentTitle;
-                titleSpan.style.display = 'none';
-                titleSpan.after(input);
-                input.focus();
-                input.select();
-
-                const finishEditing = async (save) => {
-                    const newTitle = input.value.trim();
-                    if (save && newTitle && newTitle !== currentTitle) {
-                        try {
-                            await postsCollection.doc(li.dataset.id).update({ title: newTitle });
-                            titleSpan.textContent = newTitle;
-                            showToast('이름이 변경되었습니다.');
-                        } catch (error) { console.error('이름 변경 실패:', error); showToast('이름 변경에 실패했습니다.'); }
-                    } else { titleSpan.textContent = currentTitle; }
-                    input.remove();
-                    titleSpan.style.display = 'inline';
-                };
-                
-                input.addEventListener('blur', () => finishEditing(true));
-                input.addEventListener('keydown', e => {
-                    if (e.key === 'Enter') finishEditing(true);
-                    if (e.key === 'Escape') finishEditing(false);
-                });
-            });
-        });
+        }
     }
 
-    // 새 폴더/파일 버튼 이벤트
-    if (newFolderBtn) {
-        newFolderBtn.addEventListener('click', async () => {
-            const title = prompt('새 폴더의 이름을 입력하세요.');
-            if (title) {
-                await addDataToFirestore({ type: 'folder', title: title, content: '' });
-                await fetchPosts(auth.currentUser.uid); // 데이터 다시 로드
-                renderList(); // 화면 새로고침
-            }
-        });
-    }
-    if (newPostBtn) {
-        newPostBtn.addEventListener('click', async () => {
-            const title = prompt('새 게시글의 이름을 입력하세요.');
-            if (title) {
-                await addDataToFirestore({ type: 'post', title: title, content: '' });
-                await fetchPosts(auth.currentUser.uid); // 데이터 다시 로드
-                renderList(); // 화면 새로고침
-            }
-        });
+    function handleFileClick(liElement) {
+        const post = posts.find(p => p.id === liElement.dataset.id);
+        if (post) {
+            localStorage.setItem('currentPost', JSON.stringify(post));
+            localStorage.setItem('currentCategory', currentCategory);
+            window.location.href = 'post.html';
+        }
     }
 
-    // SortableJS 초기화 (매우 단순화됨)
-    function initializeSortable(targetUl) {
-        if (!targetUl) return;
-        new Sortable(targetUl, {
-            handle: '.drag-handle',
-            animation: 150,
-            // 같은 리스트 내에서 순서가 바뀔 때만 작동합니다.
-            onEnd: async (evt) => {
-                if (evt.oldIndex !== evt.newIndex) {
-                    await updateOrder(evt.from);
-                }
-            }
-        });
-    }
+    async function deleteFolder(folderId) {
+        const user = auth.currentUser;
+        if (!user || !folderId) return;
 
-    // 순서 업데이트 로직
-    async function updateOrder(listElement) {
-        const items = listElement.children;
         const batch = db.batch();
-        Array.from(items).forEach((item, index) => {
-            const docId = item.dataset.id;
-            if (docId) {
-                const docRef = postsCollection.doc(docId);
-                batch.update(docRef, { order: index });
-            }
+        const childrenToMove = posts.filter(p => p.parentId === folderId);
+
+        childrenToMove.forEach(child => {
+            const childRef = postsCollection.doc(child.id);
+            batch.update(childRef, { parentId: 'root' });
         });
+
+        const folderRef = postsCollection.doc(folderId);
+        batch.delete(folderRef);
+
         try {
             await batch.commit();
-            // 순서 변경 후 posts 배열도 업데이트
-            await fetchPosts(auth.currentUser.uid);
-            console.log('순서가 성공적으로 저장되었습니다.');
+            showToast('폴더가 삭제되었습니다.');
+            await fetchPosts(user.uid);
+            renderList();
         } catch (error) {
-            console.error('순서 저장에 실패했습니다:', error);
+            console.error("폴더 삭제 실패:", error);
+            showToast('폴더 삭제에 실패했습니다.');
         }
+    }
+
+    // ===============================================
+    // ★★★ 핵심 수정: 드래그 앤 드롭 (SortableJS)
+    // ===============================================
+    
+    function initializeSortable(targetUl) {
+        if (!targetUl) return;
+
+        new Sortable(targetUl, {
+            group: 'nested', // ★ 같은 그룹끼리 아이템 이동 가능
+            handle: '.drag-handle',
+            animation: 150,
+            ghostClass: 'sortable-ghost',
+            
+            // 드롭이 끝났을 때 실행되는 함수
+            onEnd: async (evt) => {
+                const itemId = evt.item.dataset.id;
+                const newParentEl = evt.to;
+                
+                let newParentId = 'root';
+                // 드롭된 곳이 하위 리스트(sub-list)라면, 그 부모 li의 id가 새로운 parentId가 됨
+                if (newParentEl.classList.contains('sub-list')) {
+                    newParentId = newParentEl.closest('.list-item').dataset.id;
+                }
+
+                // 1. parentId를 Firestore에 업데이트합니다.
+                try {
+                    await postsCollection.doc(itemId).update({ parentId: newParentId });
+                } catch (error) {
+                    console.error('Parent ID 업데이트 실패:', error);
+                    // 실패 시 원래대로 되돌리는 로직이 필요하지만, 우선은 에러만 기록
+                    return; 
+                }
+
+                // 2. 이동이 발생한 모든 리스트의 순서를 다시 계산하고 업데이트합니다.
+                const involvedLists = new Set([evt.from, evt.to]);
+                const batch = db.batch();
+
+                involvedLists.forEach(listEl => {
+                    const items = listEl.children;
+                    Array.from(items).forEach((item, index) => {
+                        const docRef = postsCollection.doc(item.dataset.id);
+                        batch.update(docRef, { order: index });
+                    });
+                });
+                
+                try {
+                    await batch.commit();
+                    console.log('순서가 성공적으로 저장되었습니다.');
+                    // 최종적으로 데이터와 화면을 동기화합니다.
+                    await fetchPosts(auth.currentUser.uid);
+                    renderList();
+                } catch (error) {
+                    console.error('순서 저장에 실패했습니다:', error);
+                }
+            }
+        });
     }
 });
