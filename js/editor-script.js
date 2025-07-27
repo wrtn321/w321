@@ -146,6 +146,15 @@ document.addEventListener('DOMContentLoaded', () => {
     // 이벤트 리스너 연결
     // =====================================================
 
+    // ---- 뒤로가기 버튼의 기본 동작 변경 ----
+    backToListBtn.addEventListener('click', (e) => {
+    // <a> 태그의 기본 이동 기능(href)을 막습니다.
+    e.preventDefault(); 
+    
+    // history를 남기지 않고 해당 주소로 이동시킵니다.
+    window.location.replace(backToListBtn.href);
+    });
+
     // ---- 모드 전환 버튼 ----
     viewEditBtn.addEventListener('click', () => {
         toggleMode('edit');
@@ -239,7 +248,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 // 삭제 후 로컬 스토리지 데이터도 정리
                 localStorage.removeItem('currentPost');
                 localStorage.removeItem('currentCategory');
-                window.location.href = backToListBtn.href; // 원래 목록으로 이동
+                window.location.replace(backToListBtn.href); // 원래 목록으로 이동
             } catch (error) {
                 console.error("삭제 실패:", error);
                 showToast('삭제에 실패했습니다.');
