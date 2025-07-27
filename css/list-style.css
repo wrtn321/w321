@@ -133,3 +133,33 @@
     opacity: 0.4;
     background-color: #c8ebfb;
 }
+
+/* list-style.css 에 추가 */
+
+.sub-list {
+    list-style: none;
+    padding-left: 30px; /* 자식 목록 들여쓰기 */
+    display: none; /* 일단 숨겨둠 */
+}
+
+.list-item.open > .sub-list {
+    display: block; /* .open 클래스가 붙으면 보여줌 */
+}
+
+.list-item.open .folder-toggle-icon {
+    transform: rotate(90deg); /* 열렸을 때 아이콘 회전 */
+}
+
+.delete-folder-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    margin-left: auto; /* 오른쪽에 붙이기 */
+    padding: 0 5px;
+    display: none; /* 평소엔 숨김 */
+}
+
+.list-item:hover .delete-folder-btn {
+    display: inline-block; /* 마우스 올리면 보임 */
+}
