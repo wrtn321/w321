@@ -189,6 +189,11 @@ body.sticky-footer-layout > .main-header a {
     padding-left: 16px;
 }
 
+.view-content em {
+    font-style: normal;
+    color: #777;
+}
+
 .view-content blockquote {
     margin: 0 0 16px 0;
     padding: 0 1em;
