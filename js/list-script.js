@@ -282,7 +282,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (post) {
             localStorage.setItem('currentPost', JSON.stringify(post));
             localStorage.setItem('currentCategory', currentCategory);
-            window.location.href = 'post.html';
+            window.location.replace('post.html');
         }
     }
 

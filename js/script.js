@@ -94,6 +94,15 @@ function setupMainPage(auth) {
             auth.signOut().catch(error => console.error('로그아웃 에러:', error));
         });
     }
+    
+    // ★★★ 카드(카테고리) 클릭 시 이동 방식 변경 ★★★
+    document.querySelectorAll('.card-header-link').forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault(); // a 태그의 기본 이동을 막습니다.
+            // history를 남기지 않고 list.html로 이동합니다.
+            window.location.replace(link.href);
+        });
+    });
 
     // ★★★ '+ 새로 만들기' 버튼 기능 (핵심 수정!) ★★★
     document.querySelectorAll('.new-button').forEach(button => {
