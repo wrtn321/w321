@@ -94,10 +94,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const isNewPost = params.get('new') === 'true';
     const categoryFromURL = params.get('category');
 
-    // "목록으로" 버튼의 링크를 먼저 설정합니다.
-    const categoryForLink = localStorage.getItem('currentCategory') || categoryFromURL;
-    if (categoryForLink) {
-        backToListBtn.href = `list.html?category=${categoryForLink}`;
+    // 1. URL의 카테고리 정보를 localStorage의 정보보다 우선합니다.
+    const finalCategory = categoryFromURL || localStorage.getItem('currentCategory');
+
+    // 2. 결정된 최종 카테고리가 있다면,
+    if (finalCategory) {
+        // 2-1. 목록 버튼의 링크를 올바르게 설정합니다.
+        backToListBtn.href = `list.html?category=${finalCategory}`;
+
+        // 2-2. localStorage의 정보도 최신으로 덮어써서 '기억'을 갱신합니다.
+        //      (이래야 페이지를 새로고침해도 정보가 유지됩니다)
+        localStorage.setItem('currentCategory', finalCategory);
     }
 
     // ★★★ 새 글 작성 모드인지, 기존 글 수정 모드인지 확인 ★★★
