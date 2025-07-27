@@ -109,51 +109,91 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!normalItemList) return;
         normalItemList.innerHTML = ''; // 목록 비우기
 
-        // 모든 게시물을 순서대로 하나씩 그립니다.
-        posts.forEach(item => {
-            renderItem(item, normalItemList);
-        });
+        // 1. 최상위(루트) 아이템들만 찾아서 먼저 그립니다.
+    const rootItems = posts.filter(p => p.parentId === 'root').sort((a,b) => a.order - b.order);
 
-        addClickListenersToListItems();
-        initializeSortable(normalItemList); // 단일 리스트에 Sortable 적용
+    rootItems.forEach(item => {
+        renderItem(item, normalItemList);
+    });
+
+    addClickListenersToListItems(); // 클릭 리스너는 전체적으로 한 번만 추가
+    initializeSortable(normalItemList); // SortableJS도 루트 리스트에 적용
     }
 
-    // 개별 항목 그리기 (매우 단순화됨)
+    // renderItem 함수를 수정합니다.
     function renderItem(itemData, parentElement) {
-        const li = document.createElement('li');
-        li.className = 'list-item';
-        li.dataset.id = itemData.id;
-        if (itemData.type === 'folder') {
-            li.classList.add('item-folder');
-        }
+    const li = document.createElement('li');
+    li.className = 'list-item';
+    li.dataset.id = itemData.id;
+    li.dataset.parentId = itemData.parentId || 'root'; // parentId 데이터도 심어둠
 
-        const wrapper = document.createElement('div');
-        wrapper.className = 'item-content-wrapper';
+    const wrapper = document.createElement('div');
+    wrapper.className = 'item-content-wrapper';
 
-        const iconType = itemData.type === 'folder' ? '📁' : '📝';
-        wrapper.innerHTML = `<span class="drag-handle">⠿</span><span class="item-icon">${iconType}</span><span class="item-title">${itemData.title}</span>`;
+    let iconType = itemData.type === 'folder' ? '📁' : '📝';
+    
+    // 폴더인 경우, 열고 닫힘 상태를 표시할 아이콘을 추가합니다.
+    if (itemData.type === 'folder') {
+        li.classList.add('item-folder');
+        iconType = `<span class="folder-toggle-icon">▶</span> ${iconType}`;
+    }
 
-        li.appendChild(wrapper);
-        parentElement.appendChild(li);
+    wrapper.innerHTML = `<span class="drag-handle">⠿</span><span class="item-icon">${iconType}</span><span class="item-title">${itemData.title}</span>`;
+    
+    // 삭제 버튼 추가 (폴더에만)
+    if (itemData.type === 'folder') {
+        const deleteBtn = document.createElement('button');
+        deleteBtn.className = 'delete-folder-btn';
+        deleteBtn.textContent = '🗑️';
+        wrapper.appendChild(deleteBtn);
+    }
+    
+    li.appendChild(wrapper);
+
+    // 2. 폴더인 경우, 자식들을 담을 '주머니(sub-list)'를 만들어 숨겨둡니다.
+    if (itemData.type === 'folder') {
+        const subList = document.createElement('ul');
+        subList.className = 'sub-list item-list'; // item-list 클래스를 같이 써서 드래그&드롭을 가능하게 함
+        li.appendChild(subList);
+        initializeSortable(subList); // 자식 리스트에도 SortableJS 적용
+    }
+
+    parentElement.appendChild(li);
     }
 
     // 클릭 이벤트 리스너 추가 (매우 단순화됨)
     function addClickListenersToListItems() {
-        document.querySelectorAll('.list-container .item-content-wrapper').forEach(wrapper => {
-            wrapper.addEventListener('click', e => {
-                const li = wrapper.closest('.list-item');
-                if (!li) return;
+    document.querySelectorAll('.list-container .item-content-wrapper').forEach(wrapper => {
+        // 기존의 클릭 이벤트 리스너를 지우고 새로 만듭니다.
+        // 참고: 실제 프로젝트에서는 이벤트 위임(event delegation)을 쓰는 것이 더 효율적입니다.
 
-                // 폴더가 아닌 'post' 타입일 때만 post.html로 이동합니다.
-                if (!li.classList.contains('item-folder')) {
-                    const post = posts.find(p => p.id === li.dataset.id);
-                    if (post) {
-                        localStorage.setItem('currentPost', JSON.stringify(post));
-                        localStorage.setItem('currentCategory', currentCategory);
-                        window.location.href = 'post.html';
-                    }
+        wrapper.addEventListener('click', e => {
+            const li = wrapper.closest('.list-item');
+            if (!li) return;
+
+            // 폴더를 클릭했을 때
+            if (li.classList.contains('item-folder')) {
+                // li에 'open' 클래스를 토글(넣었다 뺐다)합니다.
+                li.classList.toggle('open');
+                
+                const subList = li.querySelector('.sub-list');
+                
+                // 만약 폴더가 열렸고, 아직 자식들을 그리지 않았다면
+                if (li.classList.contains('open') && subList.children.length === 0) {
+                    const children = posts.filter(p => p.parentId === li.dataset.id).sort((a,b) => a.order - b.order);
+                    children.forEach(child => {
+                        renderItem(child, subList); // 자식들을 그려줍니다.
+                    });
                 }
-                // 폴더를 클릭했을 때는 아무 일도 일어나지 않습니다.
+
+            } else { // 파일을 클릭했을 때 (기존과 동일)
+                const post = posts.find(p => p.id === li.dataset.id);
+                if (post) {
+                    localStorage.setItem('currentPost', JSON.stringify(post));
+                    localStorage.setItem('currentCategory', currentCategory);
+                    window.location.href = 'post.html';
+                }
+            }
             });
 
             // 이름 변경을 위한 더블클릭 이벤트는 그대로 유지합니다.
