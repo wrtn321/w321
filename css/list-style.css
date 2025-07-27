@@ -1,5 +1,5 @@
 /* =======================================
-   list-style.css - 목록 페이지 전용 스타일 (단순화 버전)
+   list-style.css - 목록 페이지 전용 스타일 (폴더 기능 적용 버전)
    ======================================= */
 
 /* 전체 페이지의 여백을 없애고, 박스 크기 계산법을 통일합니다. */
@@ -11,7 +11,7 @@
    1. 헤더 (기존 스타일 보강)
    ---------------------------------- */
 .main-header {
-    display: flex; 
+    display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 0 15px;
@@ -45,7 +45,6 @@
     gap: 10px;
 }
 
-/* 액션 버튼 그룹 */
 .action-button button {
     padding: 8px 12px;
     border: 1px solid var(--border-color);
@@ -74,20 +73,16 @@
     margin: 0;
 }
 
-/* 목록 아이템 li 스타일 */
 .list-item {
-    display: flex;
-    align-items: center;
-    padding: 3px 0; /* 상하 여백 약간 조정 */
+    /* li 태그 자체는 이제 flex가 아닌 block으로 구조를 단순화합니다. */
+    padding: 3px 0;
     border-bottom: 1px solid var(--border-color);
 }
 
-/* 마지막 아이템의 아래 구분선은 없애서 깔끔하게 */
 .list-item:last-child {
     border-bottom: none;
 }
 
-/* 클릭 가능한 영역 wrapper */
 .item-content-wrapper {
     display: flex;
     align-items: center;
@@ -97,9 +92,13 @@
     transition: background-color 0.2s;
 }
 
-/* 파일에만 마우스를 올렸을 때 효과 적용 */
-.list-item:not(.item-folder) .item-content-wrapper:hover {
-    background-color: #eaeaea;
+/* 파일이나 폴더에 마우스를 올렸을 때 효과 */
+.item-content-wrapper:hover {
+    background-color: #f0f0f0;
+}
+
+/* 파일 클릭 시에는 커서를 포인터로 변경 */
+.list-item:not(.item-folder) .item-content-wrapper {
     cursor: pointer;
 }
 
@@ -114,6 +113,8 @@
 .list-item .item-icon {
     font-size: 18px;
     margin-right: 12px;
+    /* 클릭 이벤트를 막아서 아이콘 자체는 클릭되지 않도록 함 */
+    pointer-events: none; 
 }
 
 /* 제목 스타일 */
@@ -121,11 +122,12 @@
     flex-grow: 1; 
     font-size: 16px;
     color: var(--text-primary-color);
+    /* 클릭 이벤트를 막아서 제목 자체는 클릭되지 않도록 함 */
+    pointer-events: none;
 }
 
-/* 폴더 아이템에만 적용할 특별 스타일 */
 .list-item.item-folder .item-title {
-    font-weight: 600; /* 폴더 이름은 약간 굵게 */
+    font-weight: 600;
 }
 
 /* SortableJS 드래그 효과 스타일 */
@@ -134,32 +136,49 @@
     background-color: #c8ebfb;
 }
 
-/* list-style.css 에 추가 */
-
+/* =======================================
+   ★ 폴더 기능 관련 핵심 스타일 ★
+   ======================================= */
 .sub-list {
     list-style: none;
-    padding-left: 30px; /* 자식 목록 들여쓰기 */
-    display: none; /* 일단 숨겨둠 */
+    /* 자식 목록 들여쓰기 */
+    padding-left: 30px; 
+    /* 일단 숨겨둠 */
+    display: none; 
 }
 
+/* li.open > ul.sub-list 구조일 때만 자식 목록을 보여줌 */
 .list-item.open > .sub-list {
-    display: block; /* .open 클래스가 붙으면 보여줌 */
+    display: block;
 }
 
+/* 폴더 토글 아이콘 스타일 */
+.folder-toggle-icon {
+    display: inline-block;
+    transition: transform 0.2s;
+}
+
+/* 열린 폴더 아이콘 회전 */
 .list-item.open .folder-toggle-icon {
-    transform: rotate(90deg); /* 열렸을 때 아이콘 회전 */
+    transform: rotate(90deg);
 }
 
+/* 폴더 삭제 버튼 */
 .delete-folder-btn {
     background: none;
     border: none;
     cursor: pointer;
     font-size: 16px;
-    margin-left: auto; /* 오른쪽에 붙이기 */
+    /* wrapper가 flex이므로 margin-left: auto는 필요 없습니다. */
     padding: 0 5px;
-    display: none; /* 평소엔 숨김 */
+    /* 평소엔 숨김 */
+    visibility: hidden; 
+    opacity: 0;
+    transition: opacity 0.2s;
 }
 
-.list-item:hover .delete-folder-btn {
-    display: inline-block; /* 마우스 올리면 보임 */
+/* 아이템에 마우스 올리면 버튼 보임 */
+.item-content-wrapper:hover .delete-folder-btn {
+    visibility: visible;
+    opacity: 1;
 }
