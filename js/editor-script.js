@@ -172,21 +172,40 @@ document.addEventListener('DOMContentLoaded', () => {
             currentPost.content = dataToSave.content;
 
         } else {
-            // [새로 추가] currentPost에 ID가 없으면 add
+        // [새로 추가] currentPost에 ID가 없으면 add
+            // ------------------ 여기가 교체된 부분입니다 ------------------
+            
+            // 1. 마지막 순서(order)를 가진 문서를 찾기 위해 쿼리를 실행합니다.
+            const lastPostQuery = db.collection('posts')
+                .where('userId', '==', user.uid)
+                .where('category', '==', currentPost.category)
+                .orderBy('order', 'desc') // 순서를 내림차순(큰->작은)으로 정렬
+                .limit(1);                // 그 중 1개만 가져옵니다. (가장 큰 것)
+
+            const snapshot = await lastPostQuery.get();
+            
+            let newOrder = 0; // 기본 순서는 0
+            if (!snapshot.empty) {
+                // 2. 만약 해당 카테고리에 문서가 하나라도 있다면,
+                //    가장 큰 order 값에 1을 더해 새 순서로 정합니다.
+                const lastPost = snapshot.docs[0].data();
+                newOrder = (lastPost.order || 0) + 1;
+            }
+
+            // 3. 계산된 순서(newOrder)를 포함하여 새 문서를 추가합니다.
             const docRef = await db.collection('posts').add({
                 ...dataToSave,
                 userId: user.uid,
                 createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                // 새 글의 순서는 목록 페이지에서 관리하게 되므로 여기서는 추가하지 않음
-                // 또는 기본값 0을 부여할 수 있음
-                order: 0,
+                order: newOrder, // 계산된 새 순서 값 사용
             });
             
-            // ★★★ 새로 받은 ID를 currentPost 객체에 저장! ★★★
+            // 새로 받은 ID와 데이터를 현재 게시글 정보에 업데이트합니다.
             currentPost.id = docRef.id;
             currentPost.title = dataToSave.title;
             currentPost.content = dataToSave.content;
-            console.log("새 문서가 생성되었습니다. ID:", currentPost.id);
+            console.log("새 문서가 생성되었습니다. ID:", currentPost.id, "Order:", newOrder);
+            // -----------------------------------------------------------------
         }
         
         // 읽기 모드 화면도 업데이트
