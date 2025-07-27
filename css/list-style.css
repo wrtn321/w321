@@ -83,6 +83,28 @@
     border-bottom: none;
 }
 
+/* 아이콘 (📁, 📝) 스타일 */
+.list-item .item-icon {
+    font-size: 18px;
+    margin-right: 12px;
+    pointer-events: none; 
+}
+
+/* ★ 새로 추가된 스타일 ★ */
+.item-icon .icon-open {
+    display: none; /* 열린 폴더 아이콘은 평소에 숨김 */
+}
+
+/* li.open 상태일 때의 아이콘 제어 */
+.list-item.open .item-icon .icon-closed {
+    display: none; /* 닫힌 폴더 아이콘을 숨김 */
+}
+
+.list-item.open .item-icon .icon-open {
+    display: inline; /* 열린 폴더 아이콘을 보여줌 */
+}
+
+
 .item-content-wrapper {
     display: flex;
     align-items: center;
@@ -152,16 +174,6 @@
     display: block;
 }
 
-/* 폴더 토글 아이콘 스타일 */
-.folder-toggle-icon {
-    display: inline-block;
-    transition: transform 0.2s;
-}
-
-/* 열린 폴더 아이콘 회전 */
-.list-item.open .folder-toggle-icon {
-    transform: rotate(90deg);
-}
 
 /* 폴더 삭제 버튼 */
 .delete-folder-btn {
