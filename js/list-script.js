@@ -73,22 +73,40 @@ document.addEventListener('DOMContentLoaded', () => {
     // ===============================================
 
     function renderList() {
-        if (!normalItemList) return;
-        normalItemList.innerHTML = '';
+    if (!normalItemList) return;
 
-        const rootItems = posts
-            .filter(p => !p.parentId || p.parentId === 'root') // parentId가 없거나 'root'인 아이템
-            .sort((a, b) => (a.order || 0) - (b.order || 0));
+    // ★ 1. 그리기 전에, 현재 열려있는 폴더들의 ID를 기억합니다.
+    const openFolderIds = new Set();
+    document.querySelectorAll('.list-item.open').forEach(li => {
+        openFolderIds.add(li.dataset.id);
+    });
 
-        rootItems.forEach(item => {
-            renderItem(item, normalItemList);
+    // 목록을 완전히 비웁니다.
+    normalItemList.innerHTML = '';
+
+    const rootItems = posts
+        .filter(p => !p.parentId || p.parentId === 'root')
+        .sort((a, b) => (a.order || 0) - (b.order || 0));
+
+    rootItems.forEach(item => {
+        renderItem(item, normalItemList);
+    });
+
+    // ★ 2. 그린 후에, 기억해둔 ID를 가진 폴더들을 다시 열어줍니다.
+    if (openFolderIds.size > 0) {
+        openFolderIds.forEach(id => {
+            const folderLi = normalItemList.querySelector(`.list-item[data-id="${id}"]`);
+            if (folderLi) {
+                // handleFolderClick 함수를 재사용해서 폴더를 여는 동작을 실행
+                handleFolderClick(folderLi, false); // false는 애니메이션 없이 바로 열리게 하는 옵션 (선택사항)
+            }
         });
-        
-        // ★ 모든 하위 리스트에도 Sortable을 적용합니다.
-        document.querySelectorAll('.sub-list').forEach(subList => {
-            initializeSortable(subList);
-        });
-        initializeSortable(normalItemList);
+    }
+
+    document.querySelectorAll('.sub-list').forEach(subList => {
+        initializeSortable(subList);
+    });
+    initializeSortable(normalItemList);
     }
 
     function renderItem(itemData, parentElement) {
@@ -99,15 +117,20 @@ document.addEventListener('DOMContentLoaded', () => {
         const wrapper = document.createElement('div');
         wrapper.className = 'item-content-wrapper';
         
-        let iconHtml = itemData.type === 'folder' ?
-            '<span class="folder-toggle-icon">▶</span> 📁' :
-            '📝';
+        let iconHtml;
+        if (itemData.type === 'folder') {
+            // ★ 수정된 부분 ★
+            // 닫힌 아이콘과 열린 아이콘을 모두 만들어두고, CSS로 보이거나 안보이게 제어
+            iconHtml = '<span class="icon-closed">📁</span><span class="icon-open">📂</span>';
+        } else {
+            iconHtml = '📝';
+        }
 
         wrapper.innerHTML = `
-            <span class="drag-handle">⠿</span>
-            <span class="item-icon">${iconHtml}</span>
-            <span class="item-title">${itemData.title}</span>
-            ${itemData.type === 'folder' ? '<button class="delete-folder-btn">🗑️</button>' : ''}
+        <span class="drag-handle">⠿</span>
+        <span class="item-icon">${iconHtml}</span>
+        <span class="item-title">${itemData.title}</span>
+        ${itemData.type === 'folder' ? '<button class="delete-folder-btn">🗑️</button>' : ''}
         `;
         
         li.appendChild(wrapper);
@@ -195,20 +218,24 @@ document.addEventListener('DOMContentLoaded', () => {
         renderList();
     }
 
-    function handleFolderClick(liElement) {
+    function handleFolderClick(liElement, withAnimation = true) {
+    if (withAnimation) {
         liElement.classList.toggle('open');
-        const subList = liElement.querySelector('.sub-list');
+    } else {
+        liElement.classList.add('open'); // 애니메이션 없을 땐 그냥 열기만 함
+    }
+    
+    const subList = liElement.querySelector('.sub-list');
+
+    if (liElement.classList.contains('open') && subList.children.length === 0) {
+        const children = posts
+            .filter(p => p.parentId === liElement.dataset.id)
+            .sort((a, b) => (a.order || 0) - (b.order || 0));
         
-        // 폴더가 열렸고, 아직 자식들을 그리지 않았다면
-        if (liElement.classList.contains('open') && subList.children.length === 0) {
-            const children = posts
-                .filter(p => p.parentId === liElement.dataset.id)
-                .sort((a, b) => (a.order || 0) - (b.order || 0));
-            
-            children.forEach(child => {
-                renderItem(child, subList);
-            });
-        }
+        children.forEach(child => {
+            renderItem(child, subList);
+        });
+    }
     }
 
     function handleFileClick(liElement) {
