@@ -193,29 +193,68 @@ document.addEventListener('DOMContentLoaded', () => {
     // ===============================================
 
     async function handleNewItem(type) {
-        const title = prompt(`새 ${type === 'folder' ? '폴더' : '게시글'}의 이름을 입력하세요.`);
-        if (!title) return;
+    const title = prompt(`새 ${type === 'folder' ? '폴더' : '게시글'}의 이름을 입력하세요.`);
+    if (!title) return;
 
-        const user = auth.currentUser;
-        if (!user) return;
+    const user = auth.currentUser;
+    if (!user) return;
 
-        // 새 항목은 항상 루트 목록의 맨 뒤에 추가됩니다.
-        const rootPosts = posts.filter(p => !p.parentId || p.parentId === 'root');
-        const newOrder = rootPosts.length > 0 ? Math.max(...rootPosts.map(p => p.order || 0)) + 1 : 0;
+    const batch = db.batch();
 
-        await postsCollection.add({
-            type: type,
+    // ★★★ 타입에 따라 로직을 분기합니다. ★★★
+    if (type === 'folder') {
+        // [폴더를 추가하는 경우]
+        
+        // 1. 기존 루트 아이템들의 order를 1씩 뒤로 밉니다.
+        const rootItems = posts.filter(p => !p.parentId || p.parentId === 'root');
+        rootItems.forEach(item => {
+            const itemRef = postsCollection.doc(item.id);
+            batch.update(itemRef, { order: (item.order || 0) + 1 });
+        });
+
+        // 2. 새 폴더를 order: 0 (맨 위)으로 추가합니다.
+        const newFolderRef = postsCollection.doc(); // 미리 참조를 만듭니다.
+        batch.set(newFolderRef, {
+            type: 'folder',
             title: title,
             content: '',
             category: currentCategory,
             createdAt: firebase.firestore.FieldValue.serverTimestamp(),
             userId: user.uid,
-            order: newOrder,
+            order: 0, // 맨 위로
             parentId: 'root'
         });
+
+    } else {
+        // [파일(게시글)을 추가하는 경우] - 기존 로직과 거의 동일
         
+        // 전체 posts 배열에서 가장 큰 order 값을 찾습니다.
+        const maxOrder = posts.length > 0 ? Math.max(...posts.map(p => p.order || 0)) : -1;
+        const newOrder = maxOrder + 1;
+
+        // 새 파일을 맨 뒤 순서로 추가합니다.
+        const newPostRef = postsCollection.doc();
+        batch.set(newPostRef, {
+            type: 'post',
+            title: title,
+            content: '',
+            category: currentCategory,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+            userId: user.uid,
+            order: newOrder, // 맨 아래로
+            parentId: 'root'
+        });
+    }
+
+    // 준비된 모든 작업을 한 번에 실행합니다.
+    try {
+        await batch.commit();
         await fetchPosts(user.uid);
         renderList();
+    } catch(error) {
+        console.error("항목 추가 실패:", error);
+        showToast('항목 추가에 실패했습니다.');
+    }
     }
 
     function handleFolderClick(liElement, withAnimation = true) {
@@ -251,70 +290,52 @@ document.addEventListener('DOMContentLoaded', () => {
     const user = auth.currentUser;
     if (!user || !folderId) return;
 
-    // ==========================================================
-    // 1단계: 메모리(posts 배열)에서 데이터 구조를 먼저 변경
-    // ==========================================================
-    
+    // 1. 메모리(posts 배열)에서 필요한 조각들을 준비합니다.
     const folderToDelete = posts.find(p => p.id === folderId);
     if (!folderToDelete) return;
 
-    // 폴더 안에 있던 자식들을 순서대로 찾음
+    // 폴더 안의 자식들을 순서대로 가져옵니다.
     const childrenOfFolder = posts
         .filter(p => p.parentId === folderId)
         .sort((a, b) => (a.order || 0) - (b.order || 0));
 
-    // 루트에 있던 기존 아이템들을 찾음
+    // 현재 루트에 있는 모든 아이템을 순서대로 가져옵니다.
     const originalRootItems = posts
-        .filter(p => (!p.parentId || p.parentId === 'root') && p.id !== folderId)
+        .filter(p => (!p.parentId || p.parentId === 'root'))
         .sort((a, b) => (a.order || 0) - (b.order || 0));
 
-    // "새로운 루트 목록"을 만듭니다.
-    // 폴더가 있던 위치에 자식들을 순서대로 삽입합니다.
-    const newRootItems = [];
-    originalRootItems.forEach(item => {
-        // 현재 아이템의 순서가 삭제될 폴더의 순서와 같으면, 그 자리에 자식들을 먼저 넣음
-        if ((item.order || 0) === (folderToDelete.order || 0)) {
-            newRootItems.push(...childrenOfFolder);
-        }
-        newRootItems.push(item);
-    });
-    
-    // 만약 폴더가 마지막 순서였다면, 자식들을 맨 뒤에 추가
-    if (newRootItems.length === originalRootItems.length) {
-         newRootItems.push(...childrenOfFolder);
+    // 2. ★★★ 핵심 로직: splice를 이용해 폴더를 자식들로 교체합니다.
+    // 삭제될 폴더의 현재 인덱스(위치)를 찾습니다.
+    const folderIndex = originalRootItems.findIndex(p => p.id === folderId);
+
+    if (folderIndex > -1) {
+        // `splice`를 사용해, folderIndex 위치의 1개(폴더)를 제거하고,
+        // 그 자리에 childrenOfFolder 배열의 모든 내용을 삽입합니다.
+        originalRootItems.splice(folderIndex, 1, ...childrenOfFolder);
     }
-    
 
-    // ==========================================================
-    // 2단계: 새로 정렬된 순서대로 Firestore에 한 번에 업데이트
-    // ==========================================================
+    // 이제 `originalRootItems`는 완벽하게 정렬된 최종 목록이 됩니다.
 
+    // 3. 새로 정렬된 순서대로 Firestore에 한 번에 업데이트합니다.
     const batch = db.batch();
 
-    // 새로 만들어진 전체 루트 목록을 순회하며 새로운 order 부여
-    newRootItems.forEach((item, index) => {
+    originalRootItems.forEach((item, index) => {
         const itemRef = postsCollection.doc(item.id);
-        
-        // 이 아이템이 원래 폴더의 자식이었는지 확인
         const wasChild = childrenOfFolder.some(child => child.id === item.id);
         
         if (wasChild) {
-            // 자식이었던 아이템은 parentId와 order를 모두 업데이트
             batch.update(itemRef, { parentId: 'root', order: index });
         } else {
-            // 원래 루트에 있던 아이템은 order만 업데이트
             batch.update(itemRef, { order: index });
         }
     });
 
-    // 마지막으로, 모든 정보가 업데이트된 후 폴더 자체를 삭제
-    const folderRef = postsCollection.doc(folderId);
-    batch.delete(folderRef);
+    // 폴더 자체는 이제 삭제해도 됩니다.
+    batch.delete(postsCollection.doc(folderId));
 
     try {
         await batch.commit();
         showToast('폴더가 삭제되었습니다.');
-        // 최종적으로 데이터와 화면을 동기화합니다.
         await fetchPosts(user.uid);
         renderList();
     } catch (error) {
