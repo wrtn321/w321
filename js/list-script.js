@@ -248,29 +248,79 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function deleteFolder(folderId) {
-        const user = auth.currentUser;
-        if (!user || !folderId) return;
+    const user = auth.currentUser;
+    if (!user || !folderId) return;
 
-        const batch = db.batch();
-        const childrenToMove = posts.filter(p => p.parentId === folderId);
+    // ==========================================================
+    // 1단계: 메모리(posts 배열)에서 데이터 구조를 먼저 변경
+    // ==========================================================
+    
+    const folderToDelete = posts.find(p => p.id === folderId);
+    if (!folderToDelete) return;
 
-        childrenToMove.forEach(child => {
-            const childRef = postsCollection.doc(child.id);
-            batch.update(childRef, { parentId: 'root' });
-        });
+    // 폴더 안에 있던 자식들을 순서대로 찾음
+    const childrenOfFolder = posts
+        .filter(p => p.parentId === folderId)
+        .sort((a, b) => (a.order || 0) - (b.order || 0));
 
-        const folderRef = postsCollection.doc(folderId);
-        batch.delete(folderRef);
+    // 루트에 있던 기존 아이템들을 찾음
+    const originalRootItems = posts
+        .filter(p => (!p.parentId || p.parentId === 'root') && p.id !== folderId)
+        .sort((a, b) => (a.order || 0) - (b.order || 0));
 
-        try {
-            await batch.commit();
-            showToast('폴더가 삭제되었습니다.');
-            await fetchPosts(user.uid);
-            renderList();
-        } catch (error) {
-            console.error("폴더 삭제 실패:", error);
-            showToast('폴더 삭제에 실패했습니다.');
+    // "새로운 루트 목록"을 만듭니다.
+    // 폴더가 있던 위치에 자식들을 순서대로 삽입합니다.
+    const newRootItems = [];
+    originalRootItems.forEach(item => {
+        // 현재 아이템의 순서가 삭제될 폴더의 순서와 같으면, 그 자리에 자식들을 먼저 넣음
+        if ((item.order || 0) === (folderToDelete.order || 0)) {
+            newRootItems.push(...childrenOfFolder);
         }
+        newRootItems.push(item);
+    });
+    
+    // 만약 폴더가 마지막 순서였다면, 자식들을 맨 뒤에 추가
+    if (newRootItems.length === originalRootItems.length) {
+         newRootItems.push(...childrenOfFolder);
+    }
+    
+
+    // ==========================================================
+    // 2단계: 새로 정렬된 순서대로 Firestore에 한 번에 업데이트
+    // ==========================================================
+
+    const batch = db.batch();
+
+    // 새로 만들어진 전체 루트 목록을 순회하며 새로운 order 부여
+    newRootItems.forEach((item, index) => {
+        const itemRef = postsCollection.doc(item.id);
+        
+        // 이 아이템이 원래 폴더의 자식이었는지 확인
+        const wasChild = childrenOfFolder.some(child => child.id === item.id);
+        
+        if (wasChild) {
+            // 자식이었던 아이템은 parentId와 order를 모두 업데이트
+            batch.update(itemRef, { parentId: 'root', order: index });
+        } else {
+            // 원래 루트에 있던 아이템은 order만 업데이트
+            batch.update(itemRef, { order: index });
+        }
+    });
+
+    // 마지막으로, 모든 정보가 업데이트된 후 폴더 자체를 삭제
+    const folderRef = postsCollection.doc(folderId);
+    batch.delete(folderRef);
+
+    try {
+        await batch.commit();
+        showToast('폴더가 삭제되었습니다.');
+        // 최종적으로 데이터와 화면을 동기화합니다.
+        await fetchPosts(user.uid);
+        renderList();
+    } catch (error) {
+        console.error("폴더 삭제 실패:", error);
+        showToast('폴더 삭제에 실패했습니다.');
+    }
     }
 
     // ===============================================
