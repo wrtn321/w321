@@ -90,23 +90,25 @@ async function setupMainPage(auth, db, user) {
         });
     }
 
-    // 뒤로가기 기록 방지 기능들 (기존 코드 유지)
+    // 카드 헤더(카테고리) 링크 클릭 시
     document.querySelectorAll('.card-header-link').forEach(link => {
-    link.addEventListener('click', (e) => {
-        e.preventDefault();
-        // 그냥 이동 (뒤로가기 가능)
-        window.location.href = link.href;
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            // replace -> href 로 변경하여 뒤로가기 기록을 남깁니다.
+            window.location.href = link.href;
+        });
     });
-    });
-    
-document.querySelectorAll('.new-button').forEach(button => {
-    button.addEventListener('click', (e) => {
-        const category = button.closest('.card').querySelector('a').href.split('=')[1];
-        if (category) {
-            const newPostUrl = `post.html?category=${category}&new=true`;
-            // 그냥 이동 (뒤로가기 가능)
-            window.location.href = newPostUrl;
-        }
+
+    // '+ 새로 만들기' 버튼 클릭 시
+    document.querySelectorAll('.new-button').forEach(button => {
+        button.addEventListener('click', (e) => {
+            const category = button.closest('.card').querySelector('a').href.split('=')[1];
+            if (category) {
+                const newPostUrl = `post.html?category=${category}&new=true`;
+                // replace -> href 로 변경하여 뒤로가기 기록을 남깁니다.
+                window.location.href = newPostUrl;
+            }
+        });
     });
     });
     
