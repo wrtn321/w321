@@ -126,7 +126,7 @@ async function setupMainPage(auth, db, user) {
                     .where('userId', '==', user.uid)
                     .where('category', '==', category) // ★ 각 카드에 맞는 카테고리 지정
                     .where('type', '==', 'post')
-                    .orderBy('updatedAt', 'desc') // ★ 최신 수정한 순서로 가져오기 (이 필드가 없다면 createdAt)
+                    .orderBy('order', 'asc') // ★ 최신 수정한 순서로 가져오기 (이 필드가 없다면 createdAt)
                     .limit(3) // ★ Firestore에서 직접 3개만 가져오도록 제한
                     .get();
                 
