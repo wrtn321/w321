@@ -15,7 +15,6 @@ body.sticky-footer-layout > .main-header a {
 .editor-container {
     max-width: 800px;
     width: 100%;
-    margin: 20px auto;
     padding: 0 15px;
 }
 
@@ -43,6 +42,7 @@ body.sticky-footer-layout > .main-header a {
 
 .title-actions {
     display: flex;
+    padding: 10px 0;
     gap: 8px;
 }
 
@@ -107,7 +107,6 @@ body.sticky-footer-layout > .main-header a {
 
     /* 1. 제목과 아이콘 영역을 위아래로 쌓이게 변경 */
     .title-section {
-        flex-direction: column; /* 가로 정렬(row)에서 세로 정렬(column)으로 변경 */
         align-items: flex-start; /* 왼쪽 정렬로 초기화 */
     }
 
@@ -115,11 +114,6 @@ body.sticky-footer-layout > .main-header a {
     .title-input {
         width: 100%;
         font-size: 22px; /* 작은 화면에서는 제목 폰트 살짝 줄이기 */
-    }
-
-    /* 3. 아이콘 버튼들은 오른쪽으로 정렬 */
-    .title-actions {
-        align-self: flex-end; /* 그룹 전체를 오른쪽 끝으로 이동 */
     }
 
     /* 4. 본문 입력창 폰트도 살짝 줄여주기 */
