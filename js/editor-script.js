@@ -1,4 +1,4 @@
-// editor-script.js (읽기/수정 모드 기능이 추가된 최종 버전)
+// editor-script.js (드롭다운 메뉴 UI가 적용된 최종 버전)
 
 document.addEventListener('DOMContentLoaded', () => {
     const auth = firebase.auth();
@@ -11,7 +11,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    let currentPost = null;
+    // =====================================================
+    // 전역 변수 및 요소
+    // =====================================================
+    let currentPost = null; // 게시글 데이터 전체를 저장할 변수
     const backToListBtn = document.getElementById('back-to-list-btn');
 
     // 모드 컨테이너
@@ -23,11 +26,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const viewContent = viewModeElements.querySelector('.view-content');
     const viewCopyBtn = document.getElementById('view-copy-btn');
     
-    // 새로 추가된 드롭다운 메뉴 관련 요소들
+    // ▼▼▼ 드롭다운 메뉴 관련 요소들 ▼▼▼
     const toggleMenuBtn = document.getElementById('toggle-menu-btn');
     const dropdownMenu = document.getElementById('dropdown-menu');
     const dropdownEditBtn = document.getElementById('dropdown-edit-btn');
     const dropdownDeleteBtn = document.getElementById('dropdown-delete-btn');
+    // ▲▲▲ 여기까지 ▲▲▲
 
     // 수정 모드 요소
     const titleInput = editModeElements.querySelector('.title-input');
@@ -42,27 +46,19 @@ document.addEventListener('DOMContentLoaded', () => {
     let toastTimer;
 
     // =====================================================
-    // 기능 함수들
+    // 기능 함수들 (이 부분은 수정되지 않았습니다)
     // =====================================================
 
     // 모드 전환 함수
     const toggleMode = (mode) => {
         if (mode === 'edit') {
-            // 수정 모드로 전환
-            // 1. 읽기 모드 요소를 숨기고, 수정 모드 요소를 보여준다.
             viewModeElements.hidden = true;
             editModeElements.hidden = false;
-
-            // 2. 현재 게시글 데이터를 입력창에 채워준다.
             titleInput.value = currentPost.title;
             contentTextarea.value = currentPost.content;
-            
-            // 3. 부가 기능 실행
             updateCharCount();
             autoResizeTextarea();
-
-        } else { // 'view' 모드 또는 그 외
-            // 읽기 모드로 전환
+        } else {
             viewModeElements.hidden = false;
             editModeElements.hidden = true;
         }
@@ -70,17 +66,10 @@ document.addEventListener('DOMContentLoaded', () => {
     
     const updateCharCount = () => { charCounter.textContent = contentTextarea.value.length; };
     const autoResizeTextarea = () => {
-    // 1. 현재 스크롤 위치를 기억합니다.
-    const scrollPosition = window.scrollY;
-
-    // 2. 높이를 'auto'로 초기화하여 실제 필요한 높이를 계산하게 합니다.
-    contentTextarea.style.height = 'auto';
-    
-    // 3. 계산된 높이(scrollHeight)로 실제 높이를 설정합니다.
-    contentTextarea.style.height = (contentTextarea.scrollHeight) + 'px';
-
-    // 4. 기억해둔 스크롤 위치로 되돌립니다.
-    window.scrollTo(0, scrollPosition);
+        const scrollPosition = window.scrollY;
+        contentTextarea.style.height = 'auto';
+        contentTextarea.style.height = (contentTextarea.scrollHeight) + 'px';
+        window.scrollTo(0, scrollPosition);
     };
     const showToast = message => {
         clearTimeout(toastTimer);
@@ -90,175 +79,91 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // =====================================================
-    // 페이지 로드 시 데이터 처리
+    // 페이지 로드 시 데이터 처리 (이 부분은 수정되지 않았습니다)
     // =====================================================
     function loadPostData() {
-    const params = new URLSearchParams(window.location.search);
-    const isNewPost = params.get('new') === 'true';
-    const categoryFromURL = params.get('category');
+        const params = new URLSearchParams(window.location.search);
+        const isNewPost = params.get('new') === 'true';
+        const categoryFromURL = params.get('category');
+        const finalCategory = categoryFromURL || localStorage.getItem('currentCategory');
 
-    // 1. URL의 카테고리 정보를 localStorage의 정보보다 우선합니다.
-    const finalCategory = categoryFromURL || localStorage.getItem('currentCategory');
-
-    // 2. 결정된 최종 카테고리가 있다면,
-    if (finalCategory) {
-        // 2-1. 목록 버튼의 링크를 올바르게 설정합니다.
-        backToListBtn.href = `list.html?category=${finalCategory}`;
-
-        // 2-2. localStorage의 정보도 최신으로 덮어써서 '기억'을 갱신합니다.
-        //      (이래야 페이지를 새로고침해도 정보가 유지됩니다)
-        localStorage.setItem('currentCategory', finalCategory);
-    }
-
-    // ★★★ 새 글 작성 모드인지, 기존 글 수정 모드인지 확인 ★★★
-    if (isNewPost && categoryFromURL) {
-        // [새 글 작성 모드]
-        console.log("새 글 작성 모드로 시작합니다. 카테고리:", categoryFromURL);
-        
-        // 임시 게시글 객체를 만듭니다. (ID가 없는 상태)
-        currentPost = {
-            title: '',
-            content: '',
-            category: categoryFromURL,
-            // id는 아직 없습니다. 저장 시 생성됩니다.
-        };
-
-        // 읽기 모드 화면을 건너뛰고 바로 수정 모드로 진입!
-        toggleMode('edit');
-        
-    } else {
-        // [기존 글 수정 모드] (기존 로직과 동일)
-        const postDataString = localStorage.getItem('currentPost');
-        if (postDataString) {
-            currentPost = JSON.parse(postDataString);
-            
-            viewTitle.textContent = currentPost.title;
-            viewContent.innerHTML = marked.parse(currentPost.content || '');
-
-            toggleMode('view');
-        } else {
-            alert("게시글 정보를 찾을 수 없습니다. 메인 페이지로 이동합니다.");
-            window.location.href = 'main.html';
+        if (finalCategory) {
+            backToListBtn.href = `list.html?category=${finalCategory}`;
+            localStorage.setItem('currentCategory', finalCategory);
         }
-    }
-    // 이 함수들은 모드와 상관없이 한 번 실행해주는 것이 좋습니다.
-    updateCharCount();
-    autoResizeTextarea();
-}
-    // =====================================================
-    // 이벤트 리스너 연결
-    // =====================================================
 
-    // ---- 뒤로가기 버튼의 기본 동작 변경 ----
-    backToListBtn.addEventListener('click', (e) => {
-    // <a> 태그의 기본 이동 기능(href)을 막습니다.
-    e.preventDefault(); 
-    
-    // history를 남기지 않고 해당 주소로 이동시킵니다.
-    window.location.replace(backToListBtn.href);
-    });
-
-    // ---- 모드 전환 버튼 ----
-    viewEditBtn.addEventListener('click', () => {
-        toggleMode('edit');
-    });
-
-    editCancelBtn.addEventListener('click', () => {
-        toggleMode('view');
-        // 수정 중이던 내용은 저장하지 않고 그냥 읽기 모드로 돌아감
-    });
-    
-    // ---- 기능 버튼 ----
-    editSaveBtn.addEventListener('click', async () => {
-    const user = auth.currentUser;
-    if (!user) {
-        showToast('로그인 정보가 없습니다. 다시 로그인해주세요.');
-        return;
-    }
-
-    const dataToSave = {
-        title: titleInput.value.trim() || "제목 없음", // 제목이 비어있으면 "제목 없음"으로 저장
-        content: contentTextarea.value,
-        category: currentPost.category // 카테고리 정보는 항상 포함
-    };
-
-    try {
-        if (currentPost.id) {
-            // [수정] currentPost에 ID가 있으면 update
-            await db.collection('posts').doc(currentPost.id).update(dataToSave);
-            
-            currentPost.title = dataToSave.title;
-            currentPost.content = dataToSave.content;
-
+        if (isNewPost && categoryFromURL) {
+            currentPost = {
+                title: '',
+                content: '',
+                category: categoryFromURL,
+            };
+            toggleMode('edit');
         } else {
-        // [새로 추가] currentPost에 ID가 없으면 add
-            // ------------------ 여기가 교체된 부분입니다 ------------------
-            
-            // 1. 마지막 순서(order)를 가진 문서를 찾기 위해 쿼리를 실행합니다.
-            const lastPostQuery = db.collection('posts')
-                .where('userId', '==', user.uid)
-                .where('category', '==', currentPost.category)
-                .orderBy('order', 'desc') // 순서를 내림차순(큰->작은)으로 정렬
-                .limit(1);                // 그 중 1개만 가져옵니다. (가장 큰 것)
-
-            const snapshot = await lastPostQuery.get();
-            
-            let newOrder = 0; // 기본 순서는 0
-            if (!snapshot.empty) {
-                // 2. 만약 해당 카테고리에 문서가 하나라도 있다면,
-                //    가장 큰 order 값에 1을 더해 새 순서로 정합니다.
-                const lastPost = snapshot.docs[0].data();
-                newOrder = (lastPost.order || 0) + 1;
+            const postDataString = localStorage.getItem('currentPost');
+            if (postDataString) {
+                currentPost = JSON.parse(postDataString);
+                viewTitle.textContent = currentPost.title;
+                viewContent.innerHTML = marked.parse(currentPost.content || '');
+                toggleMode('view');
+            } else {
+                alert("게시글 정보를 찾을 수 없습니다. 메인 페이지로 이동합니다.");
+                window.location.href = 'main.html';
             }
-
-            // 3. 계산된 순서(newOrder)를 포함하여 새 문서를 추가합니다.
-            const docRef = await db.collection('posts').add({
-                ...dataToSave,
-                userId: user.uid,
-                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                order: newOrder, // 계산된 새 순서 값 사용
-            });
-            
-            // 새로 받은 ID와 데이터를 현재 게시글 정보에 업데이트합니다.
-            currentPost.id = docRef.id;
-            currentPost.title = dataToSave.title;
-            currentPost.content = dataToSave.content;
-            console.log("새 문서가 생성되었습니다. ID:", currentPost.id, "Order:", newOrder);
-            // -----------------------------------------------------------------
         }
-        
-        // 읽기 모드 화면도 업데이트
-        viewTitle.textContent = currentPost.title;
-        viewContent.innerHTML = marked.parse(currentPost.content || '');
-
-        // localStorage에 현재 상태 저장 (새로고침 대비)
-        localStorage.setItem('currentPost', JSON.stringify(currentPost));
-        
-        showToast('저장되었습니다.');
-        toggleMode('view'); // 저장 후 읽기 모드로 전환
-
-    } catch (error) {
-        console.error("저장 실패:", error);
-        showToast('저장에 실패했습니다.');
+        updateCharCount();
+        autoResizeTextarea();
     }
+    
+    // =====================================================
+    // 이벤트 리스너 연결 (이 부분이 수정되었습니다)
+    // =====================================================
+
+    // ---- 뒤로가기 버튼 ----
+    backToListBtn.addEventListener('click', (e) => {
+        e.preventDefault(); 
+        window.location.replace(backToListBtn.href);
     });
 
-    viewDeleteBtn.addEventListener('click', async () => {
+    // ---- 드롭다운 메뉴 토글 기능 ----
+    toggleMenuBtn.addEventListener('click', () => {
+        dropdownMenu.hidden = !dropdownMenu.hidden;
+    });
+
+    // ---- 화면의 다른 곳을 클릭하면 메뉴가 닫히게 하는 기능 ----
+    window.addEventListener('click', (e) => {
+        if (!e.target.closest('.dropdown-menu-container')) {
+            dropdownMenu.hidden = true;
+        }
+    });
+
+    // ---- 드롭다운 메뉴 안의 '수정' 버튼 ----
+    dropdownEditBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        toggleMode('edit');
+        dropdownMenu.hidden = true;
+    });
+
+    // ---- 드롭다운 메뉴 안의 '삭제' 버튼 ----
+    dropdownDeleteBtn.addEventListener('click', async (e) => {
+        e.preventDefault();
+        dropdownMenu.hidden = true;
+
         if (!currentPost.id) return;
         if (confirm('정말로 이 게시글을 삭제하시겠습니까?')) {
             try {
                 await db.collection('posts').doc(currentPost.id).delete();
-                // 삭제 후 로컬 스토리지 데이터도 정리
                 localStorage.removeItem('currentPost');
                 localStorage.removeItem('currentCategory');
-                window.location.replace(backToListBtn.href); // 원래 목록으로 이동
+                window.location.replace(backToListBtn.href);
             } catch (error) {
                 console.error("삭제 실패:", error);
                 showToast('삭제에 실패했습니다.');
             }
         }
     });
-    
+
+    // ---- 복사 버튼 ----
     viewCopyBtn.addEventListener('click', () => {
         if (!currentPost.content) {
             showToast('복사할 내용이 없습니다.');
@@ -272,6 +177,67 @@ document.addEventListener('DOMContentLoaded', () => {
             });
     });
 
+    // ---- 수정 모드의 버튼들 ----
+    editCancelBtn.addEventListener('click', () => {
+        toggleMode('view');
+    });
+    
+    editSaveBtn.addEventListener('click', async () => {
+        const user = auth.currentUser;
+        if (!user) {
+            showToast('로그인 정보가 없습니다. 다시 로그인해주세요.');
+            return;
+        }
+
+        const dataToSave = {
+            title: titleInput.value.trim() || "제목 없음",
+            content: contentTextarea.value,
+            category: currentPost.category
+        };
+
+        try {
+            if (currentPost.id) {
+                await db.collection('posts').doc(currentPost.id).update(dataToSave);
+                currentPost.title = dataToSave.title;
+                currentPost.content = dataToSave.content;
+            } else {
+                const lastPostQuery = db.collection('posts')
+                    .where('userId', '==', user.uid)
+                    .where('category', '==', currentPost.category)
+                    .orderBy('order', 'desc')
+                    .limit(1);
+
+                const snapshot = await lastPostQuery.get();
+                let newOrder = 0;
+                if (!snapshot.empty) {
+                    const lastPost = snapshot.docs[0].data();
+                    newOrder = (lastPost.order || 0) + 1;
+                }
+
+                const docRef = await db.collection('posts').add({
+                    ...dataToSave,
+                    userId: user.uid,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    order: newOrder,
+                });
+                
+                currentPost.id = docRef.id;
+                currentPost.title = dataToSave.title;
+                currentPost.content = dataToSave.content;
+            }
+            
+            viewTitle.textContent = currentPost.title;
+            viewContent.innerHTML = marked.parse(currentPost.content || '');
+            localStorage.setItem('currentPost', JSON.stringify(currentPost));
+            showToast('저장되었습니다.');
+            toggleMode('view');
+
+        } catch (error) {
+            console.error("저장 실패:", error);
+            showToast('저장에 실패했습니다.');
+        }
+    });
+
     // ---- 입력창 이벤트 ----
     contentTextarea.addEventListener('input', updateCharCount);
     contentTextarea.addEventListener('input', autoResizeTextarea);
@@ -280,5 +246,4 @@ document.addEventListener('DOMContentLoaded', () => {
     // 최초 실행
     // =====================================================
     loadPostData();
-    
 });
