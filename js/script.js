@@ -115,40 +115,49 @@ async function setupMainPage(auth, db, user) {
     // ★★★ 핵심 로직: 모든 데이터를 한 번에 가져와서 처리하기
     // ========================================================
     try {
-        // 1. 현재 사용자의 '파일(post)' 타입 문서 전체를 한 번에 가져옵니다.
-        const snapshot = await db.collection('posts')
-            .where('userId', '==', user.uid)
-            .where('type', '==', 'post')
-            .orderBy('order') // order 순으로 정렬해서 가져옵니다.
-            .get();
+        const cards = document.querySelectorAll('.card');
+        const fetchPromises = []; // 각 카드의 데이터 요청을 담을 배열
 
-        const allPosts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-
-        // 2. 모든 카드를 순회하며 각 카드에 맞는 데이터를 전달하고 화면을 그립니다.
-        document.querySelectorAll('.card').forEach(card => {
-            const cardBody = card.querySelector('.card-body');
+        // 1. 모든 카드에 대해 '데이터 요청'을 미리 만들어 배열에 담습니다.
+        cards.forEach(card => {
             const category = card.querySelector('a').href.split('=')[1];
-
-            if (cardBody && category) {
-                // 전체 데이터(allPosts)에서 현재 카드에 해당하는 데이터만 필터링합니다.
-                const recentItems = allPosts
-                    .filter(post => post.category === category)
-                    .slice(0, 3); // 필터링된 결과에서 상위 3개만 자릅니다.
-
-                // 필터링된 데이터를 가지고 화면을 그리는 함수를 호출합니다.
-                displayRecentItems(recentItems, category, cardBody);
+            if (category) {
+                const query = db.collection('posts')
+                    .where('userId', '==', user.uid)
+                    .where('category', '==', category) // ★ 각 카드에 맞는 카테고리 지정
+                    .where('type', '==', 'post')
+                    .orderBy('updatedAt', 'desc') // ★ 최신 수정한 순서로 가져오기 (이 필드가 없다면 createdAt)
+                    .limit(3) // ★ Firestore에서 직접 3개만 가져오도록 제한
+                    .get();
+                
+                fetchPromises.push(query);
             }
         });
 
+        // 2. Promise.all로 모든 요청을 한 번에 실행하고 결과를 기다립니다.
+        const snapshots = await Promise.all(fetchPromises);
+
+        // 3. 각 결과를 순서대로 화면에 그립니다.
+        snapshots.forEach((snapshot, index) => {
+            const card = cards[index];
+            const cardBody = card.querySelector('.card-body');
+            const category = card.querySelector('a').href.split('=')[1];
+            
+            const items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            
+            // 기존에 사용하시던 그리기 함수를 그대로 재사용합니다.
+            displayRecentItems(items, category, cardBody);
+        });
+
     } catch (error) {
-        console.error("최근 항목 전체 로딩 실패:", error);
-        // 전체 로딩 실패 시 모든 카드에 에러 메시지 표시
+        console.error("최근 항목 로딩 실패:", error);
         document.querySelectorAll('.card-body').forEach(container => {
             container.innerHTML = '<p class="no-items-text">항목을 불러오지 못했습니다.</p>';
         });
         
+        // Firestore 색인 생성 링크 안내는 매우 좋은 기능이므로 유지합니다.
         if (error.code === 'failed-precondition') {
-             alert(`[개발자 알림]\n메인 화면을 표시하기 위한 Firestore 색인이 필요합니다.\n개발자 도구(F12)의 콘솔 에러 메시지에 있는 링크를 클릭하여 색인을 생성해주세요.`);
+             alert(`[개발자 알림]\nFirestore 색인이 필요합니다.\n개발자 도구(F12) 콘솔의 에러 메시지에 있는 링크를 클릭하여 색인을 생성해주세요.`);
         }
     }
 }
