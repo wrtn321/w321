@@ -245,6 +245,7 @@ body.sticky-footer-layout > .main-header a {
     box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.1);
     z-index: 1; /* 다른 요소들 위에 보이도록 합니다. */
     overflow: hidden; /* border-radius가 내부 요소에도 적용되게 합니다. */
+    text-align: center;
 }
 
 /* 드롭다운 메뉴 안의 각 항목 (수정, 삭제 링크) */
@@ -268,3 +269,6 @@ body.sticky-footer-layout > .main-header a {
     color: #d32f2f;
 }
 
+.dropdown-content a.textdown:hover{
+    background-color: #e3f6ff;
+}
