@@ -1,40 +1,33 @@
-// script.js (메인 화면 동적 로딩 기능이 추가된 최종 버전)
+// script.js (폴더 구조를 올바르게 인식하는 최종 버전)
 
 document.addEventListener('DOMContentLoaded', () => {
     const auth = firebase.auth();
-    const db = firebase.firestore(); // Firestore 인스턴스 추가
+    const db = firebase.firestore();
 
-    // =====================================================
-    // 로그인 상태 감시자 (문지기)
-    // =====================================================
     auth.onAuthStateChanged(user => {
         const isAuthPage = document.querySelector('.auth-container') !== null;
         const isMainPage = document.querySelector('.dashboard-container') !== null;
 
-        if (user) { // 로그인 상태
+        if (user) {
             if (isAuthPage) {
                 window.location.href = 'main.html';
             }
-            // ★★★ 메인 페이지라면, 최근 항목을 불러오는 함수를 실행! ★★★
             if (isMainPage) {
-                setupMainPage(auth, db, user); 
+                setupMainPage(db, user); 
             }
-        } else { // 로그아웃 상태
+        } else {
             if (isMainPage) {
                 window.location.href = 'index.html';
             }
             if (isAuthPage) {
-                setupAuthPage(auth); // 로그아웃 상태일 때만 로그인/가입 기능 설정
+                setupAuthPage(auth);
             }
         }
     });
 });
 
-
-/**
- * 인증 페이지 (index.html) 전용 기능
- */
 function setupAuthPage(auth) {
+    // 이 함수는 수정할 필요가 없습니다. (기존 코드 그대로)
     const loginForm = document.getElementById('login-form');
     const signupForm = document.getElementById('signup-form');
     const showSignupBtn = document.getElementById('show-signup');
@@ -76,109 +69,113 @@ function setupAuthPage(auth) {
     });
 }
 
-
 /**
- * 메인 페이지 (main.html) 전용 기능
+ * ★★★ 메인 페이지 (main.html)의 핵심 로직 (수정됨) ★★★
  */
-async function setupMainPage(auth, db, user) {
-    // 로그아웃 버튼 기능 (기존과 동일)
+async function setupMainPage(db, user) {
+    // 로그아웃 및 버튼 기능
     const logoutButton = document.querySelector('.logout-button');
     if(logoutButton) {
         logoutButton.addEventListener('click', e => {
             e.preventDefault();
-            auth.signOut().catch(error => console.error('로그아웃 에러:', error));
+            firebase.auth().signOut().catch(error => console.error('로그아웃 에러:', error));
         });
     }
-
-    // 카드 헤더(카테고리) 링크 클릭 시
     document.querySelectorAll('.card-header-link').forEach(link => {
         link.addEventListener('click', (e) => {
             e.preventDefault();
-            // replace -> href 로 변경하여 뒤로가기 기록을 남깁니다.
             window.location.href = link.href;
         });
     });
-
-    // '+ 새로 만들기' 버튼 클릭 시
     document.querySelectorAll('.new-button').forEach(button => {
         button.addEventListener('click', (e) => {
             const category = button.closest('.card').querySelector('a').href.split('=')[1];
             if (category) {
-                const newPostUrl = `post.html?category=${category}&new=true`;
-                // replace -> href 로 변경하여 뒤로가기 기록을 남깁니다.
-                window.location.href = newPostUrl;
+                window.location.href = `post.html?category=${category}&new=true`;
             }
         });
     });
-    
-     // ========================================================
-    // ★★★ 핵심 로직: 모든 데이터를 한 번에 가져와서 처리하기
-    // ========================================================
+
     try {
         const cards = document.querySelectorAll('.card');
-        const fetchPromises = []; // 각 카드의 데이터 요청을 담을 배열
-
-        // 1. 모든 카드에 대해 '데이터 요청'을 미리 만들어 배열에 담습니다.
-        cards.forEach(card => {
-            const category = card.querySelector('a').href.split('=')[1];
-            if (category) {
-                const query = db.collection('posts')
-                    .where('userId', '==', user.uid)
-                    .where('category', '==', category) // ★ 각 카드에 맞는 카테고리 지정
-                    .where('type', '==', 'post')
-                    .orderBy('order', 'asc') // ★ 최신 수정한 순서로 가져오기 (이 필드가 없다면 createdAt)
-                    .limit(3) // ★ Firestore에서 직접 3개만 가져오도록 제한
-                    .get();
-                
-                fetchPromises.push(query);
-            }
-        });
-
-        // 2. Promise.all로 모든 요청을 한 번에 실행하고 결과를 기다립니다.
-        const snapshots = await Promise.all(fetchPromises);
-
-        // 3. 각 결과를 순서대로 화면에 그립니다.
-        snapshots.forEach((snapshot, index) => {
-            const card = cards[index];
-            const cardBody = card.querySelector('.card-body');
-            const category = card.querySelector('a').href.split('=')[1];
-            
-            const items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            
-            // 기존에 사용하시던 그리기 함수를 그대로 재사용합니다.
-            displayRecentItems(items, category, cardBody);
-        });
-
-    } catch (error) {
-        console.error("최근 항목 로딩 실패:", error);
-        document.querySelectorAll('.card-body').forEach(container => {
-            container.innerHTML = '<p class="no-items-text">항목을 불러오지 못했습니다.</p>';
-        });
         
-        // Firestore 색인 생성 링크 안내는 매우 좋은 기능이므로 유지합니다.
-        if (error.code === 'failed-precondition') {
-             alert(`[개발자 알림]\nFirestore 색인이 필요합니다.\n개발자 도구(F12) 콘솔의 에러 메시지에 있는 링크를 클릭하여 색인을 생성해주세요.`);
+        // 모든 카드를 순회하며 각각에 맞는 데이터를 비동기적으로 가져와 채웁니다.
+        for (const card of cards) {
+            const category = card.querySelector('a').href.split('=')[1];
+            const cardBody = card.querySelector('.card-body');
+            if (category && cardBody) {
+                // 각 카테고리별로 올바른 순서의 상위 3개 아이템을 가져오는 함수 호출
+                const items = await getTopItemsForDashboard(db, user.uid, category);
+                // 가져온 아이템을 화면에 그리는 함수 호출
+                displayRecentItems(items, category, cardBody);
+            }
+        }
+    } catch (error) {
+        console.error("대시보드 로딩 중 에러 발생:", error);
+         if (error.code === 'failed-precondition') {
+             alert(`[개발자 알림]\nFirestore 색인이 필요합니다.\n개발자 도구(F12)의 콘솔 에러 메시지에 있는 링크를 클릭하여 색인을 생성해주세요.`);
         }
     }
 }
 
+/**
+ * ★★★ 대시보드 표시용 아이템을 올바른 순서로 가져오는 새 함수 ★★★
+ */
+async function getTopItemsForDashboard(db, userId, category) {
+    const finalPosts = [];
+
+    // 1단계: 최상위 아이템들 (폴더와 파일)을 순서대로 모두 가져옵니다.
+    const rootSnapshot = await db.collection('posts')
+        .where('userId', '==', userId)
+        .where('category', '==', category)
+        .where('parentId', '==', 'root')
+        .orderBy('order', 'asc')
+        .get();
+    
+    const rootItems = rootSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+    // 2단계: 최상위 아이템들을 순서대로 탐색하며 최종 표시할 파일 3개를 찾습니다.
+    for (const item of rootItems) {
+        // 이미 3개를 다 찾았다면 루프를 중단합니다.
+        if (finalPosts.length >= 3) {
+            break;
+        }
+
+        if (item.type === 'post') {
+            // 아이템이 파일이면 바로 결과에 추가합니다.
+            finalPosts.push(item);
+        } else if (item.type === 'folder') {
+            // 아이템이 폴더이면, 그 안에서 가장 순서가 빠른 파일 1개를 찾습니다.
+            const firstPostInFolderSnapshot = await db.collection('posts')
+                .where('userId', '==', userId)
+                .where('parentId', '==', item.id) // 이 폴더의 ID를 부모로 갖는
+                .where('type', '==', 'post')      // 파일 중에서
+                .orderBy('order', 'asc')          // 가장 순서가 빠른
+                .limit(1)                         // 1개만 가져옵니다.
+                .get();
+            
+            if (!firstPostInFolderSnapshot.empty) {
+                // 폴더 안에 파일이 있다면, 그 파일을 결과에 추가합니다.
+                const firstPost = { id: firstPostInFolderSnapshot.docs[0].id, ...firstPostInFolderSnapshot.docs[0].data() };
+                finalPosts.push(firstPost);
+            }
+        }
+    }
+    
+    // 최종적으로 찾은 파일 목록을 반환합니다. (최대 3개)
+    return finalPosts;
+}
+
 
 /**
- * ★★★ 이제 이 함수는 Firestore와 통신하지 않고, 받은 데이터를 그리기만 합니다. ★★★
- * @param {Array} items 표시할 게시글 데이터 배열
- * @param {string} category 현재 카테고리 이름
- * @param {HTMLElement} container 표시할 DOM 요소
+ * ★★★ 화면에 그리는 함수 (이 함수는 수정할 필요가 없습니다) ★★★
  */
 function displayRecentItems(items, category, container) {
-    // 1. 기존 내용을 비웁니다.
     container.innerHTML = '';
 
-    // 2. 받은 데이터에 따라 화면을 그립니다.
     if (items.length === 0) {
-        // 표시할 아이템이 하나도 없을 경우
         container.innerHTML = '<p class="no-items-text">작성된 파일이 없습니다.</p>';
     } else {
-        // 아이템이 있을 경우, 각 아이템을 링크(<a>)로 만들어 추가
         items.forEach(post => {
             const link = document.createElement('a');
             link.href = '#';
@@ -189,9 +186,6 @@ function displayRecentItems(items, category, container) {
                 e.preventDefault();
                 localStorage.setItem('currentPost', JSON.stringify(post));
                 localStorage.setItem('currentCategory', category);
-                // ★ 이동은 replace가 아닌 일반 href로 해야 뒤로가기가 자연스럽습니다.
-                //   main -> list, list -> post 이동은 역사가 남는 것이 좋습니다.
-                //   post -> list 로 돌아올 때만 replace를 사용합니다.
                 window.location.href = 'post.html';
             });
             container.appendChild(link);
