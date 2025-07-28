@@ -11,8 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // 전역 변수 및 요소
-    let currentPost = null; // 게시글 데이터 전체를 저장할 변수
+    let currentPost = null;
     const backToListBtn = document.getElementById('back-to-list-btn');
 
     // 모드 컨테이너
@@ -22,9 +21,13 @@ document.addEventListener('DOMContentLoaded', () => {
     // 읽기 모드 요소
     const viewTitle = viewModeElements.querySelector('.view-title');
     const viewContent = viewModeElements.querySelector('.view-content');
-    const viewEditBtn = document.getElementById('view-edit-btn');
-    const viewDeleteBtn = document.getElementById('view-delete-btn');
     const viewCopyBtn = document.getElementById('view-copy-btn');
+    
+    // 새로 추가된 드롭다운 메뉴 관련 요소들
+    const toggleMenuBtn = document.getElementById('toggle-menu-btn');
+    const dropdownMenu = document.getElementById('dropdown-menu');
+    const dropdownEditBtn = document.getElementById('dropdown-edit-btn');
+    const dropdownDeleteBtn = document.getElementById('dropdown-delete-btn');
 
     // 수정 모드 요소
     const titleInput = editModeElements.querySelector('.title-input');
