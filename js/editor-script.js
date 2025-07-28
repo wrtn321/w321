@@ -277,51 +277,5 @@ document.addEventListener('DOMContentLoaded', () => {
     // 최초 실행
     // =====================================================
     loadPostData();
-
-    /* =======================================
-   드롭다운 메뉴 스타일
-   ======================================= */
-
-/* 메뉴 전체를 감싸는 컨테이너 */
-.dropdown-menu-container {
-    position: relative; /* 자식 요소인 드롭다운 메뉴의 위치 기준점이 됩니다. */
-    display: inline-block; /* 다른 버튼 옆에 나란히 있도록 합니다. */
-}
-
-/* 실제로 나타나는 드롭다운 메뉴의 스타일 */
-.dropdown-content {
-    /* 평소엔 안 보이게 처리했다가, JS로 'show' 클래스가 추가되면 보이게 할 수 있습니다. */
-    /* 하지만 여기서는 hidden 속성을 사용했으므로 JS로 직접 제어합니다. */
-    position: absolute; /* 컨테이너를 기준으로 자유롭게 위치를 잡습니다. */
-    right: 0; /* 컨테이너의 오른쪽에 붙입니다. */
-    background-color: var(--surface-color);
-    min-width: 120px; /* 메뉴가 너무 좁아 보이지 않게 최소 너비를 줍니다. */
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.1);
-    z-index: 1; /* 다른 요소들 위에 보이도록 합니다. */
-    overflow: hidden; /* border-radius가 내부 요소에도 적용되게 합니다. */
-}
-
-/* 드롭다운 메뉴 안의 각 항목 (수정, 삭제 링크) */
-.dropdown-content a {
-    color: var(--text-primary-color);
-    padding: 12px 16px;
-    text-decoration: none;
-    display: block; /* 링크가 한 줄 전체를 차지하게 만들어 클릭하기 쉽게 합니다. */
-    font-size: 15px;
-    transition: background-color 0.2s;
-}
-
-/* 메뉴 항목에 마우스를 올렸을 때 */
-.dropdown-content a:hover {
-    background-color: var(--background-color);
-}
-
-/* '삭제'와 같이 위험한 동작을 나타내는 항목 스타일 */
-.dropdown-content a.danger:hover {
-    background-color: #ffdddd; /* 붉은 계열 배경으로 경고의 의미를 줍니다. */
-    color: #d32f2f;
-}
     
 });
