@@ -25,11 +25,25 @@
             <!-- 제목 (읽기 전용) -->
             <div class="title-section">
                 <h2 class="view-title">제목이 로드됩니다...</h2>
-                <div class="title-actions">
-                    <button id="view-copy-btn" class="action-btn" title="전체 복사">📋</button>
-                    <button id="view-edit-btn" class="action-btn" title="수정">✏️</button> <!-- 아이콘 변경 -->
-                    <button id="view-delete-btn" class="action-btn" title="삭제">🗑️</button>
+                 <div class="title-actions">
+            
+            <!-- 1. 복사 버튼은 그대로 밖에 둡니다. -->
+            <button id="view-copy-btn" class="action-btn" title="본문 복사">📋</button>
+            
+            <!-- 2. '수정'과 '삭제'를 담을 드롭다운 메뉴 컨테이너입니다. -->
+            <div class="dropdown-menu-container">
+                
+                <!-- 점 3개 '더 보기' 버튼 -->
+                <button id="toggle-menu-btn" class="action-btn" title="더 보기">⋮</button>
+                
+                <!-- 클릭하면 나타날 드롭다운 메뉴 (평소엔 숨겨져 있음) -->
+                <div id="dropdown-menu" class="dropdown-content" hidden>
+                    <a href="#" id="dropdown-edit-btn">✏️ 수정</a>
+                    <a href="#" id="dropdown-delete-btn" class="danger">🗑️ 삭제</a>
                 </div>
+            </div>
+
+        </div>
             </div>
             <!-- 본문 (읽기 전용) -->
             <div class="content-section">
