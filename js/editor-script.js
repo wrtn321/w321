@@ -26,12 +26,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const viewContent = viewModeElements.querySelector('.view-content');
     const viewCopyBtn = document.getElementById('view-copy-btn');
     
-    // ▼▼▼ 드롭다운 메뉴 관련 요소들 ▼▼▼
+    // 드롭다운 메뉴 관련 요소들 ▼▼▼
     const toggleMenuBtn = document.getElementById('toggle-menu-btn');
     const dropdownMenu = document.getElementById('dropdown-menu');
     const dropdownEditBtn = document.getElementById('dropdown-edit-btn');
     const dropdownDeleteBtn = document.getElementById('dropdown-delete-btn');
-    // ▲▲▲ 여기까지 ▲▲▲
+    const dropdownDownloadBtn = document.getElementById('dropdown-download-btn');
+    
 
     // 수정 모드 요소
     const titleInput = editModeElements.querySelector('.title-input');
@@ -78,6 +79,33 @@ document.addEventListener('DOMContentLoaded', () => {
         toastTimer = setTimeout(() => { toastNotification.classList.remove('show'); }, 3000);
     };
 
+    /**
+     * 현재 게시글의 내용을 .txt 파일로 다운로드하는 함수
+     */
+    function downloadTxtFile() {
+        // 1. 파일 내용과 파일 이름을 준비합니다. 내용이나 제목이 없으면 기본값을 사용합니다.
+        const content = currentPost.content || '';
+        const filename = (currentPost.title.trim() || '제목없음') + '.txt';
+
+        // 2. 파일 내용을 담는 Blob 객체를 만듭니다. (컴퓨터가 파일로 인식할 수 있는 데이터 덩어리)
+        const blob = new Blob([content], { type: 'text/plain;charset=utf-8;' });
+
+        // 3. 다운로드를 위한 임시 링크(<a>)를 메모리에 만듭니다.
+        const link = document.createElement("a");
+
+        // 4. Blob 객체를 가리키는 임시 URL을 생성하고 링크의 href와 download 속성에 설정합니다.
+        const url = URL.createObjectURL(blob);
+        link.href = url;
+        link.download = filename;
+
+        // 5. 링크를 눈에 보이지 않게 문서에 추가하고, 강제로 클릭 이벤트를 발생시켜 다운로드를 시작합니다.
+        document.body.appendChild(link);
+        link.click();
+        
+        // 6. 다운로드가 시작되면 임시로 만들었던 링크와 URL을 메모리에서 제거하여 정리합니다.
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    }
     // =====================================================
     // 페이지 로드 시 데이터 처리 (이 부분은 수정되지 않았습니다)
     // =====================================================
@@ -175,6 +203,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.error('복사 실패:', err);
                 showToast('복사에 실패했습니다.');
             });
+    });
+
+    dropdownDownloadBtn.addEventListener('click', (e) => {
+        e.preventDefault(); // a 태그의 기본 동작(페이지 이동)을 막습니다.
+        downloadTxtFile(); // 위에서 만든 다운로드 함수를 호출합니다.
+        dropdownMenu.hidden = true; // 메뉴를 닫아줍니다.
     });
 
     // ---- 수정 모드의 버튼들 ----
