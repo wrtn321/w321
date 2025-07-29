@@ -4,35 +4,33 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0, minimum-scale=1.0">
     <title>채팅 뷰어</title>
-    <!-- 기본 스타일과, 새로 만들 채팅 뷰어 전용 스타일을 모두 불러옵니다. -->
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/chat-viewer-style.css">
 </head>
 <body class="sticky-footer-layout">
 
-    <!-- 헤더 -->
+    <!-- 헤더 (드롭다운 메뉴가 수정됩니다) -->
     <header class="main-header">
         <a href="#" id="back-to-list-btn" class="back-button">< 목록</a>
         <h1 id="viewer-title">채팅 기록</h1>
+
         <div class="title-actions">
-        <!-- '더 보기' 메뉴 컨테이너 -->
-        <div class="dropdown-menu-container">
-            <!-- 점 3개 '더 보기' 버튼 -->
-            <button id="toggle-menu-btn" class="action-btn" title="더 보기">⋮</button>
-            
-            <!-- 클릭하면 나타날 드롭다운 메뉴 -->
-            <div id="dropdown-menu" class="dropdown-content" hidden>
-                <a href="#" id="dropdown-edit-btn">✏️ 수정</a>
-                <a href="#" id="dropdown-download-btn">💾 txt 저장</a>
-                <a href="#" id="dropdown-delete-btn" class="danger">🗑️ 삭제</a>
+            <div class="dropdown-menu-container">
+                <button id="toggle-menu-btn" class="action-btn" title="더 보기">⋮</button>
+                
+                <!-- ▼▼▼ 'txt 저장' 버튼이 제거된 간결한 메뉴입니다. ▼▼▼ -->
+                <div id="dropdown-menu" class="dropdown-content" hidden>
+                    <a href="#" id="dropdown-edit-btn">✏️ 수정</a>
+                    <a href="#" id="dropdown-delete-btn" class="danger">🗑️ 삭제</a>
+                </div>
+                <!-- ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲ -->
             </div>
         </div>
-    </div>
     </header>
 
-    <!-- 메인 컨텐츠: 여기에 채팅 로그가 표시됩니다. -->
+    <!-- 메인 컨텐츠 -->
     <main id="chat-log-container" class="chat-log-container">
-        <!-- 자바스크립트가 여기에 채팅 말풍선을 동적으로 추가할 예정입니다. -->
+        <!-- 자바스크립트가 여기에 마크다운으로 변환된 채팅을 추가합니다. -->
     </main>
     
     <!-- 푸터 -->
@@ -40,18 +38,21 @@
         <p>© 2025. 삼이일. All rights reserved.</p>
     </footer>
 
-    <!-- 토스트 알림용 (에러 메시지 표시 등에 사용) -->
+    <!-- 토스트 알림용 -->
     <div id="toast-notification">
         <p class="toast-message"></p>
     </div>
 
-    <!-- Firebase SDK는 그대로 유지합니다. -->
+    <!-- 스크립트 (marked.js가 추가됩니다) -->
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
-    <script src="firebase-init.js"></script>
     
-    <!-- 이 페이지 전용 자바스크립트 파일을 불러옵니다. -->
+    <!-- ▼▼▼ 마크다운 변환을 위한 라이브러리를 추가합니다! ▼▼▼ -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <!-- ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲ -->
+
+    <script src="firebase-init.js"></script>
     <script src="js/chat-viewer.js"></script>
 </body>
 </html>
