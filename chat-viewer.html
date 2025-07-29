@@ -14,6 +14,20 @@
     <header class="main-header">
         <a href="#" id="back-to-list-btn" class="back-button">< 목록</a>
         <h1 id="viewer-title">채팅 기록</h1>
+        <div class="title-actions">
+        <!-- '더 보기' 메뉴 컨테이너 -->
+        <div class="dropdown-menu-container">
+            <!-- 점 3개 '더 보기' 버튼 -->
+            <button id="toggle-menu-btn" class="action-btn" title="더 보기">⋮</button>
+            
+            <!-- 클릭하면 나타날 드롭다운 메뉴 -->
+            <div id="dropdown-menu" class="dropdown-content" hidden>
+                <a href="#" id="dropdown-edit-btn">✏️ 수정</a>
+                <a href="#" id="dropdown-download-btn">💾 txt 저장</a>
+                <a href="#" id="dropdown-delete-btn" class="danger">🗑️ 삭제</a>
+            </div>
+        </div>
+    </div>
     </header>
 
     <!-- 메인 컨텐츠: 여기에 채팅 로그가 표시됩니다. -->
