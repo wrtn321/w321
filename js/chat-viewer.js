@@ -1,4 +1,4 @@
-// js/chat-viewer.js (기능 버튼이 추가된 최종 버전)
+// js/chat-viewer.js (마크다운 적용 및 메뉴 간소화 버전)
 
 document.addEventListener('DOMContentLoaded', () => {
     const auth = firebase.auth();
@@ -13,9 +13,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // =====================================================
     // 전역 변수 및 요소
     // =====================================================
-    let currentPost = null; // 현재 보고 있는 게시글 데이터를 저장할 변수
+    let currentPost = null;
 
-    // HTML 요소 가져오기
     const backToListBtn = document.getElementById('back-to-list-btn');
     const viewerTitle = document.getElementById('viewer-title');
     const chatLogContainer = document.getElementById('chat-log-container');
@@ -23,11 +22,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const toastMessage = toastNotification.querySelector('.toast-message');
     let toastTimer;
 
-    // 새로 추가된 드롭다운 메뉴 요소들
+    // 'txt 저장' 버튼 변수가 제거되었습니다.
     const toggleMenuBtn = document.getElementById('toggle-menu-btn');
     const dropdownMenu = document.getElementById('dropdown-menu');
     const dropdownEditBtn = document.getElementById('dropdown-edit-btn');
-    const dropdownDownloadBtn = document.getElementById('dropdown-download-btn');
     const dropdownDeleteBtn = document.getElementById('dropdown-delete-btn');
 
     // =====================================================
@@ -40,19 +38,7 @@ document.addEventListener('DOMContentLoaded', () => {
         toastTimer = setTimeout(() => { toastNotification.classList.remove('show'); }, 3000);
     };
 
-    function downloadTxtFile() {
-        const content = currentPost.content || '';
-        const filename = (currentPost.title.trim() || '제목없음') + '.txt';
-        const blob = new Blob([content], { type: 'text/plain;charset=utf-8;' });
-        const link = document.createElement("a");
-        const url = URL.createObjectURL(blob);
-        link.href = url;
-        link.download = filename;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-    }
+    // 'downloadTxtFile' 함수는 이제 필요 없으므로 삭제되었습니다.
 
     // =====================================================
     // 페이지 로드 시 실행될 메인 함수
@@ -71,7 +57,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        currentPost = JSON.parse(postDataString); // 변수에 데이터 저장
+        currentPost = JSON.parse(postDataString);
         viewerTitle.textContent = currentPost.title;
 
         try {
@@ -88,7 +74,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 } else if (message.role === 'assistant') {
                     bubble.classList.add('assistant-message');
                 }
-                bubble.textContent = message.content;
+                
+                // ★★★ 여기가 핵심 변경사항입니다 ★★★
+                // 일반 텍스트 대신, marked.parse()로 변환된 HTML을 삽입합니다.
+                bubble.innerHTML = marked.parse(message.content || '');
+
                 chatLogContainer.appendChild(bubble);
             });
         } catch (error) {
@@ -102,13 +92,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // 이벤트 리스너 연결
     // =====================================================
 
-    // 뒤로가기 버튼
     backToListBtn.addEventListener('click', (e) => {
         e.preventDefault();
         window.location.replace(backToListBtn.href);
     });
     
-    // 드롭다운 메뉴 토글
     toggleMenuBtn.addEventListener('click', () => {
         dropdownMenu.hidden = !dropdownMenu.hidden;
     });
@@ -119,21 +107,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // '수정' 버튼 클릭 시: post.html로 이동
     dropdownEditBtn.addEventListener('click', (e) => {
         e.preventDefault();
-        // 로컬 스토리지에 데이터가 이미 있으므로, 그냥 에디터 페이지로 보내기만 하면 됩니다.
         window.location.href = 'post.html'; 
     });
 
-    // 'txt 저장' 버튼
-    dropdownDownloadBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        downloadTxtFile();
-        dropdownMenu.hidden = true;
-    });
+    // 'txt 저장' 버튼 리스너는 삭제되었습니다.
 
-    // '삭제' 버튼
     dropdownDeleteBtn.addEventListener('click', async (e) => {
         e.preventDefault();
         dropdownMenu.hidden = true;
@@ -144,7 +124,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 await db.collection('posts').doc(currentPost.id).delete();
                 localStorage.removeItem('currentPost');
                 localStorage.removeItem('currentCategory');
-                window.location.replace(backToListBtn.href); // 목록으로 이동
+                window.location.replace(backToListBtn.href);
             } catch (error) {
                 console.error("삭제 실패:", error);
                 showToast('삭제에 실패했습니다.');
