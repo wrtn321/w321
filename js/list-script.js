@@ -224,13 +224,22 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
     }
-    function handleFileClick(liElement) { /* ... 기존 코드 ... */
-        const post = posts.find(p => p.id === liElement.dataset.id);
-        if (post) {
-            localStorage.setItem('currentPost', JSON.stringify(post));
-            localStorage.setItem('currentCategory', currentCategory);
+    function handleFileClick(liElement) {
+    const post = posts.find(p => p.id === liElement.dataset.id);
+    if (post) {
+        // 로컬 스토리지에 데이터를 저장하는 것은 동일합니다.
+        localStorage.setItem('currentPost', JSON.stringify(post));
+        localStorage.setItem('currentCategory', currentCategory);
+
+        // ★★★ 여기가 핵심 변경사항 ★★★
+        // 현재 카테고리가 'chat'이면 chat-viewer.html로,
+        // 그 외에는 기존처럼 post.html로 이동합니다.
+        if (currentCategory === 'chat') {
+            window.location.href = 'chat-viewer.html';
+        } else {
             window.location.href = 'post.html';
         }
+    }
     }
     async function deleteFolder(folderId) { /* ... 기존 코드 ... */
         const user = auth.currentUser;
