@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0, minimum-scale=1.0">
+    <title>채팅 뷰어</title>
+    <!-- 기본 스타일과, 새로 만들 채팅 뷰어 전용 스타일을 모두 불러옵니다. -->
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/chat-viewer-style.css">
+</head>
+<body class="sticky-footer-layout">
+
+    <!-- 헤더 -->
+    <header class="main-header">
+        <a href="#" id="back-to-list-btn" class="back-button">< 목록</a>
+        <h1 id="viewer-title">채팅 기록</h1>
+    </header>
+
+    <!-- 메인 컨텐츠: 여기에 채팅 로그가 표시됩니다. -->
+    <main id="chat-log-container" class="chat-log-container">
+        <!-- 자바스크립트가 여기에 채팅 말풍선을 동적으로 추가할 예정입니다. -->
+    </main>
+    
+    <!-- 푸터 -->
+    <footer class="site-footer">
+        <p>© 2025. 삼이일. All rights reserved.</p>
+    </footer>
+
+    <!-- 토스트 알림용 (에러 메시지 표시 등에 사용) -->
+    <div id="toast-notification">
+        <p class="toast-message"></p>
+    </div>
+
+    <!-- Firebase SDK는 그대로 유지합니다. -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="firebase-init.js"></script>
+    
+    <!-- 이 페이지 전용 자바스크립트 파일을 불러옵니다. -->
+    <script src="js/chat-viewer.js"></script>
+</body>
+</html>
