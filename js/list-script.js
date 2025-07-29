@@ -44,10 +44,15 @@ document.addEventListener('DOMContentLoaded', () => {
         if (categoryParam && categoryNames[categoryParam]) {
             currentCategory = categoryParam;
             listTitle.textContent = categoryNames[currentCategory];
+        if (currentCategory === 'chat') {
+            newPostBtn.textContent = '+ JSON 불러오기';
         } else {
-            alert('잘못된 접근입니다.');
-            window.location.href = 'main.html';
+            newPostBtn.textContent = '+📝';
         }
+    } else {
+        alert('잘못된 접근입니다.');
+        window.location.href = 'main.html';
+    }
     }
 
     async function fetchPosts(userId) {
