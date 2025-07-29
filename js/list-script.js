@@ -132,21 +132,24 @@ document.addEventListener('DOMContentLoaded', () => {
     // ★★★ 핵심 수정 부분 1: 이벤트 리스너 변경 ★★★
     // ===============================================
     function addEventListeners() {
-        logoutButton.addEventListener('click', e => {
-            e.preventDefault();
-            auth.signOut().then(() => window.location.href = 'index.html');
-        });
+    logoutButton.addEventListener('click', e => {
+        e.preventDefault();
+        auth.signOut().then(() => window.location.href = 'index.html');
+    });
 
-        // 새 폴더 버튼은 기존과 동일
-        newFolderBtn.addEventListener('click', () => handleNewItem('folder'));
-        
-        // ▼▼▼ 새 파일 버튼의 동작을 변경합니다! ▼▼▼
-        newPostBtn.addEventListener('click', () => {
-            // 이제 prompt를 띄우거나 handleNewItem을 호출하지 않습니다.
-            // 바로 post.html 페이지로, 현재 카테고리 정보와 '새 글'이라는 표시를 함께 넘겨줍니다.
+    newFolderBtn.addEventListener('click', () => handleNewItem('folder'));
+    
+    // ▼▼▼ 새 파일 버튼의 이벤트 리스너를 수정합니다. ▼▼▼
+    newPostBtn.addEventListener('click', () => {
+        // 현재 카테고리가 'chat'일 경우와 아닐 경우를 나눕니다.
+        if (currentCategory === 'chat') {
+            // 'JSON 불러오기' 버튼을 클릭한 경우
+            handleJsonUpload();
+        } else {
+            // 기존의 '새 글 작성' 버튼을 클릭한 경우
             window.location.href = `post.html?category=${currentCategory}&new=true`;
-        });
-        // ▲▲▲ 여기까지가 새 파일 버튼의 새로운 기능입니다. ▲▲▲
+        }
+    });
         
         normalItemList.addEventListener('click', e => {
             const wrapper = e.target.closest('.item-content-wrapper');
