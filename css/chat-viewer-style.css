@@ -16,7 +16,7 @@
 .message-bubble {
     padding: 24px 16px;
     border-radius: 18px;
-    max-width: 90%;
+    max-width: 100%;
     line-height: 1.6;
     white-space: pre-wrap; 
     word-wrap: break-word; 
