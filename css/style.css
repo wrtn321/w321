@@ -298,7 +298,46 @@ body.sticky-footer-layout main {
     background-color: var(--accent-hover-color);
 }
 
+/* =======================================
+   맨 위로 가기 버튼 스타일
+   ======================================= */
+#scroll-to-top-btn {
+    position: fixed; /* 화면에 고정 */
+    bottom: 20px;    /* 화면 아래에서 20px 위 */
+    right: 20px;     /* 화면 오른쪽에서 20px 왼쪽 */
+    z-index: 999;    /* 다른 모든 요소들 위에 보이도록 */
 
+    /* 모양 */
+    width: 45px;
+    height: 45px;
+    border-radius: 50%; /* 완벽한 원 모양 */
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    cursor: pointer;
+
+    /* 아이콘 스타일 */
+    font-size: 24px;
+    font-weight: bold;
+    line-height: 45px; /* 아이콘을 수직 중앙에 오게 함 */
+    text-align: center;
+
+    /* ★★★ 핵심: 보이고 숨겨질 때의 애니메이션과 투명도 ★★★ */
+    opacity: 0; /* 평소에는 완전히 투명 (안 보임) */
+    visibility: hidden; /* 스크린 리더 등에서도 인식 안 되게 함 */
+    transition: opacity 0.3s, visibility 0.3s; /* 부드럽게 나타나고 사라지게 */
+}
+
+/* 자바스크립트가 .show 클래스를 추가하면 이 스타일이 적용됨 */
+#scroll-to-top-btn.show {
+    opacity: 0.7; /* 살짝 투명하게 보이도록 */
+    visibility: visible;
+}
+
+/* 마우스를 올리면 더 진하게 보이도록 */
+#scroll-to-top-btn:hover {
+    opacity: 1;
+}
 
 /*미디어쿼리*/
 
