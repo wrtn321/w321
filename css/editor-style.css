@@ -194,7 +194,7 @@ body.sticky-footer-layout > .main-header a {
     color: var(--text-secondary-color);
     border: 2px solid var(--background-color);
     border-left: 0.25em solid var(--border-color);
-    background-color: #e3f6ff;
+    background-color: #E6F2FFf;
 }
 
 .view-content pre {
