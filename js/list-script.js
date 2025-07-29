@@ -325,4 +325,79 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+
+    /**
+ * 사용자가 JSON 파일을 선택하도록 하는 숨겨진 input 요소를 다루는 함수
+ */
+function handleJsonUpload() {
+    // 1. 눈에 보이지 않는 파일 선택 input 요소를 동적으로 만듭니다.
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json'; // json 파일만 선택할 수 있도록 제한
+
+    // 2. 파일이 선택되면 실행될 로직을 정의합니다.
+    input.onchange = e => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            // 파일 읽기가 성공하면, 파일 이름과 내용을 다음 함수로 넘겨줍니다.
+            const fileContent = event.target.result;
+            // .json 확장자를 제외한 파일 이름을 제목으로 사용합니다.
+            const title = file.name.replace(/\.json$/, ''); 
+            createPostFromJson(title, fileContent);
+        };
+        reader.onerror = () => {
+            showToast('파일을 읽는 데 실패했습니다.');
+        };
+        reader.readAsText(file); // 파일을 텍스트로 읽기 시작
+    };
+
+    // 3. 동적으로 만든 input 요소를 강제로 클릭하여 파일 선택 창을 엽니다.
+    input.click();
+}
+
+/**
+ * 읽어들인 JSON 내용으로 새 게시물을 Firestore에 생성하는 함수
+ * @param {string} title - 파일 이름에서 추출한 제목
+ * @param {string} content - 파일의 전체 내용 (JSON 텍스트)
+ */
+async function createPostFromJson(title, content) {
+    const user = auth.currentUser;
+    if (!user) return;
+
+    // JSON 형식이 올바른지 간단하게 확인합니다.
+    try {
+        JSON.parse(content);
+    } catch (error) {
+        alert('올바른 JSON 파일이 아닙니다. 파일 내용을 확인해주세요.');
+        return;
+    }
+
+    try {
+        // 마지막 순서를 찾아서 그 다음에 새 글을 추가합니다.
+        const maxOrder = posts.length > 0 ? Math.max(...posts.map(p => p.order || 0)) : -1;
+        const newOrder = maxOrder + 1;
+
+        await postsCollection.add({
+            type: 'post',
+            title: title,
+            content: content,
+            category: currentCategory,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+            userId: user.uid,
+            order: newOrder,
+            parentId: 'root'
+        });
+
+        showToast(`'${title}' 파일이 추가되었습니다.`);
+        await fetchPosts(user.uid); // 목록을 다시 불러와서
+        renderList(); // 화면을 새로 그립니다.
+
+    } catch (error) {
+        console.error("JSON 파일로 게시글 생성 실패:", error);
+        showToast('게시글 생성에 실패했습니다.');
+    }
+}
 });
