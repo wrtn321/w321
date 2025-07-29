@@ -1,41 +1,190 @@
-/* css/chat-viewer-style.css */
+/* =======================================
+   채팅 뷰어 기본 레이아웃
+   ======================================= */
 
 /* 채팅 로그 전체를 감싸는 컨테이너 */
 .chat-log-container {
-    display: flex; /* 말풍선을 세로로 쌓기 위한 flex 설정 */
-    flex-direction: column; /* 세로 방향으로 정렬 */
-    gap: 12px; /* 말풍선 사이의 간격 */
-    padding: 20px 15px; /* 컨테이너의 안쪽 여백 */
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 20px 15px;
     max-width: 800px;
-    margin: 0 auto; /* 중앙 정렬 */
+    margin: 0 auto;
 }
 
 /* 모든 말풍선의 공통 스타일 */
 .message-bubble {
     padding: 12px 16px;
-    border-radius: 18px; /* 말풍선을 둥글게 만듭니다. */
-    max-width: 75%; /* 말풍선이 너무 길어지지 않게 합니다. */
+    border-radius: 18px;
+    max-width: 75%;
     line-height: 1.6;
-    
-    /* ★★★ 핵심: JSON 안의 줄바꿈(\n)과 공백을 그대로 표시하게 합니다. */
     white-space: pre-wrap; 
-    /* 긴 단어가 있어도 자동으로 줄바꿈 처리합니다. */
     word-wrap: break-word; 
 }
 
 /* 'user' 역할의 말풍선 스타일 */
 .user-message {
-    align-self: flex-end; /* 오른쪽으로 정렬 */
-    background-color: var(--primary-color); /* 기존 테마의 파란색 계열 사용 */
+    align-self: flex-end;
+    background-color: var(--primary-color);
     color: var(--text-primary-color);
-    border-bottom-right-radius: 4px; /* 오른쪽 아래 모서리만 살짝 각지게 해서 꼬리처럼 보이게 */
+    border-bottom-right-radius: 4px;
 }
 
 /* 'assistant' 역할의 말풍선 스타일 */
 .assistant-message {
-    align-self: flex-start; /* 왼쪽으로 정렬 */
-    background-color: var(--surface-color); /* 흰색 배경 */
-    border: 1px solid var(--border-color); /* 얇은 테두리 */
+    align-self: flex-start;
+    background-color: var(--surface-color);
+    border: 1px solid var(--border-color);
     color: var(--text-primary-color);
-    border-bottom-left-radius: 4px; /* 왼쪽 아래 모서리만 살짝 각지게 */
+    border-bottom-left-radius: 4px;
+}
+
+/* =======================================
+   ★ 토글 버튼 및 드롭다운 메뉴 스타일 (추가 및 완성) ★
+   ======================================= */
+
+/* 헤더 오른쪽의 액션 버튼들을 담는 컨테이너 (post.html과 동일한 구조) */
+.title-actions {
+    display: flex;
+    gap: 8px;
+}
+
+/* 모든 아이콘 버튼의 공통 스타일 (토글 버튼 포함) */
+.action-btn {
+    padding: 8px;
+    background-color: transparent;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    font-size: 24px; /* 아이콘 크기 (점 세 개가 잘 보이도록) */
+    line-height: 1;  /* 수직 중앙 정렬 */
+    color: var(--text-primary-color); /* 헤더의 다른 글자와 색상 통일 */
+}
+
+/* 아이콘 버튼에 마우스를 올렸을 때 (헤더가 밝은 색이므로 어둡게) */
+.action-btn:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+/* 메뉴 전체를 감싸는 컨테이너 */
+.dropdown-menu-container {
+    position: relative;
+    display: inline-block;
+}
+
+/* 실제로 나타나는 드롭다운 메뉴의 스타일 */
+.dropdown-content {
+    position: absolute;
+    right: 0;
+    background-color: var(--surface-color);
+    min-width: 120px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.1);
+    z-index: 1;
+    overflow: hidden;
+}
+
+/* 드롭다운 메뉴 안의 각 항목 (수정, 삭제 링크) */
+.dropdown-content a {
+    color: var(--text-primary-color);
+    padding: 12px 16px;
+    text-decoration: none;
+    display: block;
+    font-size: 15px;
+    transition: background-color 0.2s;
+}
+
+.dropdown-content a:hover {
+    background-color: var(--background-color);
+}
+
+.dropdown-content a.danger:hover {
+    background-color: #ffdddd;
+    color: #d32f2f;
+}
+
+
+/* =======================================
+   ★ 마크다운 렌더링 결과물 스타일 (기존과 동일) ★
+   ======================================= */
+
+/* 말풍선 안의 이미지 */
+.message-bubble img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin: 12px auto;
+    border-radius: 8px;
+
+/* 말풍선 안의 제목 태그들 */
+.message-bubble h1,
+.message-bubble h2,
+.message-bubble h3,
+.message-bubble h4,
+.message-bubble h5,
+.message-bubble h6 {
+    margin-top: 1em;
+    margin-bottom: 0.5em;
+    line-height: 1.2;
+}
+.message-bubble h1 { font-size: 1.5em; }
+.message-bubble h2 { font-size: 1.3em; }
+.message-bubble h3 { font-size: 1.1em; }
+
+/* 말풍선 안의 목록 (ul, ol) */
+.message-bubble ul,
+.message-bubble ol{
+    display: flex;
+    flex-direction: column;
+    padding-left: 20px; /* 목록 들여쓰기 */
+    margin: 0.5em 0;
+}
+
+/* 말풍선 안의 기울임 텍스트 (*italic*) - 살짝 회색으로 */
+.message-bubble em {
+    font-style: normal;
+    color: #555;
+}
+
+/* 말풍선 안의 인용구 (> quote) */
+.message-bubble blockquote {
+    margin: 1em 0;
+    padding: 2px 1em; /* 패딩을 살짝 줄여서 말풍선과 어울리게 */
+    color: var(--text-secondary-color);
+    border-left: 0.25em solid var(--border-color);
+    background-color: rgba(0, 0, 0, 0.03); /* 배경을 살짝만 어둡게 */
+}
+/* user 말풍선 안의 인용구는 다른 색으로 */
+.user-message blockquote {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+
+/* 말풍선 안의 코드 블록 (```code```) */
+.message-bubble pre {
+    background-color: #2d2d2d; /* 어두운 배경 */
+    color: #f1f1f1;    /* 밝은 글씨 */
+    border-radius: 6px;
+    padding: 16px;
+    margin: 1em 0;
+    white-space: pre-wrap;    
+    overflow-x: auto; /* 코드가 길면 가로 스크롤 생성 */
+}
+
+.message-bubble pre code {
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
+    font-size: 90%; /* 코드 폰트 크기 살짝 줄이기 */
+    background-color: transparent;
+    padding: 0;
+}
+
+/* 말풍선 안의 수평선 (---) */
+.message-bubble hr {
+    height: 0.25em;
+    padding: 0;
+    margin: 24px 0;
+    background-color: var(--border-color);
+    border: 0;
 }
