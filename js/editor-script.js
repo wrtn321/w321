@@ -4,7 +4,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const auth = firebase.auth();
     const db = firebase.firestore();
 
-    // 페이지 보호
     auth.onAuthStateChanged(user => {
         if (!user) {
             window.location.href = 'index.html';
@@ -12,34 +11,34 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // =====================================================
-    // 전역 변수 및 요소
+    // 전역 변수 및 요소 (새로운 구조에 맞게 수정됨)
     // =====================================================
-    let currentPost = null; // 게시글 데이터 전체를 저장할 변수
+    let currentPost = null;
+    const mainHeader = document.querySelector('.main-header');
     const backToListBtn = document.getElementById('back-to-list-btn');
 
-    // 모드 컨테이너
-    const viewModeElements = document.getElementById('view-mode-elements');
-    const editModeElements = document.getElementById('edit-mode-elements');
+    // 모드 컨테이너 (Header와 Content로 분리)
+    const viewModeHeader = document.getElementById('view-mode-elements-header');
+    const editModeHeader = document.getElementById('edit-mode-elements-header');
+    const viewModeContent = document.getElementById('view-mode-elements-content');
+    const editModeContent = document.getElementById('edit-mode-elements-content');
 
     // 읽기 모드 요소
-    const viewTitle = viewModeElements.querySelector('.view-title');
-    const viewContent = viewModeElements.querySelector('.view-content');
-    const viewCopyBtn = document.getElementById('view-copy-btn');
-    
-    // 드롭다운 메뉴 관련 요소들 ▼▼▼
+    const viewTitle = viewModeHeader.querySelector('.view-title');
+    const viewContent = viewModeContent.querySelector('.view-content');
+    const viewCopyBtn = document.getElementById('view-copy-btn'); // 위치가 바뀜
     const toggleMenuBtn = document.getElementById('toggle-menu-btn');
     const dropdownMenu = document.getElementById('dropdown-menu');
     const dropdownEditBtn = document.getElementById('dropdown-edit-btn');
-    const dropdownDeleteBtn = document.getElementById('dropdown-delete-btn');
     const dropdownDownloadBtn = document.getElementById('dropdown-download-btn');
-    
+    const dropdownDeleteBtn = document.getElementById('dropdown-delete-btn');
 
     // 수정 모드 요소
-    const titleInput = editModeElements.querySelector('.title-input');
-    const contentTextarea = editModeElements.querySelector('.content-textarea');
+    const titleInput = editModeHeader.querySelector('.title-input');
+    const contentTextarea = editModeContent.querySelector('.content-textarea');
     const editSaveBtn = document.getElementById('edit-save-btn');
     const editCancelBtn = document.getElementById('edit-cancel-btn');
-    const charCounter = document.getElementById('char-counter');
+    const charCounter = editModeContent.querySelector('#char-counter');
 
     // 토스트 알림 관련 요소
     const toastNotification = document.getElementById('toast-notification');
@@ -47,21 +46,53 @@ document.addEventListener('DOMContentLoaded', () => {
     let toastTimer;
 
     // =====================================================
-    // 기능 함수들 (이 부분은 수정되지 않았습니다)
+    // ★★★ 스크롤 감지 및 헤더 제어 로직 (새로 추가) ★★★
     // =====================================================
+    let lastScrollY = window.scrollY; // 마지막 스크롤 위치 저장
 
-    // 모드 전환 함수
+    window.addEventListener('scroll', () => {
+        const currentScrollY = window.scrollY;
+
+        // 스크롤을 10px 이상 했을 때만 반응하도록 하여 작은 움직임 무시
+        if (Math.abs(currentScrollY - lastScrollY) > 10) {
+            if (currentScrollY > lastScrollY && currentScrollY > 50) {
+                // 아래로 스크롤하면 헤더 숨기기
+                mainHeader.classList.add('header-hidden');
+            } else {
+                // 위로 스크롤하면 헤더 보이기
+                mainHeader.classList.remove('header-hidden');
+            }
+        }
+        lastScrollY = currentScrollY; // 마지막 위치 업데이트
+    });
+
+
+    // =====================================================
+    // 기능 함수들 (모드 전환 함수 수정)
+    // =====================================================
     const toggleMode = (mode) => {
         if (mode === 'edit') {
-            viewModeElements.hidden = true;
-            editModeElements.hidden = false;
+            // 수정 모드 요소 보이기
+            viewModeHeader.hidden = true;
+            editModeHeader.hidden = false;
+            viewModeContent.hidden = true;
+            editModeContent.hidden = false;
+            // 읽기 모드 전용 버튼 숨기기
+            viewCopyBtn.hidden = true;
+
+            // 데이터 채우기
             titleInput.value = currentPost.title;
             contentTextarea.value = currentPost.content;
             updateCharCount();
             autoResizeTextarea();
-        } else {
-            viewModeElements.hidden = false;
-            editModeElements.hidden = true;
+        } else { // 'view' 모드
+            // 읽기 모드 요소 보이기
+            viewModeHeader.hidden = false;
+            editModeHeader.hidden = true;
+            viewModeContent.hidden = false;
+            editModeContent.hidden = true;
+            // 읽기 모드 전용 버튼 보이기
+            viewCopyBtn.hidden = false;
         }
     };
     
