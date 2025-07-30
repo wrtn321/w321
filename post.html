@@ -1,3 +1,4 @@
+<!-- post.html (UI 개편을 위해 구조가 변경된 최종 버전) -->
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -9,66 +10,56 @@
 </head>
 <body class="sticky-footer-layout">
 
-    <!-- 헤더는 목록으로 돌아가는 기능에만 집중 -->
+    <!-- 헤더: 이제 '뒤로가기', '제목', '토글'만 남습니다. -->
     <header class="main-header">
         <a href="list.html" id="back-to-list-btn" class="back-button"><</a>
-        <!-- 제목과 버튼들은 메인 컨테이너로 이동 -->
-    </header>
-
-    <!-- 메인 에디터 컨테이너 -->
-    <main class="editor-container">
-
-        <!-- ======================================= -->
-        <!-- 읽기 모드 (View Mode) 에서 보일 요소들   -->
-        <!-- ======================================= -->
-        <div id="view-mode-elements">
-            <!-- 제목 (읽기 전용) -->
+        
+        <!-- 읽기 모드의 제목과 토글 메뉴 (복사 버튼은 여기서 삭제됨) -->
+        <div id="view-mode-elements-header">
             <div class="title-section">
                 <h2 class="view-title">제목이 로드됩니다...</h2>
-                 <div class="title-actions">
-            
-            <!-- 복사 버튼 -->
-            <button id="view-copy-btn" class="action-btn" title="본문 복사">📋</button>
-                     
-            <!-- '수정'과 '삭제'를 담을 드롭다운 메뉴 컨테이너입니다. -->
-            <div class="dropdown-menu-container">
-                
-                <!-- 점 3개 '더 보기' 버튼 -->
-                <button id="toggle-menu-btn" class="action-btn" title="더 보기">⋮</button>
-                
-                <!-- 클릭하면 나타날 드롭다운 메뉴 (평소엔 숨겨져 있음) -->
-                <div id="dropdown-menu" class="dropdown-content" hidden>
-                    <a href="#" id="dropdown-edit-btn">✏️ 수정</a>
-                    <a href="#" id="dropdown-delete-btn" class="danger">🗑️ 삭제</a>
-                    <a href="#" id="dropdown-download-btn" class="textdown">txt 저장</a>
+                <div class="title-actions">
+                    <div class="dropdown-menu-container">
+                        <button id="toggle-menu-btn" class="action-btn" title="더 보기">⋮</button>
+                        <div id="dropdown-menu" class="dropdown-content" hidden>
+                            <a href="#" id="dropdown-edit-btn">✏️ 수정</a>
+                            <a href="#" id="dropdown-download-btn">💾 txt 저장</a>
+                            <a href="#" id="dropdown-delete-btn" class="danger">🗑️ 삭제</a>
+                        </div>
+                    </div>
                 </div>
-            </div>
-                     
-        </div>
-            </div>
-            <!-- 본문 (읽기 전용) -->
-            <div class="content-section">
-                <div class="view-content"></div>
             </div>
         </div>
 
-        <!-- ======================================= -->
-        <!-- 수정 모드 (Edit Mode) 에서 보일 요소들   -->
-        <!-- ======================================= -->
-        <div id="edit-mode-elements" hidden> <!-- 처음엔 숨겨둠 -->
-             <!-- 제목 (입력창) -->
-            <div class="title-section">
+        <!-- 수정 모드의 제목과 버튼 (기존과 동일) -->
+        <div id="edit-mode-elements-header" hidden>
+             <div class="title-section">
                 <input type="text" class="title-input" placeholder="제목을 입력하세요">
                 <div class="title-actions">
                     <button id="edit-save-btn" class="action-btn" title="저장">💾</button>
                     <button id="edit-cancel-btn" class="action-btn" title="취소">❌</button>
                 </div>
             </div>
-            <!-- 본문 (입력창) -->
+        </div>
+    </header>
+
+    <!-- 메인 에디터 컨테이너 -->
+    <main class="editor-container">
+        <!-- ▼▼▼ 복사 버튼이 이리로 이동했습니다! ▼▼▼ -->
+        <button id="view-copy-btn" class="action-btn floating-copy-btn" title="전체 복사" hidden>📋</button>
+        
+        <!-- 읽기 모드 본문 (제목 부분은 헤더로 이동) -->
+        <div id="view-mode-elements-content">
+            <div class="content-section">
+                <div class="view-content"></div>
+            </div>
+        </div>
+
+        <!-- 수정 모드 본문 (제목 부분은 헤더로 이동) -->
+        <div id="edit-mode-elements-content" hidden>
             <div class="content-section">
                 <textarea class="content-textarea" placeholder="내용을 입력하세요..."></textarea>
             </div>
-            <!-- 글자수 세기 -->
             <div class="editor-info">
                 <span id="char-counter">0</span>
             </div>
@@ -79,11 +70,10 @@
         <p>© 2025. 삼이일. All rights reserved.</p>
     </footer>
 
-    <div id="toast-notification">
-        <p class="toast-message"></p>
-    </div>
+    <!-- 알림 및 스크립트 태그들 -->
+    <div id="toast-notification"><p class="toast-message"></p></div>
     <button id="scroll-to-top-btn" title="맨 위로 가기">↑</button>
-    <!-- Firebase SDK 등 스크립트 태그들은 그대로 유지 -->
+
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
