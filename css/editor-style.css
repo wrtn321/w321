@@ -32,6 +32,7 @@ body.sticky-footer-layout > .main-header a {
 .editor-container {
     max-width: 800px;
     width: 100%;
+    margin: 20px auto;
     padding: 0 15px;
 }
 
