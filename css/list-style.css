@@ -176,7 +176,7 @@
 
 
 /* 폴더 삭제 버튼 */
-.delete-folder-btn {
+.edit-folder-btn, .delete-folder-btn {
     background: none;
     border: none;
     cursor: pointer;
@@ -190,6 +190,7 @@
 }
 
 /* 아이템에 마우스 올리면 버튼 보임 */
+.item-content-wrapper:hover .edit-folder-btn,
 .item-content-wrapper:hover .delete-folder-btn {
     visibility: visible;
     opacity: 1;
