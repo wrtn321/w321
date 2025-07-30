@@ -109,7 +109,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     dropdownEditBtn.addEventListener('click', (e) => {
         e.preventDefault();
-        window.location.href = 'post.html'; 
+       window.location.href = 'post.html?editMode=chat'; 
     });
 
     // 'txt 저장' 버튼 리스너는 삭제되었습니다.
