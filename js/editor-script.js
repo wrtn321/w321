@@ -26,7 +26,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // 읽기 모드 요소
     const viewTitle = viewModeHeader.querySelector('.view-title');
     const viewContent = viewModeContent.querySelector('.view-content');
-    const viewCopyBtn = document.getElementById('view-copy-btn'); // 위치가 바뀜
+    const viewCopyBtn = document.getElementById('view-copy-btn');
+    const viewModeActions = document.getElementById('view-mode-actions');
     const toggleMenuBtn = document.getElementById('toggle-menu-btn');
     const dropdownMenu = document.getElementById('dropdown-menu');
     const dropdownEditBtn = document.getElementById('dropdown-edit-btn');
@@ -36,8 +37,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // 수정 모드 요소
     const titleInput = editModeHeader.querySelector('.title-input');
     const contentTextarea = editModeContent.querySelector('.content-textarea');
-    const editSaveBtn = document.getElementById('edit-save-btn');
-    const editCancelBtn = document.getElementById('edit-cancel-btn');
+    const editModeActions = document.getElementById('edit-mode-actions');
     const charCounter = editModeContent.querySelector('#char-counter');
 
     // 토스트 알림 관련 요소
@@ -45,58 +45,44 @@ document.addEventListener('DOMContentLoaded', () => {
     const toastMessage = toastNotification.querySelector('.toast-message');
     let toastTimer;
 
-    // =====================================================
-    // ★★★ 스크롤 감지 및 헤더 제어 로직 (새로 추가) ★★★
-    // =====================================================
-
-    let lastScrollY = window.scrollY;
-
-    window.addEventListener('scroll', () => {
-    const currentScrollY = window.scrollY;
-
-    // F12 개발자 도구 콘솔에서 이 값이 잘 찍히는지 확인해보세요.
-    console.log(`Scroll: lastY=${lastScrollY}, currentY=${currentScrollY}`);
-
-    if (Math.abs(currentScrollY - lastScrollY) > 10) {
-        if (currentScrollY > lastScrollY && currentScrollY > 50) {
-            mainHeader.classList.add('header-hidden');
-            console.log("Header hidden"); // 숨김 처리 되었는지 확인
-        } else {
-            mainHeader.classList.remove('header-hidden');
-            console.log("Header shown"); // 보임 처리 되었는지 확인
-        }
-    }
-    lastScrollY = currentScrollY;
-    });
-
 
     // =====================================================
     // 기능 함수들 (모드 전환 함수 수정)
     // =====================================================
     const toggleMode = (mode) => {
-        if (mode === 'edit') {
-            // 수정 모드 요소 보이기
-            viewModeHeader.hidden = true;
-            editModeHeader.hidden = false;
-            viewModeContent.hidden = true;
-            editModeContent.hidden = false;
-            // 읽기 모드 전용 버튼 숨기기
-            viewCopyBtn.hidden = true;
+    if (mode === 'edit') {
+        // 수정 모드 요소 보이기
+        viewModeHeader.hidden = true;
+        editModeHeader.hidden = false;
+        viewModeContent.hidden = true;
+        editModeContent.hidden = false;
+        
+        // 버튼 그룹 제어 (★★ 핵심 수정 부분)
+        viewModeActions.hidden = true;
+        editModeActions.hidden = false;
 
-            // 데이터 채우기
-            titleInput.value = currentPost.title;
-            contentTextarea.value = currentPost.content;
-            updateCharCount();
-            autoResizeTextarea();
-        } else { // 'view' 모드
-            // 읽기 모드 요소 보이기
-            viewModeHeader.hidden = false;
-            editModeHeader.hidden = true;
-            viewModeContent.hidden = false;
-            editModeContent.hidden = true;
-            // 읽기 모드 전용 버튼 보이기
-            viewCopyBtn.hidden = false;
-        }
+        // 읽기 모드 전용 버튼 숨기기
+        viewCopyBtn.hidden = true;
+
+        // 데이터 채우기
+        titleInput.value = currentPost.title;
+        contentTextarea.value = currentPost.content;
+        updateCharCount();
+        autoResizeTextarea();
+    } else { // 'view' 모드
+        // 읽기 모드 요소 보이기
+        viewModeHeader.hidden = false;
+        editModeHeader.hidden = true;
+        viewModeContent.hidden = false;
+        editModeContent.hidden = true;
+
+        // 버튼 그룹 제어 (★★ 핵심 수정 부분)
+        viewModeActions.hidden = false;
+        editModeActions.hidden = true;
+
+        // 읽기 모드 전용 버튼 보이기
+        viewCopyBtn.hidden = false;
+    }
     };
     
     const updateCharCount = () => { charCounter.textContent = contentTextarea.value.length; };
