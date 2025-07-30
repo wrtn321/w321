@@ -10,38 +10,42 @@
 </head>
 <body class="sticky-footer-layout">
 
-    <!-- 헤더: 이제 '뒤로가기', '제목', '토글'만 남습니다. -->
     <header class="main-header">
-        <a href="list.html" id="back-to-list-btn" class="back-button"><</a>
-        
-        <!-- 읽기 모드의 제목과 토글 메뉴 (복사 버튼은 여기서 삭제됨) -->
+    <!-- 1단: 뒤로가기 버튼 -->
+    <a href="list.html" id="back-to-list-btn" class="back-button"><</a>
+    
+    <!-- 2단: 중앙 제목 (새로 추가된 div) -->
+    <div class="header-center">
+        <!-- 읽기 모드 제목 -->
         <div id="view-mode-elements-header">
-            <div class="title-section">
-                <h2 class="view-title">제목이 로드됩니다...</h2>
-                <div class="title-actions">
-                    <div class="dropdown-menu-container">
-                        <button id="toggle-menu-btn" class="action-btn" title="더 보기">⋮</button>
-                        <div id="dropdown-menu" class="dropdown-content" hidden>
-                            <a href="#" id="dropdown-edit-btn">✏️ 수정</a>
-                            <a href="#" id="dropdown-download-btn">💾 txt 저장</a>
-                            <a href="#" id="dropdown-delete-btn" class="danger">🗑️ 삭제</a>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <h2 class="view-title">제목이 로드됩니다...</h2>
         </div>
-
-        <!-- 수정 모드의 제목과 버튼 (기존과 동일) -->
+        <!-- 수정 모드 제목 -->
         <div id="edit-mode-elements-header" hidden>
-             <div class="title-section">
-                <input type="text" class="title-input" placeholder="제목을 입력하세요">
-                <div class="title-actions">
-                    <button id="edit-save-btn" class="action-btn" title="저장">💾</button>
-                    <button id="edit-cancel-btn" class="action-btn" title="취소">❌</button>
+             <input type="text" class="title-input" placeholder="제목을 입력하세요">
+        </div>
+    </div>
+
+    <!-- 3단: 오른쪽 액션 버튼 (기존 title-actions와 title-section을 합침) -->
+    <div class="header-right">
+        <!-- 읽기 모드 토글 메뉴 -->
+        <div id="view-mode-actions">
+            <div class="dropdown-menu-container">
+                <button id="toggle-menu-btn" class="action-btn" title="더 보기">⋮</button>
+                <div id="dropdown-menu" class="dropdown-content" hidden>
+                    <a href="#" id="dropdown-edit-btn">✏️ 수정</a>
+                    <a href="#" id="dropdown-download-btn">💾 txt 저장</a>
+                    <a href="#" id="dropdown-delete-btn" class="danger">🗑️ 삭제</a>
                 </div>
             </div>
         </div>
-    </header>
+        <!-- 수정 모드 저장/취소 버튼 -->
+        <div id="edit-mode-actions" hidden>
+            <button id="edit-save-btn" class="action-btn" title="저장">💾</button>
+            <button id="edit-cancel-btn" class="action-btn" title="취소">❌</button>
+        </div>
+    </div>
+</header>
 
     <!-- 메인 에디터 컨테이너 -->
     <main class="editor-container">
