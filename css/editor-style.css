@@ -1,8 +1,9 @@
 /* editor-style.css */
 
 body.sticky-footer-layout > .main-header {
+    display: flex;
     justify-content: space-between; /* 양쪽 정렬 유지 */
-    align-items: center;
+    align-items: flex-start;
     background-color: transparent; /* 배경색을 없애서 본문과 어우러지게 */
     border-bottom: 1px solid var(--border-color); /* 구분선 추가 */
     padding: 10px 15px; /* editor-container의 padding과 동일하게 맞춤! */
@@ -20,10 +21,6 @@ body.sticky-footer-layout > .main-header a {
 .header-center {
     flex-grow: 1; /* 남는 공간을 모두 차지하여 중앙에 위치하게 함 */
     text-align: center; /* 내부 텍스트(제목)를 중앙 정렬 */
-    /* 제목이 길어질 경우를 대비 */
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
 }
 
 /* 새로 추가: 오른쪽 섹션 스타일 */
@@ -74,6 +71,8 @@ body.sticky-footer-layout > .main-header a {
     border: none;
     background-color: transparent;
     text-align: center; /* 이것도 중앙정렬! */
+    white-space: normal; /* 또는 pre-wrap. normal은 자동 줄바꿈을 의미합니다. */
+    word-break: break-word;
 }
 .title-input:focus {
     outline: none;
