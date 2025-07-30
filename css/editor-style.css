@@ -140,26 +140,6 @@ body.sticky-footer-layout > .main-header a {
 }
 
 
-
-@media (max-width: 420px) {
-
-    /* 1. 제목과 아이콘 영역을 위아래로 쌓이게 변경 */
-    .title-section {
-        align-items: flex-start; /* 왼쪽 정렬로 초기화 */
-    }
-
-    /* 2. 제목 입력창은 꽉 차게 */
-    .title-input {
-        width: 100%;
-        font-size: 22px; /* 작은 화면에서는 제목 폰트 살짝 줄이기 */
-    }
-
-    /* 4. 본문 입력창 폰트도 살짝 줄여주기 */
-    .content-textarea {
-        font-size: 15px;
-    }
-}
-
 /* =======================================
    읽기 모드(View Mode) 전용 스타일 수정
    ======================================= */
@@ -312,4 +292,36 @@ body.sticky-footer-layout > .main-header a {
 
 .dropdown-content a.textdown:hover{
     background-color: #e3f6ff;
+}
+
+
+@media (max-width: 420px) {
+
+    /* 1. 제목과 아이콘 영역을 위아래로 쌓이게 변경 */
+    .title-section {
+        align-items: flex-start; /* 왼쪽 정렬로 초기화 */
+    }
+
+    /* 2. 제목 입력창은 꽉 차게 */
+    .title-input {
+        width: 100%;
+        font-size: 22px; /* 작은 화면에서는 제목 폰트 살짝 줄이기 */
+    }
+
+    /* 4. 본문 입력창 폰트도 살짝 줄여주기 */
+    .content-textarea {
+        font-size: 15px;
+    }
+
+    body.edit-mode .main-header {
+        flex-wrap: wrap; /* 요소들이 한 줄에 다 들어가지 않으면 다음 줄로 넘어가도록 허용 */
+        row-gap: 8px;    /* 줄바꿈 시 요소들 사이에 수직 간격을 줌 */
+    }
+
+    /* 수정 모드일 때 헤더 중앙(제목 입력창)과 오른쪽(버튼) 영역에 적용 */
+    body.edit-mode .header-center,
+    body.edit-mode .header-right {
+        flex-basis: 100%; /* 너비를 100%로 만들어 한 줄을 모두 차지하게 함 */
+        justify-content: flex-end; /* 버튼들을 오른쪽으로 정렬 */
+    }
 }
