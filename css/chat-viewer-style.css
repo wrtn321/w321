@@ -14,7 +14,7 @@
 
 /* 모든 말풍선의 공통 스타일 */
 .message-bubble {
-    padding: 24px 16px;
+    padding: 12px 16px;
     border-radius: 18px;
     max-width: 100%;
     line-height: 1.6;
