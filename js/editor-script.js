@@ -55,7 +55,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const toggleMode = (mode) => {
         if (mode === 'edit') {
             // 수정 모드 관련 요소 보이기
-            body.classList.add('edit-mode');
             viewModeHeader.hidden = true;
             editModeHeader.hidden = false;
             viewModeContent.hidden = true;
@@ -75,7 +74,6 @@ document.addEventListener('DOMContentLoaded', () => {
             autoResizeTextarea();
         } else { // 'view' 모드
             // 읽기 모드 관련 요소 보이기
-            body.classList.remove('edit-mode');
             viewModeHeader.hidden = false;
             editModeHeader.hidden = true;
             viewModeContent.hidden = false;
