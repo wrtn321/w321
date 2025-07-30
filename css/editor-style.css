@@ -173,6 +173,9 @@ body.sticky-footer-layout > .main-header a {
     margin: 0;
     min-width: 0;
 }
+#view-mode-elements-header .view-title {
+    margin-block-start: -0.38em;
+}
 
 /* 읽기 모드 본문 div 스타일 */
 .view-content {
