@@ -146,6 +146,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function loadPostData() {
         const params = new URLSearchParams(window.location.search);
         const isNewPost = params.get('new') === 'true';
+        const isChatEditMode = params.get('editMode') === 'chat';
         const categoryFromURL = params.get('category');
         const finalCategory = categoryFromURL || localStorage.getItem('currentCategory');
 
@@ -168,6 +169,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 viewTitle.textContent = currentPost.title;
                 viewContent.innerHTML = marked.parse(currentPost.content || '');
                 toggleMode('view');
+            if (isChatEditMode) {
+            // chat 수정 모드라면, 데이터를 불러온 후 바로 수정 모드로 전환
+            toggleMode('edit'); 
+        }
             } else {
                 alert("게시글 정보를 찾을 수 없습니다. 메인 페이지로 이동합니다.");
                 window.location.href = 'main.html';
