@@ -190,3 +190,8 @@
     background-color: var(--border-color);
     border: 0;
 }
+
+.message-bubble p {
+    margin: 0; /* p 태그의 기본 마진을 제거 */
+    padding: 0; /* 혹시 모를 패딩도 제거 */
+}
