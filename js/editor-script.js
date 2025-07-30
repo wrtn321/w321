@@ -48,26 +48,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // =====================================================
     // ★★★ 스크롤 감지 및 헤더 제어 로직 (새로 추가) ★★★
     // =====================================================
-    let lastScrollY = window.scrollY; // 마지막 스크롤 위치 저장
 
-    window.addEventListener('scroll', () => {
-        const currentScrollY = window.scrollY;
-
-        // 스크롤을 10px 이상 했을 때만 반응하도록 하여 작은 움직임 무시
-        if (Math.abs(currentScrollY - lastScrollY) > 10) {
-            if (currentScrollY > lastScrollY && currentScrollY > 50) {
-                // 아래로 스크롤하면 헤더 숨기기
-                mainHeader.classList.add('header-hidden');
-            } else {
-                // 위로 스크롤하면 헤더 보이기
-                mainHeader.classList.remove('header-hidden');
-            }
-        }
-        lastScrollY = currentScrollY; // 마지막 위치 업데이트
-    });
     let lastScrollY = window.scrollY;
 
-window.addEventListener('scroll', () => {
+    window.addEventListener('scroll', () => {
     const currentScrollY = window.scrollY;
 
     // F12 개발자 도구 콘솔에서 이 값이 잘 찍히는지 확인해보세요.
