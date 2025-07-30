@@ -324,4 +324,6 @@ body.sticky-footer-layout > .main-header a {
         flex-basis: 100%; /* 너비를 100%로 만들어 한 줄을 모두 차지하게 함 */
         justify-content: flex-end; /* 버튼들을 오른쪽으로 정렬 */
     }
+    .edit-mode-actions{
+        display:flex;
 }
