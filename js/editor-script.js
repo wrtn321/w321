@@ -65,6 +65,25 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         lastScrollY = currentScrollY; // 마지막 위치 업데이트
     });
+    let lastScrollY = window.scrollY;
+
+window.addEventListener('scroll', () => {
+    const currentScrollY = window.scrollY;
+
+    // F12 개발자 도구 콘솔에서 이 값이 잘 찍히는지 확인해보세요.
+    console.log(`Scroll: lastY=${lastScrollY}, currentY=${currentScrollY}`);
+
+    if (Math.abs(currentScrollY - lastScrollY) > 10) {
+        if (currentScrollY > lastScrollY && currentScrollY > 50) {
+            mainHeader.classList.add('header-hidden');
+            console.log("Header hidden"); // 숨김 처리 되었는지 확인
+        } else {
+            mainHeader.classList.remove('header-hidden');
+            console.log("Header shown"); // 보임 처리 되었는지 확인
+        }
+    }
+    lastScrollY = currentScrollY;
+    });
 
 
     // =====================================================
