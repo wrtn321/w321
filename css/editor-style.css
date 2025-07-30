@@ -10,11 +10,6 @@ body.sticky-footer-layout > .main-header {
     position: sticky; /* 스크롤 영역에 붙어있게 함 */
     top: 0;
     z-index: 100;
-    transition: transform 0.3s ease-in-out; /* 부드럽게 움직이도록 */
-}
-
-body.sticky-footer-layout > .main-header.header-hidden {
-    transform: translateY(-100%);
 }
 
 body.sticky-footer-layout > .main-header a {
