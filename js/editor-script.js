@@ -1,4 +1,4 @@
-// editor-script.js (드롭다운 메뉴 UI가 적용된 최종 버전)
+// editor-script.js
 
 document.addEventListener('DOMContentLoaded', () => {
     const auth = firebase.auth();
@@ -11,13 +11,12 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // =====================================================
-    // 전역 변수 및 요소 (새로운 구조에 맞게 수정됨)
+    // 전역 변수 및 요소
     // =====================================================
     let currentPost = null;
-    const mainHeader = document.querySelector('.main-header');
     const backToListBtn = document.getElementById('back-to-list-btn');
 
-    // 모드 컨테이너 (Header와 Content로 분리)
+    // 모드 컨테이너
     const viewModeHeader = document.getElementById('view-mode-elements-header');
     const editModeHeader = document.getElementById('edit-mode-elements-header');
     const viewModeContent = document.getElementById('view-mode-elements-content');
@@ -27,7 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const viewTitle = viewModeHeader.querySelector('.view-title');
     const viewContent = viewModeContent.querySelector('.view-content');
     const viewCopyBtn = document.getElementById('view-copy-btn');
-    const viewModeActions = document.getElementById('view-mode-actions');
+    const viewModeActions = document.getElementById('view-mode-actions'); // 헤더 오른쪽 버튼 그룹
     const toggleMenuBtn = document.getElementById('toggle-menu-btn');
     const dropdownMenu = document.getElementById('dropdown-menu');
     const dropdownEditBtn = document.getElementById('dropdown-edit-btn');
@@ -37,7 +36,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // 수정 모드 요소
     const titleInput = editModeHeader.querySelector('.title-input');
     const contentTextarea = editModeContent.querySelector('.content-textarea');
-    const editModeActions = document.getElementById('edit-mode-actions');
+    const editModeActions = document.getElementById('edit-mode-actions'); // 헤더 오른쪽 버튼 그룹
     const charCounter = editModeContent.querySelector('#char-counter');
 
     // 토스트 알림 관련 요소
@@ -45,89 +44,94 @@ document.addEventListener('DOMContentLoaded', () => {
     const toastMessage = toastNotification.querySelector('.toast-message');
     let toastTimer;
 
-
     // =====================================================
-    // 기능 함수들 (모드 전환 함수 수정)
+    // 기능 함수들
     // =====================================================
+    
+    /**
+     * 화면 모드를 '읽기' 또는 '수정'으로 전환하는 함수
+     * @param {'view' | 'edit'} mode - 전환할 모드
+     */
     const toggleMode = (mode) => {
-    if (mode === 'edit') {
-        // 수정 모드 요소 보이기
-        viewModeHeader.hidden = true;
-        editModeHeader.hidden = false;
-        viewModeContent.hidden = true;
-        editModeContent.hidden = false;
-        
-        // 버튼 그룹 제어 (★★ 핵심 수정 부분)
-        viewModeActions.hidden = true;
-        editModeActions.hidden = false;
+        if (mode === 'edit') {
+            // 수정 모드 관련 요소 보이기
+            viewModeHeader.hidden = true;
+            editModeHeader.hidden = false;
+            viewModeContent.hidden = true;
+            editModeContent.hidden = false;
+            
+            // 헤더 오른쪽 버튼 그룹 제어
+            viewModeActions.hidden = true;
+            editModeActions.hidden = false;
 
-        // 읽기 모드 전용 버튼 숨기기
-        viewCopyBtn.hidden = true;
+            // 읽기 모드 전용 플로팅 버튼 숨기기
+            viewCopyBtn.hidden = true;
 
-        // 데이터 채우기
-        titleInput.value = currentPost.title;
-        contentTextarea.value = currentPost.content;
-        updateCharCount();
-        autoResizeTextarea();
-    } else { // 'view' 모드
-        // 읽기 모드 요소 보이기
-        viewModeHeader.hidden = false;
-        editModeHeader.hidden = true;
-        viewModeContent.hidden = false;
-        editModeContent.hidden = true;
+            // 데이터 채우기
+            titleInput.value = currentPost.title;
+            contentTextarea.value = currentPost.content;
+            updateCharCount();
+            autoResizeTextarea();
+        } else { // 'view' 모드
+            // 읽기 모드 관련 요소 보이기
+            viewModeHeader.hidden = false;
+            editModeHeader.hidden = true;
+            viewModeContent.hidden = false;
+            editModeContent.hidden = true;
 
-        // 버튼 그룹 제어 (★★ 핵심 수정 부분)
-        viewModeActions.hidden = false;
-        editModeActions.hidden = true;
+            // 헤더 오른쪽 버튼 그룹 제어
+            viewModeActions.hidden = false;
+            editModeActions.hidden = true;
 
-        // 읽기 모드 전용 버튼 보이기
-        viewCopyBtn.hidden = false;
-    }
+            // 읽기 모드 전용 플로팅 버튼 보이기
+            viewCopyBtn.hidden = false;
+        }
     };
     
-    const updateCharCount = () => { charCounter.textContent = contentTextarea.value.length; };
-    const autoResizeTextarea = () => {
-        const scrollPosition = window.scrollY;
-        contentTextarea.style.height = 'auto';
-        contentTextarea.style.height = (contentTextarea.scrollHeight) + 'px';
-        window.scrollTo(0, scrollPosition);
+    const updateCharCount = () => {
+        if(charCounter) charCounter.textContent = contentTextarea.value.length;
     };
+
+    const autoResizeTextarea = () => {
+        const scrollPosition = window.scrollY; // 현재 스크롤 위치 저장
+        contentTextarea.style.height = 'auto'; // 높이를 초기화하여 줄어들 수 있게 함
+        contentTextarea.style.height = (contentTextarea.scrollHeight) + 'px'; // 스크롤 높이에 맞게 설정
+        window.scrollTo(0, scrollPosition); // 원래 스크롤 위치로 복귀
+    };
+
     const showToast = message => {
+        if (!toastNotification || !toastMessage) return;
         clearTimeout(toastTimer);
         toastMessage.textContent = message;
         toastNotification.classList.add('show');
-        toastTimer = setTimeout(() => { toastNotification.classList.remove('show'); }, 3000);
+        toastTimer = setTimeout(() => {
+            toastNotification.classList.remove('show');
+        }, 3000);
     };
 
     /**
      * 현재 게시글의 내용을 .txt 파일로 다운로드하는 함수
      */
     function downloadTxtFile() {
-        // 1. 파일 내용과 파일 이름을 준비합니다. 내용이나 제목이 없으면 기본값을 사용합니다.
         const content = currentPost.content || '';
         const filename = (currentPost.title.trim() || '제목없음') + '.txt';
 
-        // 2. 파일 내용을 담는 Blob 객체를 만듭니다. (컴퓨터가 파일로 인식할 수 있는 데이터 덩어리)
         const blob = new Blob([content], { type: 'text/plain;charset=utf-8;' });
-
-        // 3. 다운로드를 위한 임시 링크(<a>)를 메모리에 만듭니다.
         const link = document.createElement("a");
-
-        // 4. Blob 객체를 가리키는 임시 URL을 생성하고 링크의 href와 download 속성에 설정합니다.
         const url = URL.createObjectURL(blob);
+
         link.href = url;
         link.download = filename;
-
-        // 5. 링크를 눈에 보이지 않게 문서에 추가하고, 강제로 클릭 이벤트를 발생시켜 다운로드를 시작합니다.
+        
         document.body.appendChild(link);
         link.click();
         
-        // 6. 다운로드가 시작되면 임시로 만들었던 링크와 URL을 메모리에서 제거하여 정리합니다.
         document.body.removeChild(link);
         URL.revokeObjectURL(url);
     }
+
     // =====================================================
-    // 페이지 로드 시 데이터 처리 (이 부분은 수정되지 않았습니다)
+    // 페이지 로드 시 데이터 처리
     // =====================================================
     function loadPostData() {
         const params = new URLSearchParams(window.location.search);
@@ -154,11 +158,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 currentPost = JSON.parse(postDataString);
                 viewTitle.textContent = currentPost.title;
                 viewContent.innerHTML = marked.parse(currentPost.content || '');
-                toggleMode('view');
-            if (isChatEditMode) {
-            // chat 수정 모드라면, 데이터를 불러온 후 바로 수정 모드로 전환
-            toggleMode('edit'); 
-        }
+                
+                // chat-viewer에서 넘어왔다면 바로 수정 모드로, 아니면 읽기 모드로 시작
+                if (isChatEditMode) {
+                    toggleMode('edit'); 
+                } else {
+                    toggleMode('view');
+                }
             } else {
                 alert("게시글 정보를 찾을 수 없습니다. 메인 페이지로 이동합니다.");
                 window.location.href = 'main.html';
@@ -169,7 +175,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     // =====================================================
-    // 이벤트 리스너 연결 (이 부분이 수정되었습니다)
+    // 이벤트 리스너 연결
     // =====================================================
 
     // ---- 뒤로가기 버튼 ----
@@ -202,12 +208,16 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
         dropdownMenu.hidden = true;
 
-        if (!currentPost.id) return;
+        if (!currentPost || !currentPost.id) {
+             showToast('삭제할 수 없는 게시글입니다.');
+             return;
+        }
         if (confirm('정말로 이 게시글을 삭제하시겠습니까?')) {
             try {
                 await db.collection('posts').doc(currentPost.id).delete();
                 localStorage.removeItem('currentPost');
                 localStorage.removeItem('currentCategory');
+                showToast('게시글이 삭제되었습니다.');
                 window.location.replace(backToListBtn.href);
             } catch (error) {
                 console.error("삭제 실패:", error);
@@ -216,7 +226,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // ---- 복사 버튼 ----
+    // ---- 드롭다운 메뉴 안의 'txt 저장' 버튼 ----
+    dropdownDownloadBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        downloadTxtFile();
+        dropdownMenu.hidden = true;
+    });
+    
+    // ---- 읽기 모드의 플로팅 '복사' 버튼 ----
     viewCopyBtn.addEventListener('click', () => {
         if (!currentPost.content) {
             showToast('복사할 내용이 없습니다.');
@@ -230,18 +247,18 @@ document.addEventListener('DOMContentLoaded', () => {
             });
     });
 
-    dropdownDownloadBtn.addEventListener('click', (e) => {
-        e.preventDefault(); // a 태그의 기본 동작(페이지 이동)을 막습니다.
-        downloadTxtFile(); // 위에서 만든 다운로드 함수를 호출합니다.
-        dropdownMenu.hidden = true; // 메뉴를 닫아줍니다.
-    });
-
-    // ---- 수정 모드의 버튼들 ----
-    editCancelBtn.addEventListener('click', () => {
-        toggleMode('view');
+    // ---- 수정 모드의 '취소' 버튼 ----
+    editModeActions.querySelector('#edit-cancel-btn').addEventListener('click', () => {
+        // 새 글 작성 중 취소하면 목록으로, 기존 글 수정 중 취소하면 읽기 모드로
+        if (!currentPost.id) {
+            window.location.replace(backToListBtn.href);
+        } else {
+            toggleMode('view');
+        }
     });
     
-    editSaveBtn.addEventListener('click', async () => {
+    // ---- 수정 모드의 '저장' 버튼 ----
+    editModeActions.querySelector('#edit-save-btn').addEventListener('click', async () => {
         const user = auth.currentUser;
         if (!user) {
             showToast('로그인 정보가 없습니다. 다시 로그인해주세요.');
@@ -251,43 +268,33 @@ document.addEventListener('DOMContentLoaded', () => {
         const dataToSave = {
             title: titleInput.value.trim() || "제목 없음",
             content: contentTextarea.value,
-            category: currentPost.category
+            category: currentPost.category,
+            // 수정 시간을 기록하려면 아래 줄의 주석을 푸세요
+            // updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         };
 
         try {
-            if (currentPost.id) {
+            if (currentPost.id) { // 기존 글 업데이트
                 await db.collection('posts').doc(currentPost.id).update(dataToSave);
-                currentPost.title = dataToSave.title;
-                currentPost.content = dataToSave.content;
-            } else {
-                const lastPostQuery = db.collection('posts')
-                    .where('userId', '==', user.uid)
-                    .where('category', '==', currentPost.category)
-                    .orderBy('order', 'desc')
-                    .limit(1);
-
-                const snapshot = await lastPostQuery.get();
-                let newOrder = 0;
-                if (!snapshot.empty) {
-                    const lastPost = snapshot.docs[0].data();
-                    newOrder = (lastPost.order || 0) + 1;
-                }
-
+            } else { // 새 글 생성
                 const docRef = await db.collection('posts').add({
                     ...dataToSave,
                     userId: user.uid,
+                    type: 'post', // 기본 타입은 post
+                    parentId: 'root', // 기본적으로 최상위에 생성
+                    order: Date.now(), // 순서 정렬을 위해 현재 시간 사용
                     createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                    order: newOrder,
                 });
-                
                 currentPost.id = docRef.id;
-                currentPost.title = dataToSave.title;
-                currentPost.content = dataToSave.content;
             }
-            
+
+            // 로컬 데이터 및 UI 업데이트
+            currentPost.title = dataToSave.title;
+            currentPost.content = dataToSave.content;
             viewTitle.textContent = currentPost.title;
             viewContent.innerHTML = marked.parse(currentPost.content || '');
             localStorage.setItem('currentPost', JSON.stringify(currentPost));
+            
             showToast('저장되었습니다.');
             toggleMode('view');
 
