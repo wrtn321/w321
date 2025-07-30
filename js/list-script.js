@@ -156,6 +156,29 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!wrapper) return;
             const li = wrapper.closest('.list-item');
             if (!li) return;
+            if (e.target.classList.contains('edit-folder-btn')) {
+        e.stopPropagation(); // 이벤트 전파 중지
+        const folderId = li.dataset.id;
+        const currentTitle = posts.find(p => p.id === folderId).title;
+        const newTitle = prompt("폴더의 새 이름을 입력하세요.", currentTitle);
+
+        if (newTitle && newTitle.trim() !== '' && newTitle !== currentTitle) {
+            // Firestore에 새 이름 업데이트
+            db.collection('posts').doc(folderId).update({ title: newTitle })
+                .then(() => {
+                    showToast('폴더 이름이 변경되었습니다.');
+                    return fetchPosts(auth.currentUser.uid); // 데이터 다시 불러오기
+                })
+                .then(() => {
+                    renderList(); // 목록 새로 그리기
+                })
+                .catch(error => {
+                    console.error("이름 변경 실패:", error);
+                    showToast('이름 변경에 실패했습니다.');
+                });
+        }
+        return; // 아래 로직이 실행되지 않도록 여기서 종료
+    }
             if (e.target.classList.contains('delete-folder-btn')) {
                 e.stopPropagation();
                 if (confirm('폴더를 삭제하시겠습니까?\n(안에 있는 파일은 밖으로 이동됩니다)')) {
