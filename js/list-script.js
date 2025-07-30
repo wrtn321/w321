@@ -116,7 +116,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <span class="drag-handle">⠿</span>
         <span class="item-icon">${iconHtml}</span>
         <span class="item-title">${itemData.title}</span>
-        ${itemData.type === 'folder' ? '<button class="delete-folder-btn">🗑️</button>' : ''}
+        ${itemData.type === 'folder' ? '<button class="edit-folder-btn" title="이름 변경">✏️</button><button class="delete-folder-btn">🗑️</button>' : ''}
         `;
         li.appendChild(wrapper);
         if (itemData.type === 'folder') {
