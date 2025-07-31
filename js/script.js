@@ -73,7 +73,7 @@ function setupAuthPage(auth) {
  * ★★★ 메인 페이지 (main.html)의 핵심 로직 (수정됨) ★★★
  */
 async function setupMainPage(db, user) {
-    // 로그아웃 및 버튼 기능
+    // 로그아웃 기능
     const logoutButton = document.querySelector('.logout-button');
     if(logoutButton) {
         logoutButton.addEventListener('click', e => {
@@ -81,42 +81,57 @@ async function setupMainPage(db, user) {
             firebase.auth().signOut().catch(error => console.error('로그아웃 에러:', error));
         });
     }
+
+    // ★★★ 핵심 수정: 각 카드의 링크 클릭 이벤트 ★★★
     document.querySelectorAll('.card-header-link').forEach(link => {
         link.addEventListener('click', (e) => {
             e.preventDefault();
-            window.location.href = link.href;
-        });
-    });
-    document.querySelectorAll('.new-button').forEach(button => {
-        button.addEventListener('click', (e) => {
-            const category = button.closest('.card').querySelector('a').href.split('=')[1];
-            if (category) {
-                window.location.href = `post.html?category=${category}&new=true`;
+            const category = link.href.split('=').pop(); // href에서 category= 뒤의 값을 추출
+
+            // 카테고리가 'chat'이면 chat-list.html로, 그 외에는 list.html로 이동
+            if (category === 'chat') {
+                window.location.href = 'chat-list.html';
+            } else {
+                window.location.href = `list.html?category=${category}`;
             }
         });
     });
 
+    // ★★★ 핵심 수정: '새로 만들기' 버튼 클릭 이벤트 ★★★
+    document.querySelectorAll('.new-button').forEach(button => {
+        button.addEventListener('click', (e) => {
+            // 버튼이 속한 카드의 a 태그에서 카테고리 정보 가져오기
+            const card = button.closest('.card');
+            const link = card.querySelector('a');
+            const category = link.href.split('=').pop();
+
+            // 'chat' 카테고리는 새로 만들기가 없으므로 (JSON 업로드만 있음) 제외
+            if (category !== 'chat') {
+                // 새 글 작성 페이지로 이동
+                window.location.href = `post.html?category=${category}&new=true`;
+            } else {
+                // 채팅 목록 페이지로 이동해서 사용자가 직접 JSON을 올리도록 유도
+                window.location.href = 'chat-list.html';
+            }
+        });
+    });
+
+    // 대시보드에 최근 항목 표시하는 로직 (기존과 동일)
     try {
         const cards = document.querySelectorAll('.card');
-        
-        // 모든 카드를 순회하며 각각에 맞는 데이터를 비동기적으로 가져와 채웁니다.
         for (const card of cards) {
-            const category = card.querySelector('a').href.split('=')[1];
+            const category = card.querySelector('a').href.split('=').pop();
             const cardBody = card.querySelector('.card-body');
             if (category && cardBody) {
-                // 각 카테고리별로 올바른 순서의 상위 3개 아이템을 가져오는 함수 호출
                 const items = await getTopItemsForDashboard(db, user.uid, category);
-                // 가져온 아이템을 화면에 그리는 함수 호출
                 displayRecentItems(items, category, cardBody);
             }
         }
     } catch (error) {
         console.error("대시보드 로딩 중 에러 발생:", error);
-         if (error.code === 'failed-precondition') {
-             alert(`[개발자 알림]\nFirestore 색인이 필요합니다.\n개발자 도구(F12)의 콘솔 에러 메시지에 있는 링크를 클릭하여 색인을 생성해주세요.`);
-        }
     }
 }
+
 
 /**
  * ★★★ 대시보드 표시용 아이템을 올바른 순서로 가져오는 새 함수 ★★★
@@ -167,18 +182,18 @@ async function getTopItemsForDashboard(db, userId, category) {
 }
 
 
-/**
- * ★★★ 화면에 그리는 함수 (이 함수는 수정할 필요가 없습니다) ★★★
- */
+// ★★★ 핵심 수정: displayRecentItems 함수 ★★★
 function displayRecentItems(items, category, container) {
     container.innerHTML = '';
 
     if (items.length === 0) {
         container.innerHTML = '<p class="no-items-text">작성된 파일이 없습니다.</p>';
+        // no-items-text 클래스에 대한 스타일을 CSS에 추가해주는 것이 좋습니다.
+        // 예: .no-items-text { color: #999; text-align: center; padding: 20px 0; }
     } else {
         items.forEach(post => {
             const link = document.createElement('a');
-            link.href = '#';
+            link.href = '#'; // 링크 기능은 아래 이벤트 리스너가 처리
             link.className = 'recent-item';
             link.textContent = post.title;
 
@@ -186,7 +201,13 @@ function displayRecentItems(items, category, container) {
                 e.preventDefault();
                 localStorage.setItem('currentPost', JSON.stringify(post));
                 localStorage.setItem('currentCategory', category);
-                window.location.href = 'post.html';
+                
+                // 여기서도 'chat'과 '그 외'를 구분해서 이동
+                if (category === 'chat') {
+                    window.location.href = 'chat-viewer.html';
+                } else {
+                    window.location.href = 'post.html';
+                }
             });
             container.appendChild(link);
         });
