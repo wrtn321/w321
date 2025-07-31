@@ -1,33 +1,31 @@
-// js/script.js (main.html 전용 스크립트)
+// js/script.js (main.html 전용 스크립트 - 최종 완성본)
 
 document.addEventListener('DOMContentLoaded', () => {
     const auth = firebase.auth();
     const db = firebase.firestore();
 
-    // 페이지 로드 시 인증 상태 확인
     auth.onAuthStateChanged(user => {
         const isAuthPage = document.querySelector('.auth-container') !== null;
         const isMainPage = document.querySelector('.dashboard-container') !== null;
 
         if (user) {
-            if (isAuthPage) { // 로그인 페이지에 있다면 메인으로 이동
+            if (isAuthPage) {
                 window.location.href = 'main.html';
             }
-            if (isMainPage) { // 메인 페이지에 있다면 페이지 설정
+            if (isMainPage) {
                 setupMainPage(db, user); 
             }
         } else {
-            if (isMainPage) { // 메인 페이지에 있는데 로그아웃 상태면 로그인 페이지로
+            if (isMainPage) {
                 window.location.href = 'index.html';
             }
-            if (isAuthPage) { // 로그인 페이지에 있다면 인증 폼 설정
+            if (isAuthPage) {
                 setupAuthPage(auth);
             }
         }
     });
 });
 
-// 로그인/회원가입 페이지 설정 함수
 function setupAuthPage(auth) {
     const loginForm = document.getElementById('login-form');
     const signupForm = document.getElementById('signup-form');
@@ -90,19 +88,13 @@ async function setupMainPage(db, user) {
     // --- 데이터 로드 및 렌더링 ---
     async function loadAndRenderTabs() {
         try {
-            const snapshot = await tabsCollection
-                .where('userId', '==', user.uid)
-                .orderBy('order', 'asc')
-                .get();
-            
+            const snapshot = await tabsCollection.where('userId', '==', user.uid).orderBy('order', 'asc').get();
             dashboardContainer.innerHTML = '';
             if (snapshot.empty) {
                 dashboardContainer.innerHTML = '<p style="text-align:center; color:#999; padding: 20px;">탭이 없습니다. 편집 버튼을 눌러 추가해보세요.</p>';
             } else {
                 snapshot.docs.forEach(doc => {
-                    const tabData = { id: doc.id, ...doc.data() };
-                    const card = createTabCard(tabData);
-                    dashboardContainer.appendChild(card);
+                    dashboardContainer.appendChild(createTabCard({ id: doc.id, ...doc.data() }));
                 });
             }
         } catch (error) {
@@ -121,17 +113,13 @@ async function setupMainPage(db, user) {
         card.dataset.type = tabData.type;
 
         const linkUrl = tabData.type === 'chat-list' ? 'chat-list.html' : `list.html?category=${tabData.categoryKey}`;
-        
         card.innerHTML = `
             <div class="edit-controls">
                 <button class="control-btn drag-handle" title="순서 변경">☰</button>
                 <button class="control-btn delete-btn" title="탭 삭제">✕</button>
             </div>
             <a href="${linkUrl}" class="card-header-link">
-                <div class="card-header">
-                    <h2>${tabData.name}</h2>
-                    <span>></span>
-                </div>
+                <div class="card-header"><h2>${tabData.name}</h2><span>></span></div>
             </a>
             <div class="card-body"></div>
             <div class="card-footer">
@@ -147,10 +135,9 @@ async function setupMainPage(db, user) {
         });
         card.querySelector('.delete-btn').addEventListener('click', () => deleteTab(tabData.id, tabData.name));
         card.querySelector('.new-button').addEventListener('click', () => {
-            if(tabData.type === 'chat-list') window.location.href = 'chat-list.html';
+            if (tabData.type === 'chat-list') window.location.href = 'chat-list.html';
             else window.location.href = `post.html?category=${tabData.categoryKey}&new=true`;
         });
-        
         return card;
     }
 
@@ -158,7 +145,6 @@ async function setupMainPage(db, user) {
     function toggleEditMode() {
         document.body.classList.toggle('edit-mode-active');
         const addTabBtn = document.getElementById('add-tab-btn');
-
         if (document.body.classList.contains('edit-mode-active')) {
             editModeBtn.textContent = '✓';
             if (!addTabBtn) {
@@ -224,16 +210,15 @@ async function setupMainPage(db, user) {
     }
     
     function initSortable() {
-        if(sortableInstance) sortableInstance.destroy();
+        if (sortableInstance) sortableInstance.destroy();
         sortableInstance = new Sortable(dashboardContainer, {
             handle: '.drag-handle',
             animation: 150,
-            onEnd: async (evt) => {
+            onEnd: async () => {
                 const items = dashboardContainer.querySelectorAll('.card');
                 const batch = db.batch();
                 items.forEach((item, index) => {
-                    const docRef = tabsCollection.doc(item.dataset.id);
-                    batch.update(docRef, { order: index });
+                    batch.update(tabsCollection.doc(item.dataset.id), { order: index });
                 });
                 try {
                     await batch.commit();
@@ -246,7 +231,9 @@ async function setupMainPage(db, user) {
         });
     }
 
-    // ★★★ 바로 이 부분입니다! 이 리스너는 setupMainPage 안에 있어야 합니다. ★★★
+    // --- ★★★ 이벤트 리스너들을 함수 안의 올바른 위치에 배치 ★★★ ---
+
+    // 폼 제출(저장) 이벤트
     tabForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const tabName = tabNameInput.value;
@@ -258,12 +245,7 @@ async function setupMainPage(db, user) {
             return;
         }
 
-        const dataToSave = {
-            name: tabName,
-            type: tabType,
-            userId: user.uid,
-        };
-
+        const dataToSave = { name: tabName, type: tabType, userId: user.uid };
         try {
             if (currentEditingTabId) {
                 await tabsCollection.doc(currentEditingTabId).update({ name: tabName, type: tabType });
@@ -273,21 +255,28 @@ async function setupMainPage(db, user) {
                 dataToSave.categoryKey = tabKey;
                 await tabsCollection.add(dataToSave);
             }
-            
             modal.hidden = true;
             showToast('성공적으로 저장되었습니다.');
             await loadAndRenderTabs();
-
         } catch (error) {
             console.error('탭 저장 실패:', error);
             showToast('저장에 실패했습니다.');
         }
     });
 
-    // --- 초기 이벤트 리스너 연결 ---
-    logoutButton.addEventListener('click', (e) => { e.preventDefault(); firebase.auth().signOut(); });
+    // 모달의 취소 버튼 이벤트
+    cancelTabBtn.addEventListener('click', () => {
+        modal.hidden = true;
+    });
+
+    // 페이지 전체의 메인 편집 버튼 이벤트
     editModeBtn.addEventListener('click', toggleEditMode);
-    cancelTabBtn.addEventListener('click', () => { modal.hidden = true; });
+    
+    // 로그아웃 버튼 이벤트
+    logoutButton.addEventListener('click', (e) => {
+        e.preventDefault();
+        firebase.auth().signOut();
+    });
 
     // --- 최초 실행 ---
     loadAndRenderTabs();
