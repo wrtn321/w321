@@ -5,35 +5,20 @@ document.addEventListener('DOMContentLoaded', () => {
     const db = firebase.firestore();
 
     const postsCollection = db.collection('posts');
-    let currentCategory = ''; // URL에 따라 동적으로 변경될 변수
+    let currentCategory = '';
     let posts = [];
-    // 이 스크립트가 인식하는 카테고리 목록
     const categoryNames = { prompt: '프롬프트', novel: '소설' };
 
-    // --- HTML 요소 가져오기 ---
     const listTitle = document.getElementById('list-title');
     const newPostBtn = document.querySelector('.new-post-btn');
     const newFolderBtn = document.querySelector('.new-folder-btn');
     const normalItemList = document.querySelector('.normal-list .item-list');
     const logoutButton = document.querySelector('.logout-button');
-    const toastNotification = document.getElementById('toast-notification');
-    const toastMessage = toastNotification ? toastNotification.querySelector('.toast-message') : null;
-    let toastTimer;
 
-    const showToast = message => {
-        if (!toastNotification || !toastMessage) return;
-        clearTimeout(toastTimer);
-        toastMessage.textContent = message;
-        toastNotification.classList.add('show');
-        toastTimer = setTimeout(() => { toastNotification.classList.remove('show'); }, 3000);
-    };
-
-    // --- Firebase 인증 및 데이터 로드 ---
     auth.onAuthStateChanged(async user => {
         if (user) {
-            initializePage(); // 페이지 초기화가 먼저!
-            if (!currentCategory) return; // 유효한 카테고리가 아니면 중단
-
+            initializePage();
+            if (!currentCategory) return;
             await fetchPosts(user.uid);
             renderList();
             addEventListeners(user);
@@ -42,21 +27,17 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // ★★★ 핵심: URL에서 카테고리를 읽어오는 함수 ★★★
     function initializePage() {
         const params = new URLSearchParams(window.location.search);
         const categoryParam = params.get('category');
-        
-        // URL의 category가 유효한 경우 (prompt, novel)
         if (categoryParam && categoryNames[categoryParam]) {
             currentCategory = categoryParam;
             listTitle.textContent = categoryNames[currentCategory];
-            newPostBtn.textContent = '+📝'; // 버튼 텍스트 고정
+            newPostBtn.textContent = '+📝';
         } else {
-            // 유효하지 않은 카테고리이거나, category 파라미터가 없으면 메인으로 보냄
             alert('잘못된 접근입니다.');
             window.location.href = 'main.html';
-            currentCategory = null; // 작업을 중단시키기 위해 null로 설정
+            currentCategory = null;
         }
     }
 
@@ -64,7 +45,7 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const snapshot = await postsCollection
                 .where('userId', '==', userId)
-                .where('category', '==', currentCategory) // 여기서 동적으로 설정된 카테고리 사용
+                .where('category', '==', currentCategory)
                 .orderBy('order', 'asc')
                 .get();
             posts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -76,25 +57,19 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // --- 이벤트 리스너 ---
     function addEventListeners(user) {
         logoutButton.addEventListener('click', e => {
             e.preventDefault();
             auth.signOut().then(() => window.location.href = 'index.html');
         });
-
         newFolderBtn.addEventListener('click', () => handleNewFolder(user.uid));
-        
-        // '+📝' 버튼 클릭 시 새 글 작성 페이지로 이동
         newPostBtn.addEventListener('click', () => {
             window.location.href = `post.html?category=${currentCategory}&new=true`;
         });
-        
         normalItemList.addEventListener('click', e => {
             const li = e.target.closest('.list-item');
             if (!li) return;
             const itemId = li.dataset.id;
-            
             if (e.target.classList.contains('edit-folder-btn')) {
                 e.stopPropagation();
                 editFolderName(user.uid, itemId);
@@ -107,21 +82,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 return;
             }
-
             const wrapper = e.target.closest('.item-content-wrapper');
             if(wrapper) {
-                if (li.classList.contains('item-folder')) {
-                    handleFolderClick(li);
-                } else {
-                    handleFileClick(li); // 일반 글 파일 클릭
-                }
+                if (li.classList.contains('item-folder')) handleFolderClick(li);
+                else handleFileClick(li);
             }
         });
     }
 
-    // --- 핵심 기능 함수 ---
-
-    // 파일을 클릭하면 항상 post.html 로 이동
     function handleFileClick(liElement) {
         const post = posts.find(p => p.id === liElement.dataset.id);
         if (post) {
@@ -130,16 +98,12 @@ document.addEventListener('DOMContentLoaded', () => {
             window.location.href = 'post.html';
         }
     }
-    
-    // --- 렌더링 및 UI 관련 함수 (chat-list와 거의 동일) ---
 
     function renderList() {
         if (!normalItemList) return;
         const openFolderIds = new Set(Array.from(document.querySelectorAll('.list-item.open')).map(li => li.dataset.id));
         normalItemList.innerHTML = '';
-        const rootItems = posts
-            .filter(p => !p.parentId || p.parentId === 'root')
-            .sort((a, b) => (a.order || 0) - (b.order || 0));
+        const rootItems = posts.filter(p => !p.parentId || p.parentId === 'root').sort((a, b) => (a.order || 0) - (b.order || 0));
         rootItems.forEach(item => renderItem(item, normalItemList));
         openFolderIds.forEach(id => {
             const folderLi = normalItemList.querySelector(`.list-item[data-id="${id}"]`);
@@ -155,19 +119,10 @@ document.addEventListener('DOMContentLoaded', () => {
         li.dataset.id = itemData.id;
         const wrapper = document.createElement('div');
         wrapper.className = 'item-content-wrapper';
-        // 아이콘을 문서(📝) 모양으로 변경
-        let iconHtml = itemData.type === 'folder' 
-            ? '<span class="icon-closed">📁</span><span class="icon-open">📂</span>' 
-            : '📝';
+        let iconHtml = itemData.type === 'folder' ? '<span class="icon-closed">📁</span><span class="icon-open">📂</span>' : '📝';
         wrapper.innerHTML = `
-            <span class="drag-handle">⠿</span>
-            <span class="item-icon">${iconHtml}</span>
-            <span class="item-title">${itemData.title}</span>
-            ${itemData.type === 'folder' 
-                ? `<button class="edit-folder-btn" title="폴더 이름 변경">✏️</button>
-                   <button class="delete-folder-btn" title="폴더 삭제">🗑️</button>` 
-                : ''
-            }
+            <span class="drag-handle">⠿</span><span class="item-icon">${iconHtml}</span><span class="item-title">${itemData.title}</span>
+            ${itemData.type === 'folder' ? `<button class="edit-folder-btn" title="폴더 이름 변경">✏️</button><button class="delete-folder-btn" title="폴더 삭제">🗑️</button>` : ''}
         `;
         li.appendChild(wrapper);
         if (itemData.type === 'folder') {
@@ -182,12 +137,9 @@ document.addEventListener('DOMContentLoaded', () => {
     function handleFolderClick(liElement, withAnimation = true) {
         if (withAnimation) liElement.classList.toggle('open');
         else liElement.classList.add('open');
-        
         const subList = liElement.querySelector('.sub-list');
         if (liElement.classList.contains('open') && subList.children.length === 0) {
-            const children = posts
-                .filter(p => p.parentId === liElement.dataset.id)
-                .sort((a, b) => (a.order || 0) - (b.order || 0));
+            const children = posts.filter(p => p.parentId === liElement.dataset.id).sort((a, b) => (a.order || 0) - (b.order || 0));
             children.forEach(child => renderItem(child, subList));
         }
     }
@@ -198,14 +150,9 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const minOrder = posts.length > 0 ? Math.min(0, ...posts.map(p => p.order).filter(o => typeof o === 'number')) : 0;
             await postsCollection.add({
-                type: 'folder',
-                title: title,
-                content: '',
-                category: currentCategory,
+                type: 'folder', title: title, content: '', category: currentCategory,
                 createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                userId: userId,
-                order: minOrder - 1,
-                parentId: 'root'
+                userId: userId, order: minOrder - 1, parentId: 'root'
             });
             await fetchPosts(userId);
             renderList();
@@ -219,8 +166,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const children = posts.filter(p => p.parentId === folderId);
         const batch = db.batch();
         children.forEach(child => {
-            const docRef = postsCollection.doc(child.id);
-            batch.update(docRef, { parentId: 'root', order: Date.now() });
+            batch.update(postsCollection.doc(child.id), { parentId: 'root', order: Date.now() });
         });
         batch.delete(postsCollection.doc(folderId));
         try {
@@ -252,7 +198,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     function initializeSortable(targetUl) {
-        // ... (기존과 동일)
         if (!targetUl || targetUl.sortable) return;
         new Sortable(targetUl, {
             group: 'nested',
