@@ -127,14 +127,6 @@
 }
 
 /* 말풍선 안의 제목 태그들 */
-.message-bubble h1,
-.message-bubble h2,
-.message-bubble h3,
-.message-bubble h4,
-.message-bubble h5,
-.message-bubble h6 {
-    margin-block-end: -0.67em;
-}
 .message-bubble h1 { font-size: 1.5em; }
 .message-bubble h2 { font-size: 1.3em; }
 .message-bubble h3 { font-size: 1.1em; }
