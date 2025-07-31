@@ -76,6 +76,14 @@ async function setupMainPage(db, user) {
     const tabTypeSelect = document.getElementById('tab-type');
     const cancelTabBtn = document.getElementById('cancel-tab-btn');
 
+    const forceCloseBtn = document.getElementById('force-close-modal-x');
+    if (forceCloseBtn) {
+        forceCloseBtn.addEventListener('click', () => {
+            console.log("X 버튼 클릭됨!");
+            modal.hidden = true;
+        });
+    }
+    
     async function loadAndRenderTabs() {
         try {
             const snapshot = await tabsCollection.where('userId', '==', user.uid).orderBy('order', 'asc').get();
