@@ -70,114 +70,169 @@ function setupAuthPage(auth) {
     });
 }
 
-// 메인 대시보드 페이지 설정 함수
 async function setupMainPage(db, user) {
-    // 로그아웃 기능
+    const tabsCollection = db.collection('tabs');
+    let sortableInstance = null; // SortableJS 인스턴스 저장용
+
+    // --- HTML 요소 가져오기 ---
     const logoutButton = document.querySelector('.logout-button');
-    if(logoutButton) {
-        logoutButton.addEventListener('click', e => {
-            e.preventDefault();
-            firebase.auth().signOut().catch(error => console.error('로그아웃 에러:', error));
-        });
-    }
+    const dashboardContainer = document.querySelector('.dashboard-container');
+    const editModeBtn = document.getElementById('main-edit-mode-btn');
+    const modal = document.getElementById('tab-modal');
+    const tabForm = document.getElementById('tab-form');
+    const cancelTabBtn = document.getElementById('cancel-tab-btn');
 
-    // 각 카드의 링크 클릭 이벤트
-    document.querySelectorAll('.card-header-link').forEach(link => {
-        link.addEventListener('click', (e) => {
-            e.preventDefault();
-            const category = link.href.split('=').pop();
-            if (category === 'chat') {
-                window.location.href = 'chat-list.html';
-            } else {
-                window.location.href = `list.html?category=${category}`;
-            }
-        });
-    });
-
-    // '새로 만들기' 버튼 클릭 이벤트
-    document.querySelectorAll('.new-button').forEach(button => {
-        button.addEventListener('click', (e) => {
-            const card = button.closest('.card');
-            const link = card.querySelector('a');
-            const category = link.href.split('=').pop();
-            if (category !== 'chat') {
-                window.location.href = `post.html?category=${category}&new=true`;
-            } else {
-                window.location.href = 'chat-list.html';
-            }
-        });
-    });
-
-    // 대시보드에 최근 항목 표시
-    try {
-        const cards = document.querySelectorAll('.card');
-        for (const card of cards) {
-            const category = card.querySelector('a').href.split('=').pop();
-            const cardBody = card.querySelector('.card-body');
-            if (category && cardBody) {
-                const items = await getTopItemsForDashboard(db, user.uid, category);
-                displayRecentItems(items, category, cardBody);
-            }
-        }
-    } catch (error) {
-        console.error("대시보드 로딩 중 에러 발생:", error);
-    }
-}
-
-// 대시보드 표시용 아이템을 가져오는 함수
-async function getTopItemsForDashboard(db, userId, category) {
-    const finalPosts = [];
-    const rootSnapshot = await db.collection('posts')
-        .where('userId', '==', userId)
-        .where('category', '==', category)
-        .where('parentId', '==', 'root')
-        .orderBy('order', 'asc')
-        .get();
-    
-    const rootItems = rootSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-
-    for (const item of rootItems) {
-        if (finalPosts.length >= 3) break;
-        if (item.type === 'post') {
-            finalPosts.push(item);
-        } else if (item.type === 'folder') {
-            const firstPostInFolderSnapshot = await db.collection('posts')
-                .where('userId', '==', userId)
-                .where('parentId', '==', item.id)
-                .where('type', '==', 'post')
+    // --- 데이터 로드 및 렌더링 ---
+    async function loadAndRenderTabs() {
+        try {
+            const snapshot = await tabsCollection
+                .where('userId', '==', user.uid)
                 .orderBy('order', 'asc')
-                .limit(1)
                 .get();
-            if (!firstPostInFolderSnapshot.empty) {
-                finalPosts.push({ id: firstPostInFolderSnapshot.docs[0].id, ...firstPostInFolderSnapshot.docs[0].data() });
+            
+            dashboardContainer.innerHTML = ''; // 컨테이너 비우기
+            if (snapshot.empty) {
+                dashboardContainer.innerHTML = '<p style="text-align:center; color:#999;">탭이 없습니다. 편집 버튼을 눌러 추가해보세요.</p>';
+            } else {
+                snapshot.docs.forEach(doc => {
+                    const tabData = { id: doc.id, ...doc.data() };
+                    const card = createTabCard(tabData);
+                    dashboardContainer.appendChild(card);
+                });
+            }
+        } catch (error) {
+            console.error("탭 로딩 실패:", error);
+            dashboardContainer.innerHTML = '<p style="color:red;">탭을 불러오는 데 실패했습니다.</p>';
+        }
+    }
+
+    // --- 카드 1개 생성 함수 ---
+    function createTabCard(tabData) {
+        const card = document.createElement('section');
+        card.className = 'card';
+        card.dataset.id = tabData.id; // 문서 ID를 저장
+        card.dataset.name = tabData.name;
+        card.dataset.key = tabData.categoryKey;
+        card.dataset.type = tabData.type;
+
+        const linkUrl = tabData.type === 'chat-list' ? 'chat-list.html' : `list.html?category=${tabData.categoryKey}`;
+        
+        card.innerHTML = `
+            <div class="edit-controls">
+                <button class="control-btn drag-handle" title="순서 변경">☰</button>
+                <button class="control-btn delete-btn" title="탭 삭제">✕</button>
+            </div>
+            <a href="${linkUrl}" class="card-header-link">
+                <div class="card-header">
+                    <h2>${tabData.name}</h2>
+                    <span>></span>
+                </div>
+            </a>
+            <div class="card-body">
+                <!-- 최근 항목은 추후 추가 -->
+            </div>
+            <div class="card-footer">
+                <button type="button" class="new-button">+ 새로 만들기</button>
+            </div>
+        `;
+        
+        // --- 각 카드에 이벤트 리스너 연결 ---
+        card.querySelector('.card-header-link').addEventListener('click', (e) => {
+            if (document.body.classList.contains('edit-mode-active')) {
+                e.preventDefault(); // 편집 모드일 땐 이름 변경
+                editTabName(card);
+            }
+        });
+
+        card.querySelector('.delete-btn').addEventListener('click', () => deleteTab(tabData.id, tabData.name));
+        card.querySelector('.new-button').addEventListener('click', (e) => {
+            if(tabData.type === 'chat-list') window.location.href = 'chat-list.html';
+            else window.location.href = `post.html?category=${tabData.categoryKey}&new=true`;
+        });
+        
+        return card;
+    }
+
+    // --- 편집 모드 관련 함수 ---
+    function toggleEditMode() {
+        document.body.classList.toggle('edit-mode-active');
+        if (document.body.classList.contains('edit-mode-active')) {
+            editModeBtn.textContent = '✓'; // 완료 아이콘
+            initSortable();
+        } else {
+            editModeBtn.textContent = '✏️'; // 편집 아이콘
+            if (sortableInstance) {
+                sortableInstance.destroy();
+                sortableInstance = null;
             }
         }
     }
-    return finalPosts;
-}
+    
+    // --- 1. 탭 이름 변경 ---
+    async function editTabName(card) {
+        const currentName = card.dataset.name;
+        const newName = prompt("새 탭 이름을 입력하세요.", currentName);
+        if (newName && newName.trim() !== '' && newName !== currentName) {
+            try {
+                await tabsCollection.doc(card.dataset.id).update({ name: newName });
+                showToast('탭 이름이 변경되었습니다.');
+                loadAndRenderTabs(); // 다시 렌더링
+            } catch (error) {
+                showToast('이름 변경에 실패했습니다.');
+            }
+        }
+    }
 
-// 가져온 아이템을 화면에 그리는 함수
-function displayRecentItems(items, category, container) {
-    container.innerHTML = '';
-    if (items.length === 0) {
-        container.innerHTML = '<p class="no-items-text" style="color:#999; text-align:center; padding:20px 0;">작성된 파일이 없습니다.</p>';
-    } else {
-        items.forEach(post => {
-            const link = document.createElement('a');
-            link.href = '#';
-            link.className = 'recent-item';
-            link.textContent = post.title;
-            link.addEventListener('click', e => {
-                e.preventDefault();
-                localStorage.setItem('currentPost', JSON.stringify(post));
-                localStorage.setItem('currentCategory', category);
-                if (category === 'chat') {
-                    window.location.href = 'chat-viewer.html';
-                } else {
-                    window.location.href = 'post.html';
+    // --- 2. 탭 삭제 ---
+    async function deleteTab(tabId, tabName) {
+        if (confirm(`'${tabName}' 탭을 정말 삭제하시겠습니까?\n(연결된 게시물들은 삭제되지 않습니다)`)) {
+            try {
+                await tabsCollection.doc(tabId).delete();
+                showToast('탭이 삭제되었습니다.');
+                loadAndRenderTabs();
+            } catch (error) {
+                showToast('탭 삭제에 실패했습니다.');
+            }
+        }
+    }
+    
+    // --- 3. 탭 추가 (모달) ---
+    function showTabModal(tabData = null) {
+        // ... 모달 UI 설정 로직 ...
+        modal.hidden = false;
+    }
+    
+    // --- 4. 탭 순서 변경 (SortableJS) ---
+    function initSortable() {
+        sortableInstance = new Sortable(dashboardContainer, {
+            handle: '.drag-handle',
+            animation: 150,
+            onEnd: async (evt) => {
+                const items = dashboardContainer.querySelectorAll('.card');
+                const batch = db.batch();
+                items.forEach((item, index) => {
+                    const docRef = tabsCollection.doc(item.dataset.id);
+                    batch.update(docRef, { order: index });
+                });
+                try {
+                    await batch.commit();
+                    showToast('순서가 저장되었습니다.');
+                } catch (error) {
+                    showToast('순서 저장에 실패했습니다.');
+                    loadAndRenderTabs(); // 실패 시 원위치로
                 }
-            });
-            container.appendChild(link);
+            }
         });
     }
+
+    // --- 초기 이벤트 리스너 연결 ---
+    logoutButton.addEventListener('click', (e) => { e.preventDefault(); firebase.auth().signOut(); });
+    editModeBtn.addEventListener('click', toggleEditMode);
+    cancelTabBtn.addEventListener('click', () => { modal.hidden = true; });
+
+    // --- 최초 실행 ---
+    loadAndRenderTabs();
 }
+
+}
+
