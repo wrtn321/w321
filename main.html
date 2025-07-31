@@ -16,63 +16,36 @@
 
     <!--메인컨텐츠-->
     <main class="dashboard-container">
-        <section class="card">
-            <a href="list.html?category=prompt" class="card-header-link">
-                <div class="card-header">
-                    <h2>📝 프롬프트</h2>
-                    <span>></span>
-                </div>
-            </a>
-            <div class="card-body">
-                <a href="/prompts/1" class="recent-item">최근 작업한 프롬프트 제목 1</a>
-                <a href="/prompts/2" class="recent-item">최근 작업한 프롬프트 제목 2</a>
-                <a href="/prompts/3" class="recent-item">최근 작업한 프롬프트 제목 3</a>
-            </div>
-             <div class="card-footer">
-                <button type="button" class="new-button">+ 새로 만들기</button>
-            </div>
-        </section>
-
-        <section class="card">
-            <a href="chat-list.html?category=chat" class="card-header-link">
-                <div class="card-header">
-                    <h2>💬 채팅백업</h2>
-                    <span>></span>
-                </div>
-            </a>
-            <div class="card-body">
-                <a href="/chats/1" class="recent-item">최근 작업한 채팅백업 1</a>
-                <a href="/chats/2" class="recent-item">최근 작업한 채팅백업 1</a>
-                <a href="/chats/3" class="recent-item">최근 작업한 채팅백업 1</a>
-            </div>
-            <div class="card-footer">
-                <button type="button" class="new-button">+ 새로만들기</button>
-            </div>
-        </section>
-
-        <section class="card">
-            <a href="list.html?category=novel" class="card-header-link">
-                <div class="card-header">
-                    <h2>📖 소설</h2>
-                    <span>></span>
-                </div>
-            </a>
-            <div class="card-body">
-                <a href="/novel/1" class="recent-item">최근 작업한 소설 1</a>
-                <a href="/novel/2" class="recent-item">최근 작업한 소설 1</a>
-                <a href="/novel/3" class="recent-item">최근 작업한 소설 1</a>
-            </div>
-            <div class="card-footer">
-                <button type="button" class="new-button">+ 새로만들기</button>
-            </div>
-        </section>
     </main>
+    
+    <button id="main-edit-mode-btn" title="탭 편집">✏️</button>
+    
     <footer class="site-footer">
     <p>© 2025. 삼이일. All rights reserved.</p>
     </footer>
+
+    <div id="tab-modal" class="modal-overlay" hidden>
+        <div class="modal-content">
+            <h2 id="modal-title">새 탭 추가</h2>
+            <form id="tab-form">
+                <input type="text" id="tab-name" placeholder="탭 이름 (예: 📝 프롬프트)" required>
+                <input type="text" id="tab-key" placeholder="고유 키 (영어, 숫자, - 만 사용, 예: prompt)" required>
+                <select id="tab-type" required>
+                    <option value="list">일반 목록</option>
+                    <option value="chat-list">채팅 목록</option>
+                </select>
+                <div class="modal-actions">
+                    <button type="submit" id="save-tab-btn">저장</button>
+                    <button type="button" id="cancel-tab-btn">취소</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script> <!-- Auth SDK 추가! -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
     <script src="firebase-init.js"></script>
     <script src="js/common-script.js"></script> 
     <script src="js/script.js"></script>
