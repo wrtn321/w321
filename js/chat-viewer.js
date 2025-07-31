@@ -1,4 +1,4 @@
-// js/chat-viewer.js (인라인 편집 V/X 버튼, 다운로드, 토글 메뉴 버그 수정 최종 버전)
+// js/chat-viewer.js (제목 인라인 편집, 더블클릭 수정 적용 최종 버전 - 생략 없음)
 
 document.addEventListener('DOMContentLoaded', () => {
     const auth = firebase.auth();
@@ -6,9 +6,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let currentPost = null;
     let originalMessages = [];
-    let activeEditingIndex = null; // 현재 수정 중인 말풍선의 인덱스를 저장
+    let activeEditingIndex = null; // 현재 수정 중인 말풍선의 인덱스 저장
 
-    // HTML 요소
+    // --- HTML 요소 가져오기 ---
     const backToListBtn = document.getElementById('back-to-list-btn');
     const viewerTitle = document.getElementById('viewer-title');
     const chatLogContainer = document.getElementById('chat-log-container');
@@ -16,23 +16,22 @@ document.addEventListener('DOMContentLoaded', () => {
     const toastMessage = toastNotification.querySelector('.toast-message');
     let toastTimer;
 
-    // 드롭다운 메뉴 요소
     const toggleMenuBtn = document.getElementById('toggle-menu-btn');
     const dropdownMenu = document.getElementById('dropdown-menu');
     const downloadJsonBtn = document.getElementById('download-json-btn');
     const downloadTxtBtn = document.getElementById('download-txt-btn');
     const dropdownDeleteBtn = document.getElementById('dropdown-delete-btn');
 
-    // Firebase 인증 상태 확인
+    // --- 초기화 및 데이터 로드 ---
     auth.onAuthStateChanged(user => {
         if (!user) {
             window.location.href = 'index.html';
         } else {
             loadChatData();
+            addPageEventListeners(); // 페이지 레벨 이벤트 리스너 연결
         }
     });
 
-    // 채팅 데이터를 불러와 화면에 그리는 메인 함수
     function loadChatData() {
         const postDataString = localStorage.getItem('currentPost');
         const category = localStorage.getItem('currentCategory');
@@ -56,13 +55,11 @@ document.addEventListener('DOMContentLoaded', () => {
             
             originalMessages = chatData.messages;
             renderMessages();
-
         } catch (error) {
             chatLogContainer.innerHTML = `<p style="text-align: center; color: red;">채팅 기록을 불러올 수 없습니다.</p>`;
         }
     }
     
-    // 메시지 배열을 기반으로 화면을 렌더링하는 함수
     function renderMessages() {
         chatLogContainer.innerHTML = '';
         originalMessages.forEach((message, index) => {
@@ -71,12 +68,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    /**
-     * 채팅 말풍선 한 개를 생성하고 이벤트 리스너를 연결하는 함수
-     * @param {object} message - { role: 'user', content: '...' }
-     * @param {number} index - 메시지의 배열 인덱스
-     * @returns {HTMLElement} 생성된 div 엘리먼트
-     */
+    // --- 핵심 로직: 말풍선 생성 및 이벤트 ---
     function createMessageBubble(message, index) {
         const bubble = document.createElement('div');
         bubble.className = `message-bubble ${message.role}-message`;
@@ -84,6 +76,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const viewContent = document.createElement('div');
         viewContent.className = 'message-content';
         viewContent.innerHTML = marked.parse(message.content || '');
+        viewContent.title = '더블클릭하여 수정';
 
         const editContent = document.createElement('textarea');
         editContent.className = 'editable-textarea';
@@ -100,36 +93,28 @@ document.addEventListener('DOMContentLoaded', () => {
         bubble.appendChild(editContent);
         bubble.appendChild(editActions);
 
-        // --- 이벤트 리스너 ---
-
-        viewContent.addEventListener('click', () => {
+        viewContent.addEventListener('dblclick', () => {
             if (activeEditingIndex !== null && activeEditingIndex !== index) {
                 showToast('먼저 다른 항목의 수정을 완료해주세요.');
                 return;
             }
             activeEditingIndex = index;
-            
-            bubble.classList.add('editing'); 
-
+            bubble.classList.add('editing');
             const originalHeight = viewContent.offsetHeight;
             editContent.style.height = originalHeight + 'px';
-            
             viewContent.style.display = 'none';
             editContent.style.display = 'block';
             editActions.style.display = 'block';
-            
             autoResizeTextarea({ target: editContent });
             editContent.focus();
             editContent.setSelectionRange(editContent.value.length, editContent.value.length);
         });
 
         editActions.querySelector('.save-edit-btn').addEventListener('click', async () => {
-            bubble.classList.remove('editing'); 
-
+            bubble.classList.remove('editing');
             const newText = editContent.value;
             showToast('저장 중...');
             originalMessages[index].content = newText;
-            
             const success = await saveChanges();
             if (success) {
                 viewContent.innerHTML = marked.parse(newText);
@@ -137,7 +122,6 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 showToast('저장에 실패했습니다.');
             }
-
             viewContent.style.display = 'block';
             editContent.style.display = 'none';
             editActions.style.display = 'none';
@@ -146,7 +130,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         editActions.querySelector('.cancel-edit-btn').addEventListener('click', () => {
             bubble.classList.remove('editing');
-
             editContent.value = originalMessages[index].content;
             viewContent.style.display = 'block';
             editContent.style.display = 'none';
@@ -158,12 +141,12 @@ document.addEventListener('DOMContentLoaded', () => {
         return bubble;
     }
 
-    // 변경된 내용을 Firestore에 저장하는 함수
+    // --- 헬퍼 함수들 (저장, 리사이즈, 토스트, 다운로드 등) ---
+
     async function saveChanges() {
         try {
             const newContent = JSON.stringify({ messages: originalMessages }, null, 2);
             await db.collection('posts').doc(currentPost.id).update({ content: newContent });
-            
             currentPost.content = newContent;
             localStorage.setItem('currentPost', JSON.stringify(currentPost));
             return true;
@@ -173,7 +156,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Textarea 높이 자동 조절 함수 (스크롤 버그 수정된 버전)
     function autoResizeTextarea(event) {
         const textarea = event.target;
         const scrollPosition = window.scrollY;
@@ -182,7 +164,6 @@ document.addEventListener('DOMContentLoaded', () => {
         window.scrollTo(0, scrollPosition);
     }
 
-    // 토스트 알림 함수
     const showToast = message => {
         clearTimeout(toastTimer);
         toastMessage.textContent = message;
@@ -190,12 +171,6 @@ document.addEventListener('DOMContentLoaded', () => {
         toastTimer = setTimeout(() => { toastNotification.classList.remove('show'); }, 3000);
     };
 
-    /**
-     * 주어진 내용을 파일로 다운로드하는 범용 함수
-     * @param {string} content - 파일 내용
-     * @param {string} filename - 저장될 파일 이름
-     * @param {string} contentType - 파일 타입
-     */
     function downloadFile(content, filename, contentType) {
         const blob = new Blob([content], { type: contentType });
         const link = document.createElement("a");
@@ -208,10 +183,6 @@ document.addEventListener('DOMContentLoaded', () => {
         URL.revokeObjectURL(url);
     }
 
-    /**
-     * 현재 채팅 데이터를 인간이 읽기 좋은 TXT 형식으로 변환하는 함수
-     * @returns {string} 변환된 텍스트
-     */
     function generateTxtFromChat() {
         if (!originalMessages || originalMessages.length === 0) return "채팅 기록이 없습니다.";
         return originalMessages.map(msg => {
@@ -221,53 +192,102 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- 페이지 전체 이벤트 리스너 ---
-    backToListBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        window.location.replace('chat-list.html');
-    });
-    
-    toggleMenuBtn.addEventListener('click', () => {
-        dropdownMenu.hidden = !dropdownMenu.hidden;
-    });
+    function addPageEventListeners() {
+        backToListBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            window.location.replace('chat-list.html');
+        });
+        
+        toggleMenuBtn.addEventListener('click', () => {
+            dropdownMenu.hidden = !dropdownMenu.hidden;
+        });
 
-    window.addEventListener('click', (e) => {
-        if (!e.target.closest('.dropdown-menu-container')) {
-            dropdownMenu.hidden = true;
-        }
-    });
-
-    // --- 드롭다운 메뉴 버튼 이벤트 리스너 ---
-    downloadJsonBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        const filename = (currentPost.title.trim() || 'chat') + '.json';
-        // 저장 시에는 보기 좋게 포맷팅된 JSON을 사용
-        const formattedJson = JSON.stringify(JSON.parse(currentPost.content), null, 2);
-        downloadFile(formattedJson, filename, 'application/json');
-        dropdownMenu.hidden = true;
-    });
-
-    downloadTxtBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        const filename = (currentPost.title.trim() || 'chat') + '.txt';
-        const txtContent = generateTxtFromChat();
-        downloadFile(txtContent, filename, 'text/plain');
-        dropdownMenu.hidden = true;
-    });
-    
-    dropdownDeleteBtn.addEventListener('click', async (e) => {
-        e.preventDefault();
-        dropdownMenu.hidden = true;
-        if (!currentPost.id) return;
-        if (confirm('정말로 이 채팅 기록을 삭제하시겠습니까?')) {
-            try {
-                await db.collection('posts').doc(currentPost.id).delete();
-                localStorage.removeItem('currentPost');
-                localStorage.removeItem('currentCategory');
-                window.location.replace('chat-list.html');
-            } catch (error) {
-                console.error("삭제 실패:", error);
-                showToast('삭제에 실패했습니다.');
+        window.addEventListener('click', (e) => {
+            if (!e.target.closest('.dropdown-menu-container') && !e.target.closest('#viewer-title') && !e.target.closest('.title-edit-input')) {
+                dropdownMenu.hidden = true;
             }
-        }
-    });
+        });
+
+        viewerTitle.addEventListener('click', () => {
+            if (document.querySelector('.title-edit-input')) return;
+
+            const currentTitle = viewerTitle.textContent;
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.className = 'title-edit-input';
+            input.value = currentTitle;
+
+            viewerTitle.style.display = 'none';
+            // h1의 부모(header)에 input을 h1 대신 삽입
+            viewerTitle.parentNode.insertBefore(input, viewerTitle);
+            input.focus();
+            input.select();
+
+            const saveNewTitle = async () => {
+                const newTitle = input.value.trim();
+                if(input.parentNode) {
+                    input.parentNode.removeChild(input);
+                }
+                viewerTitle.style.display = 'block';
+
+                if (newTitle && newTitle !== currentTitle) {
+                    viewerTitle.textContent = newTitle;
+                    try {
+                        await db.collection('posts').doc(currentPost.id).update({ title: newTitle });
+                        currentPost.title = newTitle;
+                        localStorage.setItem('currentPost', JSON.stringify(currentPost));
+                        showToast('제목이 변경되었습니다.');
+                    } catch(err) {
+                        showToast('제목 변경에 실패했습니다.');
+                        viewerTitle.textContent = currentTitle;
+                    }
+                }
+            };
+
+            input.addEventListener('blur', saveNewTitle);
+            input.addEventListener('keydown', e => {
+                if (e.key === 'Enter') input.blur();
+                if (e.key === 'Escape') {
+                    if(input.parentNode) {
+                        input.parentNode.removeChild(input);
+                    }
+                    viewerTitle.style.display = 'block';
+                }
+            });
+        });
+
+        // --- 드롭다운 메뉴 버튼 이벤트 리스너 ---
+        downloadJsonBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            const filename = (currentPost.title.trim() || 'chat') + '.json';
+            const formattedJson = JSON.stringify(JSON.parse(currentPost.content), null, 2);
+            downloadFile(formattedJson, filename, 'application/json');
+            dropdownMenu.hidden = true;
+        });
+
+        downloadTxtBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            const filename = (currentPost.title.trim() || 'chat') + '.txt';
+            const txtContent = generateTxtFromChat();
+            downloadFile(txtContent, filename, 'text/plain');
+            dropdownMenu.hidden = true;
+        });
+        
+        dropdownDeleteBtn.addEventListener('click', async (e) => {
+            e.preventDefault();
+            dropdownMenu.hidden = true;
+            if (!currentPost.id) return;
+            if (confirm('정말로 이 채팅 기록을 삭제하시겠습니까?')) {
+                try {
+                    await db.collection('posts').doc(currentPost.id).delete();
+                    localStorage.removeItem('currentPost');
+                    localStorage.removeItem('currentCategory');
+                    window.location.replace('chat-list.html');
+                } catch (error) {
+                    console.error("삭제 실패:", error);
+                    showToast('삭제에 실패했습니다.');
+                }
+            }
+        });
+    }
 });
