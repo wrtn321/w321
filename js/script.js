@@ -72,7 +72,8 @@ function setupAuthPage(auth) {
 
 async function setupMainPage(db, user) {
     const tabsCollection = db.collection('tabs');
-    let sortableInstance = null; // SortableJS 인스턴스 저장용
+    let sortableInstance = null;
+    let currentEditingTabId = null; // 새로 추가/수정 중인 탭의 ID를 저장
 
     // --- HTML 요소 가져오기 ---
     const logoutButton = document.querySelector('.logout-button');
@@ -80,6 +81,10 @@ async function setupMainPage(db, user) {
     const editModeBtn = document.getElementById('main-edit-mode-btn');
     const modal = document.getElementById('tab-modal');
     const tabForm = document.getElementById('tab-form');
+    const modalTitle = document.getElementById('modal-title');
+    const tabNameInput = document.getElementById('tab-name');
+    const tabKeyInput = document.getElementById('tab-key');
+    const tabTypeSelect = document.getElementById('tab-type');
     const cancelTabBtn = document.getElementById('cancel-tab-btn');
 
     // --- 데이터 로드 및 렌더링 ---
@@ -157,10 +162,21 @@ async function setupMainPage(db, user) {
     function toggleEditMode() {
         document.body.classList.toggle('edit-mode-active');
         if (document.body.classList.contains('edit-mode-active')) {
-            editModeBtn.textContent = '✓'; // 완료 아이콘
+            editModeBtn.textContent = '✓';
+            // ★★★ 편집 모드일 때만 '탭 추가' 버튼이 보이도록 수정 ★★★
+            const addTabBtn = document.createElement('button');
+            addTabBtn.id = 'add-tab-btn';
+            addTabBtn.textContent = '+ 탭 추가';
+            addTabBtn.style.cssText = 'padding: 10px 20px; margin: 20px auto; display: block;';
+            dashboardContainer.insertAdjacentElement('afterend', addTabBtn);
+            addTabBtn.addEventListener('click', () => showTabModal());
+
             initSortable();
         } else {
-            editModeBtn.textContent = '✏️'; // 편집 아이콘
+            editModeBtn.textContent = '✏️';
+            const addTabBtn = document.getElementById('add-tab-btn');
+            if (addTabBtn) addTabBtn.remove();
+            
             if (sortableInstance) {
                 sortableInstance.destroy();
                 sortableInstance = null;
@@ -198,7 +214,19 @@ async function setupMainPage(db, user) {
     
     // --- 3. 탭 추가 (모달) ---
     function showTabModal(tabData = null) {
-        // ... 모달 UI 설정 로직 ...
+        tabForm.reset(); // 폼 초기화
+        if (tabData) { // 수정 모드
+            modalTitle.textContent = '탭 수정';
+            currentEditingTabId = tabData.id;
+            tabNameInput.value = tabData.name;
+            tabKeyInput.value = tabData.key;
+            tabKeyInput.disabled = true; // 고유 키는 수정 불가
+            tabTypeSelect.value = tabData.type;
+        } else { // 추가 모드
+            modalTitle.textContent = '새 탭 추가';
+            currentEditingTabId = null;
+            tabKeyInput.disabled = false;
+        }
         modal.hidden = false;
     }
     
@@ -224,6 +252,46 @@ async function setupMainPage(db, user) {
             }
         });
     }
+
+     tabForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const tabName = tabNameInput.value;
+        const tabKey = tabKeyInput.value;
+        const tabType = tabTypeSelect.value;
+
+        // 고유 키 유효성 검사 (영어 소문자, 숫자, 하이픈만 허용)
+        if (!/^[a-z0-9-]+$/.test(tabKey)) {
+            alert('고유 키는 영어 소문자, 숫자, 하이픈(-)만 사용할 수 있습니다.');
+            return;
+        }
+
+        const dataToSave = {
+            name: tabName,
+            type: tabType,
+            userId: user.uid,
+        };
+
+        try {
+            if (currentEditingTabId) { // 수정일 경우
+                // 이름과 타입만 업데이트
+                await tabsCollection.doc(currentEditingTabId).update({ name: tabName, type: tabType });
+            } else { // 추가일 경우
+                // 모든 데이터 저장
+                const items = dashboardContainer.querySelectorAll('.card');
+                dataToSave.order = items.length; // 맨 마지막 순서로 추가
+                dataToSave.categoryKey = tabKey;
+                await tabsCollection.add(dataToSave);
+            }
+            
+            modal.hidden = true; // ★★★ 바로 이 부분! 저장이 성공하면 모달을 숨깁니다. ★★★
+            showToast('성공적으로 저장되었습니다.');
+            loadAndRenderTabs(); // 목록을 새로고침하여 변경사항을 반영합니다.
+
+        } catch (error) {
+            console.error('탭 저장 실패:', error);
+            showToast('저장에 실패했습니다.');
+        }
+    });
 
     // --- 초기 이벤트 리스너 연결 ---
     logoutButton.addEventListener('click', (e) => { e.preventDefault(); firebase.auth().signOut(); });
