@@ -1,61 +1,13 @@
+/* css/style.css (index, main 페이지 전용 스타일) */
+
 /* =======================================
-   추천 색상 팔레트 (CSS 변수 선언)
+   인증 페이지 (index.html)
    ======================================= */
-:root {
-    --primary-color: #bbd4ff;       /* 부드러운 핑크 */
-    --primary-hover-color: #7a9eff;    /* 더 진한 핑크 (호버용) */
-    --accent-color: #b7b7b7;        /* 차분한 민트 */
-    --accent-hover-color: #8a8a8a;     /* 더 진한 민트 (호버용) */
-    --background-color: #F9FAFB;    /* 아주 연한 회색 (배경) */
-    --surface-color: #FFFFFF;        /* 흰색 (카드 배경) */
-    --text-primary-color: #111827;  /* 진한 회색 (주요 텍스트) */
-    --text-secondary-color: #9CA3AF;/* 연한 회색 (보조 텍스트, 아이콘) */
-    --border-color: #E5E7EB;       /* 아주 연한 회색 (테두리) */
-}
-
-/* 전체 페이지 기본 설정 */
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-
-html, body {
-    overflow-x: hidden;
-}
-
-body {
-    font-family: Arial, sans-serif;
-    background-color: var(--background-color);
-    min-height: 100vh;
-}
-
-body.sticky-footer-layout {
-    display: flex;
-    flex-direction: column;
-}
-
-body.sticky-footer-layout main {
-    flex-grow: 1;
-}
-
-/* 푸터 */
-.site-footer {
-    background-color: var(--background-color); /* 배경색과 동일하게 */
-    border-top: 1px solid var(--border-color); /* 상단에 얇은 구분선 추가 */
-    padding: 50px 0; /* 위아래 여백 */
-    text-align: center; /* 텍스트 중앙 정렬 */
-    color: var(--text-secondary-color); /* 연한 회색 글씨 */
-    font-size: 14px;
-    margin-top: auto; /* flex-grow와 함께 푸터를 아래로 밀어내는 핵심! */
-}
-
-/* 인증 페이지 컨테이너 - 기존 login-container 대체 */
 .auth-container {
     display: flex;
     justify-content: center;
     align-items: center;
-    flex-grow: 1; /* 푸터를 아래로 밀기 위해 추가 */
+    flex-grow: 1;
 }
 
 .auth-form-wrapper {
@@ -67,7 +19,6 @@ body.sticky-footer-layout main {
     max-width: 400px;
 }
 
-/* 폼 공통 스타일 - 기존 login-form 대체 */
 .auth-form:not([hidden]) { 
     display: flex;
     flex-direction: column;
@@ -97,7 +48,7 @@ body.sticky-footer-layout main {
 .auth-form button {
     padding: 12px;
     background-color: var(--primary-color);
-    color: white; /* 텍스트 색상을 흰색으로 변경하여 가독성 확보 */
+    color: white;
     border: none;
     border-radius: 5px;
     font-size: 16px;
@@ -110,7 +61,6 @@ body.sticky-footer-layout main {
     background-color: var(--primary-hover-color);
 }
 
-/* 폼 전환 텍스트 스타일 */
 .form-toggle-text {
     text-align: center;
     font-size: 14px;
@@ -127,45 +77,9 @@ body.sticky-footer-layout main {
 }
 
 
-/* 메인페이지 */
-
-/*헤더*/
-.main-header{
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    width: 100%;
-    height: 60px;
-    padding: 10px 20px;
-    background-color: var(--primary-color);
-    position: sticky;
-    top: 0;
-    z-index: 100;
-}
-
-.main-header h1{
-    color: var(--text-primary-color);
-    font-size: 24px;
-    margin: 0;
-
-}
-
-.main-header a{
-    text-decoration: none;
-    color: var(--text-primary-color);
-    font-size: 16px;
-    font-weight: bold;
-    padding: 8px 12px;
-    border-radius: 5px;
-    transition: background-color 0.2s;
-}
-
-.main-header a:hover{
-    background-color: rgba(255, 255, 255, 0.5);
-}
-
-
-/*메인컨텐츠*/
+/* =======================================
+   메인 대시보드 페이지 (main.html)
+   ======================================= */
 .dashboard-container{
     display: flex;
     justify-content: space-around;
@@ -223,12 +137,11 @@ body.sticky-footer-layout main {
     transform: translateX(5px);
 }
 
-
-/*컨텐츠칸*/
 .card-body{
     padding: 10px 10px;
     flex-grow: 1;
 }
+
 .recent-item{
     display: block;
     font-size: 16px;
@@ -244,44 +157,10 @@ body.sticky-footer-layout main {
     color: var(--text-primary-color);
 }
 
-/* =======================================
-   토스트(Toast) 알림 스타일
-   ======================================= */
-
-#toast-notification {
-    /* 화면 하단 중앙에 고정시키기 */
-    position: fixed;
-    left: 50%;
-    bottom: 30px;
-    transform: translateX(-50%); /* X축으로 자신의 절반만큼 왼쪽으로 이동해 완벽한 중앙 정렬 */
-
-    /* 디자인 */
-    background-color: rgba(0, 0, 0, 0.75); /* 살짝 투명한 검은색 배경 */
-    color: white;
-    padding: 12px 20px;
-    border-radius: 25px; /* 동글동글한 알약 모양 */
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-
-    /* 처음에는 숨겨두기 */
-    opacity: 0;
-    visibility: hidden;
-    z-index: 1000; /* 다른 모든 요소들 위에 보이도록 */
-
-    /* 나타나고 사라질 때 부드러운 애니메이션 효과 */
-    transition: opacity 0.5s, visibility 0.5s, bottom 0.5s;
-}
-
-/* JavaScript가 .show 클래스를 추가하면 이 스타일이 적용됨 */
-#toast-notification.show {
-    opacity: 1;
-    visibility: visible;
-    bottom: 50px; /* 살짝 위로 떠오르는 효과 */
-}
-
-/*컨텐츠 푸터*/
 .card-footer{
     padding: 15px;
 }
+
 .new-button{
     width:100%;
     padding: 12px;
@@ -298,49 +177,7 @@ body.sticky-footer-layout main {
     background-color: var(--accent-hover-color);
 }
 
-/* =======================================
-   맨 위로 가기 버튼 스타일
-   ======================================= */
-#scroll-to-top-btn {
-    position: fixed; /* 화면에 고정 */
-    bottom: 20px;    /* 화면 아래에서 20px 위 */
-    right: 20px;     /* 화면 오른쪽에서 20px 왼쪽 */
-    z-index: 999;    /* 다른 모든 요소들 위에 보이도록 */
-
-    /* 모양 */
-    width: 45px;
-    height: 45px;
-    border-radius: 50%; /* 완벽한 원 모양 */
-    background-color: var(--primary-color);
-    color: white;
-    border: none;
-    cursor: pointer;
-
-    /* 아이콘 스타일 */
-    font-size: 24px;
-    font-weight: bold;
-    line-height: 45px; /* 아이콘을 수직 중앙에 오게 함 */
-    text-align: center;
-
-    /* ★★★ 핵심: 보이고 숨겨질 때의 애니메이션과 투명도 ★★★ */
-    opacity: 0; /* 평소에는 완전히 투명 (안 보임) */
-    visibility: hidden; /* 스크린 리더 등에서도 인식 안 되게 함 */
-    transition: opacity 0.3s, visibility 0.3s; /* 부드럽게 나타나고 사라지게 */
-}
-
-/* 자바스크립트가 .show 클래스를 추가하면 이 스타일이 적용됨 */
-#scroll-to-top-btn.show {
-    opacity: 0.7; /* 살짝 투명하게 보이도록 */
-    visibility: visible;
-}
-
-/* 마우스를 올리면 더 진하게 보이도록 */
-#scroll-to-top-btn:hover {
-    opacity: 1;
-}
-
-/*미디어쿼리*/
-
+/* 미디어쿼리 */
 @media(max-width: 768px){
     .dashboard-container{
         flex-direction: column;
