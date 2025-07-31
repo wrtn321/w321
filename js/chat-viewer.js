@@ -195,10 +195,12 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     
-   주어진 내용을 파일로 다운로드하는 범용 함수
-   @param {string} content - 파일 내용
-   @param {string} filename - 저장될 파일 이름 (예: "chat.txt")
-   @param {string} contentType - 파일 타입 (예: "text/plain")
+/**
+ * 주어진 내용을 파일로 다운로드하는 범용 함수
+ * @param {string} content - 파일 내용
+ * @param {string} filename - 저장될 파일 이름 (예: "chat.txt")
+ * @param {string} contentType - 파일 타입 (예: "text/plain")
+ */
  
 function downloadFile(content, filename, contentType) {
     const blob = new Blob([content], { type: contentType });
