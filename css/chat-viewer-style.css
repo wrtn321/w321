@@ -302,3 +302,16 @@
 .user-message.editing {
     width: 100%;
 }
+
+.title-edit-input {
+    width: 80%; /* 너무 꽉 차지 않게 */
+    max-width: 400px;
+    font-size: 24px;
+    font-weight: bold;
+    text-align: center;
+    border: 1px solid var(--primary-color);
+    border-radius: 5px;
+    padding: 5px;
+    outline: none;
+    background-color: var(--surface-color);
+}
