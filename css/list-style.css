@@ -1,41 +1,18 @@
-/* =======================================
-   list-style.css - 목록 페이지 전용 스타일 (폴더 기능 적용 버전)
-   ======================================= */
+/* css/list-style.css (목록 페이지 전용 스타일) */
 
-/* 전체 페이지의 여백을 없애고, 박스 크기 계산법을 통일합니다. */
-* {
-    box-sizing: border-box;
-}
-
-/* ----------------------------------
-   1. 헤더 (기존 스타일 보강)
-   ---------------------------------- */
+/* 헤더의 좌우 패딩을 목록 페이지에 맞게 조정 */
 .main-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
     padding: 0 15px;
 }
 
-.main-header .back-button {
-    font-size: 24px;
-    font-weight: bold;
-    text-decoration: none;
-    color: var(--text-primary-color);
-}
-
-/* ----------------------------------
-   2. 목록 페이지 컨테이너
-   ---------------------------------- */
+/* 목록 페이지 컨테이너 */
 .list-container {
     max-width: 800px;
     margin: 20px auto;
     padding: 0 15px;
 }
 
-/* ----------------------------------
-   3. 상단 액션 바
-   ---------------------------------- */
+/* 상단 액션 바 */
 .action-bar {
     display: flex;
     justify-content: flex-end;
@@ -60,9 +37,7 @@
     border-color: var(--accent-color);
 }
 
-/* ----------------------------------
-   4. 게시글 리스트
-   ---------------------------------- */
+/* 게시글 리스트 */
 .normal-list {
     margin-bottom: 30px;
 }
@@ -74,7 +49,6 @@
 }
 
 .list-item {
-    /* li 태그 자체는 이제 flex가 아닌 block으로 구조를 단순화합니다. */
     padding: 3px 0;
     border-bottom: 1px solid var(--border-color);
 }
@@ -82,28 +56,6 @@
 .list-item:last-child {
     border-bottom: none;
 }
-
-/* 아이콘 (📁, 📝) 스타일 */
-.list-item .item-icon {
-    font-size: 18px;
-    margin-right: 12px;
-    pointer-events: none; 
-}
-
-/* ★ 새로 추가된 스타일 ★ */
-.item-icon .icon-open {
-    display: none; /* 열린 폴더 아이콘은 평소에 숨김 */
-}
-
-/* li.open 상태일 때의 아이콘 제어 */
-.list-item.open .item-icon .icon-closed {
-    display: none; /* 닫힌 폴더 아이콘을 숨김 */
-}
-
-.list-item.open .item-icon .icon-open {
-    display: inline; /* 열린 폴더 아이콘을 보여줌 */
-}
-
 
 .item-content-wrapper {
     display: flex;
@@ -114,84 +66,86 @@
     transition: background-color 0.2s;
 }
 
-/* 파일이나 폴더에 마우스를 올렸을 때 효과 */
 .item-content-wrapper:hover {
     background-color: #f0f0f0;
 }
 
-/* 파일 클릭 시에는 커서를 포인터로 변경 */
 .list-item:not(.item-folder) .item-content-wrapper {
     cursor: pointer;
 }
 
-/* 드래그 핸들 (⠿) 스타일 */
 .list-item .drag-handle {
     color: var(--text-secondary-color);
     padding: 0 10px 0 0;
     cursor: grab;
 }
 
-/* 아이콘 (📁, 📝) 스타일 */
 .list-item .item-icon {
     font-size: 18px;
     margin-right: 12px;
-    /* 클릭 이벤트를 막아서 아이콘 자체는 클릭되지 않도록 함 */
     pointer-events: none; 
 }
 
-/* 제목 스타일 */
+.item-icon .icon-open {
+    display: none;
+}
+
+.list-item.open .item-icon .icon-closed {
+    display: none;
+}
+
+.list-item.open .item-icon .icon-open {
+    display: inline;
+}
+
 .list-item .item-title {
     flex-grow: 1; 
     font-size: 16px;
     color: var(--text-primary-color);
-    /* 클릭 이벤트를 막아서 제목 자체는 클릭되지 않도록 함 */
-    pointer-events: none;
+    /* 클릭 이벤트를 막기 위해 pointer-events를 사용하지 않음 (JS에서 제어) */
 }
 
 .list-item.item-folder .item-title {
     font-weight: 600;
 }
 
-/* SortableJS 드래그 효과 스타일 */
 .sortable-ghost {
     opacity: 0.4;
     background-color: #c8ebfb;
 }
 
-/* =======================================
-   ★ 폴더 기능 관련 핵심 스타일 ★
-   ======================================= */
 .sub-list {
     list-style: none;
-    /* 자식 목록 들여쓰기 */
     padding-left: 30px; 
-    /* 일단 숨겨둠 */
     display: none; 
 }
 
-/* li.open > ul.sub-list 구조일 때만 자식 목록을 보여줌 */
 .list-item.open > .sub-list {
     display: block;
 }
 
-
-/* 폴더 삭제 버튼 */
 .edit-folder-btn, .delete-folder-btn {
     background: none;
     border: none;
     cursor: pointer;
     font-size: 16px;
-    /* wrapper가 flex이므로 margin-left: auto는 필요 없습니다. */
     padding: 0 5px;
-    /* 평소엔 숨김 */
     visibility: hidden; 
     opacity: 0;
     transition: opacity 0.2s;
 }
 
-/* 아이템에 마우스 올리면 버튼 보임 */
 .item-content-wrapper:hover .edit-folder-btn,
 .item-content-wrapper:hover .delete-folder-btn {
     visibility: visible;
     opacity: 1;
+}
+
+.title-edit-input {
+    flex-grow: 1;
+    font-size: 16px;
+    padding: 2px 5px;
+    border: 1px solid var(--primary-color);
+    border-radius: 4px;
+    outline: none;
 }
