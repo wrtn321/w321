@@ -73,7 +73,7 @@ function setupAuthPage(auth) {
 async function setupMainPage(db, user) {
     const tabsCollection = db.collection('tabs');
     let sortableInstance = null;
-    let currentEditingTabId = null; // 새로 추가/수정 중인 탭의 ID를 저장
+    let currentEditingTabId = null;
 
     // --- HTML 요소 가져오기 ---
     const logoutButton = document.querySelector('.logout-button');
@@ -95,9 +95,9 @@ async function setupMainPage(db, user) {
                 .orderBy('order', 'asc')
                 .get();
             
-            dashboardContainer.innerHTML = ''; // 컨테이너 비우기
+            dashboardContainer.innerHTML = '';
             if (snapshot.empty) {
-                dashboardContainer.innerHTML = '<p style="text-align:center; color:#999;">탭이 없습니다. 편집 버튼을 눌러 추가해보세요.</p>';
+                dashboardContainer.innerHTML = '<p style="text-align:center; color:#999; padding: 20px;">탭이 없습니다. 편집 버튼을 눌러 추가해보세요.</p>';
             } else {
                 snapshot.docs.forEach(doc => {
                     const tabData = { id: doc.id, ...doc.data() };
@@ -107,7 +107,7 @@ async function setupMainPage(db, user) {
             }
         } catch (error) {
             console.error("탭 로딩 실패:", error);
-            dashboardContainer.innerHTML = '<p style="color:red;">탭을 불러오는 데 실패했습니다.</p>';
+            dashboardContainer.innerHTML = '<p style="color:red; text-align:center;">탭을 불러오는 데 실패했습니다.</p>';
         }
     }
 
@@ -115,7 +115,7 @@ async function setupMainPage(db, user) {
     function createTabCard(tabData) {
         const card = document.createElement('section');
         card.className = 'card';
-        card.dataset.id = tabData.id; // 문서 ID를 저장
+        card.dataset.id = tabData.id;
         card.dataset.name = tabData.name;
         card.dataset.key = tabData.categoryKey;
         card.dataset.type = tabData.type;
@@ -133,24 +133,20 @@ async function setupMainPage(db, user) {
                     <span>></span>
                 </div>
             </a>
-            <div class="card-body">
-                <!-- 최근 항목은 추후 추가 -->
-            </div>
+            <div class="card-body"></div>
             <div class="card-footer">
                 <button type="button" class="new-button">+ 새로 만들기</button>
             </div>
         `;
         
-        // --- 각 카드에 이벤트 리스너 연결 ---
         card.querySelector('.card-header-link').addEventListener('click', (e) => {
             if (document.body.classList.contains('edit-mode-active')) {
-                e.preventDefault(); // 편집 모드일 땐 이름 변경
+                e.preventDefault();
                 editTabName(card);
             }
         });
-
         card.querySelector('.delete-btn').addEventListener('click', () => deleteTab(tabData.id, tabData.name));
-        card.querySelector('.new-button').addEventListener('click', (e) => {
+        card.querySelector('.new-button').addEventListener('click', () => {
             if(tabData.type === 'chat-list') window.location.href = 'chat-list.html';
             else window.location.href = `post.html?category=${tabData.categoryKey}&new=true`;
         });
@@ -161,22 +157,22 @@ async function setupMainPage(db, user) {
     // --- 편집 모드 관련 함수 ---
     function toggleEditMode() {
         document.body.classList.toggle('edit-mode-active');
+        const addTabBtn = document.getElementById('add-tab-btn');
+
         if (document.body.classList.contains('edit-mode-active')) {
             editModeBtn.textContent = '✓';
-            // ★★★ 편집 모드일 때만 '탭 추가' 버튼이 보이도록 수정 ★★★
-            const addTabBtn = document.createElement('button');
-            addTabBtn.id = 'add-tab-btn';
-            addTabBtn.textContent = '+ 탭 추가';
-            addTabBtn.style.cssText = 'padding: 10px 20px; margin: 20px auto; display: block;';
-            dashboardContainer.insertAdjacentElement('afterend', addTabBtn);
-            addTabBtn.addEventListener('click', () => showTabModal());
-
+            if (!addTabBtn) {
+                const newBtn = document.createElement('button');
+                newBtn.id = 'add-tab-btn';
+                newBtn.textContent = '+ 탭 추가';
+                newBtn.style.cssText = 'padding: 10px 20px; margin: 20px auto; display: block; border-radius: 8px; border: 1px solid #ccc; cursor: pointer;';
+                dashboardContainer.insertAdjacentElement('afterend', newBtn);
+                newBtn.addEventListener('click', () => showTabModal());
+            }
             initSortable();
         } else {
             editModeBtn.textContent = '✏️';
-            const addTabBtn = document.getElementById('add-tab-btn');
             if (addTabBtn) addTabBtn.remove();
-            
             if (sortableInstance) {
                 sortableInstance.destroy();
                 sortableInstance = null;
@@ -184,7 +180,6 @@ async function setupMainPage(db, user) {
         }
     }
     
-    // --- 1. 탭 이름 변경 ---
     async function editTabName(card) {
         const currentName = card.dataset.name;
         const newName = prompt("새 탭 이름을 입력하세요.", currentName);
@@ -192,37 +187,35 @@ async function setupMainPage(db, user) {
             try {
                 await tabsCollection.doc(card.dataset.id).update({ name: newName });
                 showToast('탭 이름이 변경되었습니다.');
-                loadAndRenderTabs(); // 다시 렌더링
+                await loadAndRenderTabs();
             } catch (error) {
                 showToast('이름 변경에 실패했습니다.');
             }
         }
     }
 
-    // --- 2. 탭 삭제 ---
     async function deleteTab(tabId, tabName) {
         if (confirm(`'${tabName}' 탭을 정말 삭제하시겠습니까?\n(연결된 게시물들은 삭제되지 않습니다)`)) {
             try {
                 await tabsCollection.doc(tabId).delete();
                 showToast('탭이 삭제되었습니다.');
-                loadAndRenderTabs();
+                await loadAndRenderTabs();
             } catch (error) {
                 showToast('탭 삭제에 실패했습니다.');
             }
         }
     }
     
-    // --- 3. 탭 추가 (모달) ---
     function showTabModal(tabData = null) {
-        tabForm.reset(); // 폼 초기화
-        if (tabData) { // 수정 모드
+        tabForm.reset();
+        if (tabData) {
             modalTitle.textContent = '탭 수정';
             currentEditingTabId = tabData.id;
             tabNameInput.value = tabData.name;
             tabKeyInput.value = tabData.key;
-            tabKeyInput.disabled = true; // 고유 키는 수정 불가
+            tabKeyInput.disabled = true;
             tabTypeSelect.value = tabData.type;
-        } else { // 추가 모드
+        } else {
             modalTitle.textContent = '새 탭 추가';
             currentEditingTabId = null;
             tabKeyInput.disabled = false;
@@ -230,8 +223,8 @@ async function setupMainPage(db, user) {
         modal.hidden = false;
     }
     
-    // --- 4. 탭 순서 변경 (SortableJS) ---
     function initSortable() {
+        if(sortableInstance) sortableInstance.destroy();
         sortableInstance = new Sortable(dashboardContainer, {
             handle: '.drag-handle',
             animation: 150,
@@ -247,20 +240,20 @@ async function setupMainPage(db, user) {
                     showToast('순서가 저장되었습니다.');
                 } catch (error) {
                     showToast('순서 저장에 실패했습니다.');
-                    loadAndRenderTabs(); // 실패 시 원위치로
+                    await loadAndRenderTabs();
                 }
             }
         });
     }
 
-     tabForm.addEventListener('submit', async (e) => {
+    // ★★★ 바로 이 부분입니다! 이 리스너는 setupMainPage 안에 있어야 합니다. ★★★
+    tabForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const tabName = tabNameInput.value;
         const tabKey = tabKeyInput.value;
         const tabType = tabTypeSelect.value;
 
-        // 고유 키 유효성 검사 (영어 소문자, 숫자, 하이픈만 허용)
-        if (!/^[a-z0-9-]+$/.test(tabKey)) {
+        if (!currentEditingTabId && !/^[a-z0-9-]+$/.test(tabKey)) {
             alert('고유 키는 영어 소문자, 숫자, 하이픈(-)만 사용할 수 있습니다.');
             return;
         }
@@ -272,20 +265,18 @@ async function setupMainPage(db, user) {
         };
 
         try {
-            if (currentEditingTabId) { // 수정일 경우
-                // 이름과 타입만 업데이트
+            if (currentEditingTabId) {
                 await tabsCollection.doc(currentEditingTabId).update({ name: tabName, type: tabType });
-            } else { // 추가일 경우
-                // 모든 데이터 저장
+            } else {
                 const items = dashboardContainer.querySelectorAll('.card');
-                dataToSave.order = items.length; // 맨 마지막 순서로 추가
+                dataToSave.order = items.length;
                 dataToSave.categoryKey = tabKey;
                 await tabsCollection.add(dataToSave);
             }
             
-            modal.hidden = true; // ★★★ 바로 이 부분! 저장이 성공하면 모달을 숨깁니다. ★★★
+            modal.hidden = true;
             showToast('성공적으로 저장되었습니다.');
-            loadAndRenderTabs(); // 목록을 새로고침하여 변경사항을 반영합니다.
+            await loadAndRenderTabs();
 
         } catch (error) {
             console.error('탭 저장 실패:', error);
@@ -301,5 +292,3 @@ async function setupMainPage(db, user) {
     // --- 최초 실행 ---
     loadAndRenderTabs();
 }
-
-//연결해줘
