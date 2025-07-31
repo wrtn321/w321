@@ -177,6 +177,75 @@
     background-color: var(--accent-hover-color);
 }
 
+/* =======================================
+   메인 페이지 편집 기능 스타일
+   ======================================= */
+
+/* 편집 모드 진입 버튼 */
+#main-edit-mode-btn {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 50px;
+    height: 50px;
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    font-size: 24px;
+    cursor: pointer;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    z-index: 1001; /* 맨 위로 가기 버튼보다 위에 */
+}
+
+/* 편집 모드일 때 카드에 표시될 버튼들 */
+.card .edit-controls {
+    display: none; /* 평소엔 숨김 */
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background-color: rgba(255, 255, 255, 0.8);
+    border-radius: 5px;
+    padding: 2px;
+}
+.edit-mode-active .card .edit-controls {
+    display: flex; /* 편집 모드일 때만 보임 */
+    gap: 5px;
+}
+.card .control-btn {
+    background: none;
+    border: none;
+    font-size: 18px;
+    cursor: pointer;
+}
+.card .drag-handle { cursor: grab; }
+.card .delete-btn { color: #f44336; }
+
+/* 모달 (팝업창) 스타일 */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+}
+.modal-content {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    width: 90%;
+    max-width: 400px;
+}
+#tab-form { display: flex; flex-direction: column; gap: 15px; }
+#tab-form input, #tab-form select { padding: 10px; font-size: 16px; }
+.modal-actions { display: flex; justify-content: flex-end; gap: 10px; }
+
+
 /* 미디어쿼리 */
 @media(max-width: 768px){
     .dashboard-container{
