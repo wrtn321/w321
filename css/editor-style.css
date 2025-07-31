@@ -1,92 +1,67 @@
-/* editor-style.css */
+/* css/editor-style.css (일반 글 에디터 페이지 전용) */
 
+/* 에디터 페이지의 헤더는 투명 배경에 밑줄 */
 body.sticky-footer-layout > .main-header {
     display: flex;
-    justify-content: space-between; /* 양쪽 정렬 유지 */
-    align-items: flex-start;
-    background-color: transparent; /* 배경색을 없애서 본문과 어우러지게 */
-    border-bottom: 1px solid var(--border-color); /* 구분선 추가 */
-    padding: 10px 15px; /* editor-container의 padding과 동일하게 맞춤! */
+    justify-content: space-between;
+    align-items: flex-start; /* 제목이 길어져도 위쪽 정렬 유지 */
+    background-color: transparent;
+    border-bottom: 1px solid var(--border-color);
+    padding: 15px;
     color: var(--text-secondary-color);
-    position: sticky; /* 스크롤 영역에 붙어있게 함 */
-    top: 0;
-    z-index: 100;
 }
 
 body.sticky-footer-layout > .main-header a {
-    color: var(--text-secondary-color); /* 링크 색상도 통일 */
-    font-weight: normal; /* 너무 굵지 않게 */
+    color: var(--text-secondary-color);
+    font-weight: normal;
 }
 
 .header-center {
-    flex-grow: 1; /* 남는 공간을 모두 차지하여 중앙에 위치하게 함 */
-    text-align: center; /* 내부 텍스트(제목)를 중앙 정렬 */
+    flex-grow: 1;
+    text-align: center;
 }
 
-/* 새로 추가: 오른쪽 섹션 스타일 */
 .header-right {
     display: flex;
-    gap: 8px; /* 버튼들 사이의 간격 */
+    gap: 8px;
 }
 
 .floating-copy-btn {
-    position: sticky;  /* 스크롤 시 상단에 붙어있게 함 */
-    float: right;      /* 오른쪽으로 띄움 */
-    z-index: 50;       /* 헤더보다는 아래, 본문보다는 위에 있도록 */
-}
-.action-btn.floating-copy-btn{
-        color: var(--text-secondary-color);
-        border: 1px solid var(--text-secondary-color);
-        font-size: 16px;
-        margin-top: 16px;
+    position: sticky;
+    float: right;
+    z-index: 50;
+    color: var(--text-secondary-color);
+    border: 1px solid var(--text-secondary-color);
+    font-size: 16px;
+    margin-top: 16px;
 }
 
 .editor-container {
     max-width: 800px;
     width: 100%;
     padding: 0 15px;
+    margin: 20px auto; /* 헤더와 겹치지 않게 마진 추가 */
 }
 
-/* ----------------------------------
-   1. 제목 및 아이콘 버튼 영역
-   ---------------------------------- */
-
-.title-input {
-    flex-grow: 1; 
-    border: none;
-    background-color: transparent;
-    padding: 10px;
-    font-size: 24px; /* 모바일도 고려해서 살짝 줄임 */
-    font-weight: bold;
-    outline: none;
-    /* 최소 너비를 지정해서 아이콘이 밀려나지 않게 함 */
-    min-width: 0; 
-}
-
-/* 제목 입력창과 보기 제목 스타일 조정 */
+/* 제목 입력창과 보기 제목 스타일 */
 .title-input, .view-title {
-    width: 100%; /* 부모(.header-center) 너비에 맞춤 */
-    padding: 10px 0; /* 위아래 여백만 줌 */
+    width: 100%;
+    padding: 0; /* 헤더 자체에 패딩이 있으므로 0으로 */
     margin: 0;
-    font-size: 20px; /* 화면에 맞게 약간 조정 */
+    font-size: 20px;
     font-weight: bold;
     border: none;
     background-color: transparent;
-    text-align: center; /* 이것도 중앙정렬! */
-    white-space: normal; /* 또는 pre-wrap. normal은 자동 줄바꿈을 의미합니다. */
+    text-align: center;
+    white-space: normal;
     word-break: break-word;
+    color: var(--text-primary-color); /* 제목은 진한 색으로 */
 }
 .title-input:focus {
     outline: none;
 }
 
-.title-actions {
-    display: flex;
-    padding: 10px 0;
-    gap: 8px;
-}
-
-/* 모든 아이콘 버튼의 공통 스타일 */
+/* 아이콘 버튼 공통 스타일 */
 .action-btn {
     padding: 8px;
     background-color: transparent;
@@ -94,27 +69,20 @@ body.sticky-footer-layout > .main-header a {
     border-radius: 8px;
     cursor: pointer;
     transition: all 0.2s;
-    font-size: 22px; /* 아이콘 크기 키우기 */
-    line-height: 1; /* 아이콘이 수직 중앙에 오도록 함 */
+    font-size: 22px;
+    line-height: 1;
 }
-
-/* 아이콘 버튼에 마우스를 올렸을 때 */
 .action-btn:hover {
     background-color: var(--background-color);
 }
 
-/* ----------------------------------
-   2. 본문 영역
-   ---------------------------------- */
 .content-section {
     position: relative;
     margin-top: 15px;
 }
 
-
 .content-textarea {
     width: 100%;
-    /* height는 JS가 조절하므로 최소 높이만 남깁니다 */
     min-height: 60vh; 
     padding: 20px;
     border: 1px solid var(--border-color);
@@ -127,47 +95,26 @@ body.sticky-footer-layout > .main-header a {
     overflow-y: hidden;
 }
 
-/* ----------------------------------
-   3. 에디터 정보 영역 (글자 수 카운터 등)
-   ---------------------------------- */
 .editor-info {
-    margin-top: 10px; /* 본문 입력창과의 간격 */
-    padding: 0 5px;   /* 좌우에 미세한 여백 */
+    margin-top: 10px;
+    padding: 0 5px;
     text-align: right;
 }
 
 #char-counter {
     font-size: 14px;
-    color: var(--text-secondary-color); /* 연한 회색 글씨 */
+    color: var(--text-secondary-color);
 }
 
-
-/* =======================================
-   읽기 모드(View Mode) 전용 스타일 수정
-   ======================================= */
-
-/* 읽기 모드 제목 h2 스타일 */
-.view-title {
-    flex-grow: 1;
-    font-size: 24px;
-    font-weight: bold;
-    padding: 10px 0; /* 위아래 여백만 주고 좌우는 없애서 자연스럽게 */
-    margin: 0;
-    min-width: 0;
-}
-#view-mode-elements-header .view-title {
-    margin-block-start: -0.38em;
-}
-
-/* 읽기 모드 본문 div 스타일 */
+/* 읽기 모드 본문 */
 .view-content {
     width: 100%;
     min-height: 60vh; 
-    padding: 5px; /* 패딩을 조정해 답답한 느낌을 없앱니다. */
+    padding: 5px;
     font-size: 16px;
-    line-height: 1.5;
-    white-space: pre-wrap; /* 줄바꿈과 공백 표시는 매우 중요하므로 유지! */
-    word-wrap: break-word; /* 긴 단어 자동 줄바꿈도 유지! */
+    line-height: 1.7;
+    white-space: pre-wrap;
+    word-wrap: break-word;
 }
 
 /* =======================================
@@ -245,87 +192,15 @@ body.sticky-footer-layout > .main-header a {
     border: 0;
 }
 
-/* =======================================
-   드롭다운 메뉴 스타일
-   ======================================= */
-
-/* 메뉴 전체를 감싸는 컨테이너 */
-.dropdown-menu-container {
-    position: relative; /* 자식 요소인 드롭다운 메뉴의 위치 기준점이 됩니다. */
-    display: inline-block; /* 다른 버튼 옆에 나란히 있도록 합니다. */
-}
-
-/* 실제로 나타나는 드롭다운 메뉴의 스타일 */
-.dropdown-content {
-    /* 평소엔 안 보이게 처리했다가, JS로 'show' 클래스가 추가되면 보이게 할 수 있습니다. */
-    /* 하지만 여기서는 hidden 속성을 사용했으므로 JS로 직접 제어합니다. */
-    position: absolute; /* 컨테이너를 기준으로 자유롭게 위치를 잡습니다. */
-    right: 0; /* 컨테이너의 오른쪽에 붙입니다. */
-    background-color: var(--surface-color);
-    min-width: 120px; /* 메뉴가 너무 좁아 보이지 않게 최소 너비를 줍니다. */
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.1);
-    z-index: 1; /* 다른 요소들 위에 보이도록 합니다. */
-    overflow: hidden; /* border-radius가 내부 요소에도 적용되게 합니다. */
-    text-align: center;
-}
-
-/* 드롭다운 메뉴 안의 각 항목 (수정, 삭제 링크) */
-.dropdown-content a {
-    color: var(--text-primary-color);
-    padding: 12px 16px;
-    text-decoration: none;
-    display: block; /* 링크가 한 줄 전체를 차지하게 만들어 클릭하기 쉽게 합니다. */
-    font-size: 15px;
-    transition: background-color 0.2s;
-}
-
-/* 메뉴 항목에 마우스를 올렸을 때 */
-.dropdown-content a:hover {
-    background-color: var(--background-color);
-}
-
-/* '삭제'와 같이 위험한 동작을 나타내는 항목 스타일 */
-.dropdown-content a.danger:hover {
-    background-color: #ffdddd; /* 붉은 계열 배경으로 경고의 의미를 줍니다. */
-    color: #d32f2f;
-}
-
-.dropdown-content a.textdown:hover{
-    background-color: #e3f6ff;
-}
-
 
 @media (max-width: 420px) {
-
-    /* 1. 제목과 아이콘 영역을 위아래로 쌓이게 변경 */
-    .title-section {
-        align-items: flex-start; /* 왼쪽 정렬로 초기화 */
+    .title-input, .view-title {
+        font-size: 18px;
     }
-
-    /* 2. 제목 입력창은 꽉 차게 */
-    .title-input {
-        width: 100%;
-        font-size: 22px; /* 작은 화면에서는 제목 폰트 살짝 줄이기 */
-    }
-
-    /* 4. 본문 입력창 폰트도 살짝 줄여주기 */
     .content-textarea {
         font-size: 15px;
-    }
-
-    body.edit-mode .main-header {
-        flex-wrap: wrap; /* 요소들이 한 줄에 다 들어가지 않으면 다음 줄로 넘어가도록 허용 */
-        row-gap: 8px;    /* 줄바꿈 시 요소들 사이에 수직 간격을 줌 */
-    }
-
-    /* 수정 모드일 때 헤더 중앙(제목 입력창)과 오른쪽(버튼) 영역에 적용 */
-    body.edit-mode .header-center,
-    body.edit-mode .header-right {
-        flex-basis: 100%; /* 너비를 100%로 만들어 한 줄을 모두 차지하게 함 */
-        justify-content: flex-end; /* 버튼들을 오른쪽으로 정렬 */
     }
     .action-flex{
         display:flex;
     }
+}
