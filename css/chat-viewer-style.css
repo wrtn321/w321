@@ -15,6 +15,16 @@ body.sticky-footer-layout > .main-header a,
 body.sticky-footer-layout > .main-header .action-btn {
     color: var(--text-primary-color);
 }
+.action-btn {
+    padding: 8px;
+    background-color: transparent;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 22px;
+    line-height: 1;
+}
 
 /* --- 채팅 뷰어 기본 레이아웃 --- */
 .chat-log-container {
