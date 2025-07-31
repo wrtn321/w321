@@ -176,14 +176,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // 드롭다운의 '수정' 버튼은 이제 사용하지 않으므로 비활성화하거나 다른 기능으로 바꿀 수 있습니다.
-    // 여기서는 클릭하면 안내 메시지를 보여주도록 변경합니다.
-    dropdownEditBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        dropdownMenu.hidden = true;
-        showToast('수정할 말풍선을 직접 클릭하세요!');
-    });
-
     dropdownDeleteBtn.addEventListener('click', async (e) => {
         e.preventDefault();
         dropdownMenu.hidden = true;
@@ -201,4 +193,40 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
     });
+
+    
+   주어진 내용을 파일로 다운로드하는 범용 함수
+   @param {string} content - 파일 내용
+   @param {string} filename - 저장될 파일 이름 (예: "chat.txt")
+   @param {string} contentType - 파일 타입 (예: "text/plain")
+ 
+function downloadFile(content, filename, contentType) {
+    const blob = new Blob([content], { type: contentType });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+
+    link.href = url;
+    link.download = filename;
+    
+    document.body.appendChild(link);
+    link.click();
+    
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+}
+
+/**
+ * 현재 채팅 데이터를 인간이 읽기 좋은 TXT 형식으로 변환하는 함수
+ * @returns {string} 변환된 텍스트
+ */
+function generateTxtFromChat() {
+    if (!originalMessages || originalMessages.length === 0) {
+        return "채팅 기록이 없습니다.";
+    }
+    // 각 메시지를 "역할: 내용" 형태로 변환하고 두 줄씩 띄워서 합칩니다.
+    return originalMessages.map(msg => {
+        const roleName = msg.role === 'user' ? 'USER' : 'ASSISTANT';
+        return `${roleName}:\n${msg.content}`;
+    }).join('\n\n');
+}
 });
