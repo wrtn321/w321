@@ -147,10 +147,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Textarea 높이 자동 조절 함수
     function autoResizeTextarea(event) {
-        const textarea = event.target;
-        textarea.style.height = 'auto';
-        textarea.style.height = (textarea.scrollHeight) + 'px';
-    }
+    const textarea = event.target;
+    const scrollPosition = window.scrollY; // 현재 스크롤 위치 저장
+    textarea.style.height = 'auto';
+    textarea.style.height = (textarea.scrollHeight) + 'px';
+    window.scrollTo(0, scrollPosition); // 저장했던 위치로 스크롤 복원
+}
 
     // 토스트 알림 함수
     const showToast = message => {
