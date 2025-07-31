@@ -59,86 +59,91 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function createMessageBubble(message, index) {
-        const bubble = document.createElement('div');
-        bubble.className = `message-bubble ${message.role}-message`;
+    const bubble = document.createElement('div');
+    bubble.className = `message-bubble ${message.role}-message`;
 
-        const viewContent = document.createElement('div');
-        viewContent.className = 'message-content';
-        viewContent.innerHTML = marked.parse(message.content || '');
+    const viewContent = document.createElement('div');
+    viewContent.className = 'message-content';
+    viewContent.innerHTML = marked.parse(message.content || '');
 
-        const editContent = document.createElement('textarea');
-        editContent.className = 'editable-textarea';
-        editContent.value = message.content || '';
+    const editContent = document.createElement('textarea');
+    editContent.className = 'editable-textarea';
+    editContent.value = message.content || '';
 
-        // ★★★ V/X 버튼이 담길 컨테이너 생성 ★★★
-        const editActions = document.createElement('div');
-        editActions.className = 'edit-actions';
-        editActions.innerHTML = `
-            <button class="save-edit-btn" title="저장">✓</button>
-            <button class="cancel-edit-btn" title="취소">✕</button>
-        `;
+    const editActions = document.createElement('div');
+    editActions.className = 'edit-actions';
+    editActions.innerHTML = `
+        <button class="save-edit-btn" title="저장">✓</button>
+        <button class="cancel-edit-btn" title="취소">✕</button>
+    `;
 
-        bubble.appendChild(viewContent);
-        bubble.appendChild(editContent);
-        bubble.appendChild(editActions);
+    bubble.appendChild(viewContent);
+    bubble.appendChild(editContent);
+    bubble.appendChild(editActions);
 
-        // --- 이벤트 리스너 ---
+    // --- 이벤트 리스너 ---
 
-        // 1. 읽기 모드 div 클릭 시 -> 수정 모드로 전환
-        viewContent.addEventListener('click', () => {
-            // 다른 말풍선이 이미 수정 중이면, 그 말풍선을 먼저 저장(또는 취소)하도록 유도
-            if (activeEditingIndex !== null && activeEditingIndex !== index) {
-                showToast('먼저 다른 항목의 수정을 완료해주세요.');
-                return;
-            }
-            activeEditingIndex = index; // 현재 수정 중인 인덱스로 설정
-            
-            const originalHeight = viewContent.offsetHeight;
-            editContent.style.height = originalHeight + 'px';
-            
-            viewContent.style.display = 'none';
-            editContent.style.display = 'block';
-            editActions.style.display = 'block'; // V/X 버튼 보이기
-            
-            autoResizeTextarea({ target: editContent });
-            editContent.focus();
-            editContent.setSelectionRange(editContent.value.length, editContent.value.length);
-        });
+    // 1. 읽기 모드 div 클릭 시 -> 수정 모드로 전환
+    viewContent.addEventListener('click', () => {
+        if (activeEditingIndex !== null && activeEditingIndex !== index) {
+            showToast('먼저 다른 항목의 수정을 완료해주세요.');
+            return;
+        }
+        activeEditingIndex = index;
+        
+        // ★★★ 핵심: 수정 시작 시 editing 클래스 추가 ★★★
+        bubble.classList.add('editing'); 
 
-        // 2. 저장(V) 버튼 클릭
-        editActions.querySelector('.save-edit-btn').addEventListener('click', async () => {
-            const newText = editContent.value;
-            showToast('저장 중...');
-            originalMessages[index].content = newText;
-            
-            const success = await saveChanges();
-            if (success) {
-                viewContent.innerHTML = marked.parse(newText);
-                showToast('성공적으로 저장되었습니다!');
-            } else {
-                showToast('저장에 실패했습니다.');
-            }
-            // 모드 전환
-            viewContent.style.display = 'block';
-            editContent.style.display = 'none';
-            editActions.style.display = 'none';
-            activeEditingIndex = null; // 수정 완료
-        });
+        const originalHeight = viewContent.offsetHeight;
+        editContent.style.height = originalHeight + 'px';
+        
+        viewContent.style.display = 'none';
+        editContent.style.display = 'block';
+        editActions.style.display = 'block';
+        
+        autoResizeTextarea({ target: editContent });
+        editContent.focus();
+        editContent.setSelectionRange(editContent.value.length, editContent.value.length);
+    });
 
-        // 3. 취소(X) 버튼 클릭
-        editActions.querySelector('.cancel-edit-btn').addEventListener('click', () => {
-            // 원래 내용으로 복구
-            editContent.value = originalMessages[index].content;
-            // 모드 전환
-            viewContent.style.display = 'block';
-            editContent.style.display = 'none';
-            editActions.style.display = 'none';
-            activeEditingIndex = null; // 수정 취소
-        });
+    // 2. 저장(V) 버튼 클릭
+    editActions.querySelector('.save-edit-btn').addEventListener('click', async () => {
+        // ★★★ 핵심: 수정 완료 시 editing 클래스 제거 ★★★
+        bubble.classList.remove('editing'); 
 
-        editContent.addEventListener('input', autoResizeTextarea);
-        return bubble;
-    }
+        const newText = editContent.value;
+        showToast('저장 중...');
+        originalMessages[index].content = newText;
+        
+        const success = await saveChanges();
+        if (success) {
+            viewContent.innerHTML = marked.parse(newText);
+            showToast('성공적으로 저장되었습니다!');
+        } else {
+            showToast('저장에 실패했습니다.');
+        }
+
+        viewContent.style.display = 'block';
+        editContent.style.display = 'none';
+        editActions.style.display = 'none';
+        activeEditingIndex = null;
+    });
+
+    // 3. 취소(X) 버튼 클릭
+    editActions.querySelector('.cancel-edit-btn').addEventListener('click', () => {
+        // ★★★ 핵심: 수정 취소 시 editing 클래스 제거 ★★★
+        bubble.classList.remove('editing');
+
+        editContent.value = originalMessages[index].content;
+        viewContent.style.display = 'block';
+        editContent.style.display = 'none';
+        editActions.style.display = 'none';
+        activeEditingIndex = null;
+    });
+
+    editContent.addEventListener('input', autoResizeTextarea);
+    return bubble;
+}
 
     async function saveChanges() { /* ... 기존과 동일 ... */ }
     function autoResizeTextarea(event) { /* ... 기존과 동일 (스크롤 위치 저장하는 버전) ... */ }
