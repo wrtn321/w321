@@ -195,3 +195,13 @@
     visibility: visible;
     opacity: 1;
 }
+
+/* 인라인 제목 편집 input 스타일 */
+.title-edit-input {
+    flex-grow: 1;
+    font-size: 16px;
+    padding: 2px 5px;
+    border: 1px solid var(--primary-color);
+    border-radius: 4px;
+    outline: none;
+}
