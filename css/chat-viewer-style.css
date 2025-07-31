@@ -297,3 +297,7 @@
 .edit-actions .cancel-edit-btn:hover {
     background-color: #ffebee;
 }
+
+.user-message.editing {
+    width: 100%;
+}
