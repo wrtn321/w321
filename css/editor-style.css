@@ -4,7 +4,6 @@
 body.sticky-footer-layout > .main-header {
     display: flex;
     justify-content: space-between;
-    align-items: flex-start; /* 제목이 길어져도 위쪽 정렬 유지 */
     background-color: transparent;
     border-bottom: 1px solid var(--border-color);
     padding: 15px;
