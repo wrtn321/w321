@@ -234,4 +234,4 @@ async function setupMainPage(db, user) {
     loadAndRenderTabs();
 }
 
-
+//연결해줘
