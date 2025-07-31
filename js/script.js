@@ -234,5 +234,4 @@ async function setupMainPage(db, user) {
     loadAndRenderTabs();
 }
 
-}
 
