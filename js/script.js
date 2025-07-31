@@ -1,5 +1,3 @@
-// js/script.js (main.html 전용 스크립트 - 최종 검수 완료 버전)
-
 document.addEventListener('DOMContentLoaded', () => {
     const auth = firebase.auth();
     const db = firebase.firestore();
@@ -75,7 +73,6 @@ async function setupMainPage(db, user) {
     let sortableInstance = null;
     let currentEditingTabId = null;
 
-    // --- HTML 요소 가져오기 ---
     const logoutButton = document.querySelector('.logout-button');
     const dashboardContainer = document.querySelector('.dashboard-container');
     const editModeBtn = document.getElementById('main-edit-mode-btn');
@@ -88,7 +85,6 @@ async function setupMainPage(db, user) {
     const cancelTabBtn = document.getElementById('cancel-tab-btn');
     const forceCloseBtn = document.getElementById('force-close-modal-x');
 
-    // --- 데이터 로드 및 렌더링 ---
     async function loadAndRenderTabs() {
         try {
             const snapshot = await tabsCollection.where('userId', '==', user.uid).orderBy('order', 'asc').get();
@@ -106,7 +102,6 @@ async function setupMainPage(db, user) {
         }
     }
 
-    // --- 카드 1개 생성 함수 ---
     function createTabCard(tabData) {
         const card = document.createElement('section');
         card.className = 'card';
@@ -126,21 +121,30 @@ async function setupMainPage(db, user) {
             <div class="card-body"></div>
             <div class="card-footer"><button type="button" class="new-button">+ 새로 만들기</button></div>
         `;
-        card.querySelector('.card-header-link').addEventListener('click', (e) => {
+        
+        const cardLink = card.querySelector('.card-header-link');
+        cardLink.addEventListener('click', (e) => {
             if (document.body.classList.contains('edit-mode-active')) {
                 e.preventDefault();
                 editTabName(card);
+            } else {
+                localStorage.setItem('currentListTitle', tabData.name);
             }
         });
+
         card.querySelector('.delete-btn').addEventListener('click', () => deleteTab(tabData.id, tabData.name));
         card.querySelector('.new-button').addEventListener('click', () => {
-            if (tabData.type === 'chat-list') window.location.href = 'chat-list.html';
-            else window.location.href = `post.html?category=${tabData.categoryKey}&new=true`;
+            if (tabData.type === 'chat-list') {
+                 localStorage.setItem('currentListTitle', tabData.name);
+                 window.location.href = 'chat-list.html';
+            }
+            else {
+                window.location.href = `post.html?category=${tabData.categoryKey}&new=true`;
+            }
         });
         return card;
     }
 
-    // --- 편집 모드 관련 함수 ---
     function toggleEditMode() {
         document.body.classList.toggle('edit-mode-active');
         const addTabBtn = document.getElementById('add-tab-btn');
@@ -213,7 +217,6 @@ async function setupMainPage(db, user) {
         });
     }
 
-    // --- 모달 제어 함수 ---
     function showTabModal(tabData = null) {
         tabForm.reset();
         if (tabData) {
@@ -235,7 +238,6 @@ async function setupMainPage(db, user) {
         modal.classList.remove('is-visible');
     }
 
-    // --- 이벤트 리스너 중앙 관리 ---
     tabForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const tabName = tabNameInput.value;
@@ -269,6 +271,5 @@ async function setupMainPage(db, user) {
     editModeBtn.addEventListener('click', toggleEditMode);
     logoutButton.addEventListener('click', (e) => { e.preventDefault(); firebase.auth().signOut(); });
 
-    // --- 최초 실행 ---
     loadAndRenderTabs();
 }
