@@ -9,11 +9,19 @@ document.addEventListener('DOMContentLoaded', () => {
         const isMainPage = document.querySelector('.dashboard-container') !== null;
 
         if (user) {
-            if (isAuthPage) window.location.href = 'main.html';
-            if (isMainPage) setupMainPage(db, user);
+            if (isAuthPage) {
+                window.location.href = 'main.html';
+            }
+            if (isMainPage) {
+                setupMainPage(db, user);
+            }
         } else {
-            if (isMainPage) window.location.href = 'index.html';
-            if (isAuthPage) setupAuthPage(auth);
+            if (isMainPage) {
+                window.location.href = 'index.html';
+            }
+            if (isAuthPage) {
+                setupAuthPage(auth);
+            }
         }
     });
 });
@@ -24,40 +32,42 @@ function setupAuthPage(auth) {
     const showSignupBtn = document.getElementById('show-signup');
     const showLoginBtn = document.getElementById('show-login');
 
-    showSignupBtn.addEventListener('click', e => { e.preventDefault(); loginForm.hidden = true; signupForm.hidden = false; });
-    showLoginBtn.addEventListener('click', e => { e.preventDefault(); loginForm.hidden = false; signupForm.hidden = true; });
+    if (showSignupBtn && showLoginBtn && loginForm && signupForm) {
+        showSignupBtn.addEventListener('click', e => { e.preventDefault(); loginForm.hidden = true; signupForm.hidden = false; });
+        showLoginBtn.addEventListener('click', e => { e.preventDefault(); loginForm.hidden = false; signupForm.hidden = true; });
 
-    signupForm.addEventListener('submit', e => {
-        e.preventDefault();
-        const email = document.getElementById('signup-email').value;
-        const password = document.getElementById('signup-password').value;
-        auth.createUserWithEmailAndPassword(email, password)
-            .then(() => {
-                alert('회원가입에 성공했습니다! 로그인 해주세요.');
-                signupForm.reset();
-                loginForm.hidden = false;
-                signupForm.hidden = true;
-            })
-            .catch(error => {
-                if (error.code === 'auth/email-already-in-use') alert('이미 사용 중인 이메일입니다.');
-                else if (error.code === 'auth/weak-password') alert('비밀번호는 6자리 이상이어야 합니다.');
-                else alert('회원가입 실패: ' + error.message);
-            });
-    });
+        signupForm.addEventListener('submit', e => {
+            e.preventDefault();
+            const email = document.getElementById('signup-email').value;
+            const password = document.getElementById('signup-password').value;
+            auth.createUserWithEmailAndPassword(email, password)
+                .then(() => {
+                    alert('회원가입에 성공했습니다! 로그인 해주세요.');
+                    signupForm.reset();
+                    loginForm.hidden = false;
+                    signupForm.hidden = true;
+                })
+                .catch(error => {
+                    if (error.code === 'auth/email-already-in-use') alert('이미 사용 중인 이메일입니다.');
+                    else if (error.code === 'auth/weak-password') alert('비밀번호는 6자리 이상이어야 합니다.');
+                    else alert('회원가입 실패: ' + error.message);
+                });
+        });
 
-    loginForm.addEventListener('submit', e => {
-        e.preventDefault();
-        const email = document.getElementById('login-email').value;
-        const password = document.getElementById('login-password').value;
-        auth.signInWithEmailAndPassword(email, password)
-            .catch(error => {
-                if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
-                    alert('이메일 또는 비밀번호가 올바르지 않습니다.');
-                } else {
-                    alert('로그인에 실패했습니다: ' + error.message);
-                }
-            });
-    });
+        loginForm.addEventListener('submit', e => {
+            e.preventDefault();
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+            auth.signInWithEmailAndPassword(email, password)
+                .catch(error => {
+                    if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+                        alert('이메일 또는 비밀번호가 올바르지 않습니다.');
+                    } else {
+                        alert('로그인에 실패했습니다: ' + error.message);
+                    }
+                });
+        });
+    }
 }
 
 async function setupMainPage(db, user) {
@@ -65,6 +75,7 @@ async function setupMainPage(db, user) {
     let sortableInstance = null;
     let currentEditingTabId = null;
 
+    // --- HTML 요소 가져오기 ---
     const logoutButton = document.querySelector('.logout-button');
     const dashboardContainer = document.querySelector('.dashboard-container');
     const editModeBtn = document.getElementById('main-edit-mode-btn');
@@ -75,15 +86,9 @@ async function setupMainPage(db, user) {
     const tabKeyInput = document.getElementById('tab-key');
     const tabTypeSelect = document.getElementById('tab-type');
     const cancelTabBtn = document.getElementById('cancel-tab-btn');
-
     const forceCloseBtn = document.getElementById('force-close-modal-x');
-    if (forceCloseBtn) {
-        forceCloseBtn.addEventListener('click', () => {
-            console.log("X 버튼 클릭됨!");
-            modal.hidden = true;
-        });
-    }
-    
+
+    // --- 데이터 로드 및 렌더링 ---
     async function loadAndRenderTabs() {
         try {
             const snapshot = await tabsCollection.where('userId', '==', user.uid).orderBy('order', 'asc').get();
@@ -101,6 +106,7 @@ async function setupMainPage(db, user) {
         }
     }
 
+    // --- 카드 1개 생성 함수 ---
     function createTabCard(tabData) {
         const card = document.createElement('section');
         card.className = 'card';
@@ -134,6 +140,7 @@ async function setupMainPage(db, user) {
         return card;
     }
 
+    // --- 편집 모드 관련 함수 ---
     function toggleEditMode() {
         document.body.classList.toggle('edit-mode-active');
         const addTabBtn = document.getElementById('add-tab-btn');
@@ -184,27 +191,11 @@ async function setupMainPage(db, user) {
         }
     }
     
-    function showTabModal(tabData = null) {
-        tabForm.reset();
-        if (tabData) {
-            modalTitle.textContent = '탭 수정';
-            currentEditingTabId = tabData.id;
-            tabNameInput.value = tabData.name;
-            tabKeyInput.value = tabData.key;
-            tabKeyInput.disabled = true;
-            tabTypeSelect.value = tabData.type;
-        } else {
-            modalTitle.textContent = '새 탭 추가';
-            currentEditingTabId = null;
-            tabKeyInput.disabled = false;
-        }
-        modal.hidden = false;
-    }
-    
     function initSortable() {
         if (sortableInstance) sortableInstance.destroy();
         sortableInstance = new Sortable(dashboardContainer, {
-            handle: '.drag-handle', animation: 150,
+            handle: '.drag-handle',
+            animation: 150,
             onEnd: async () => {
                 const items = dashboardContainer.querySelectorAll('.card');
                 const batch = db.batch();
@@ -222,6 +213,29 @@ async function setupMainPage(db, user) {
         });
     }
 
+    // --- 모달 제어 함수 ---
+    function showTabModal(tabData = null) {
+        tabForm.reset();
+        if (tabData) {
+            modalTitle.textContent = '탭 수정';
+            currentEditingTabId = tabData.id;
+            tabNameInput.value = tabData.name;
+            tabKeyInput.value = tabData.key;
+            tabKeyInput.disabled = true;
+            tabTypeSelect.value = tabData.type;
+        } else {
+            modalTitle.textContent = '새 탭 추가';
+            currentEditingTabId = null;
+            tabKeyInput.disabled = false;
+        }
+        modal.classList.add('is-visible');
+    }
+    
+    function closeModal() {
+        modal.classList.remove('is-visible');
+    }
+
+    // --- 이벤트 리스너 중앙 관리 ---
     tabForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const tabName = tabNameInput.value;
@@ -241,7 +255,7 @@ async function setupMainPage(db, user) {
                 dataToSave.categoryKey = tabKey;
                 await tabsCollection.add(dataToSave);
             }
-            modal.hidden = true;
+            closeModal();
             showToast('성공적으로 저장되었습니다.');
             await loadAndRenderTabs();
         } catch (error) {
@@ -250,12 +264,11 @@ async function setupMainPage(db, user) {
         }
     });
 
-    cancelTabBtn.addEventListener('click', () => {
-        modal.hidden = true;
-    });
-
+    cancelTabBtn.addEventListener('click', closeModal);
+    if (forceCloseBtn) forceCloseBtn.addEventListener('click', closeModal);
     editModeBtn.addEventListener('click', toggleEditMode);
     logoutButton.addEventListener('click', (e) => { e.preventDefault(); firebase.auth().signOut(); });
 
+    // --- 최초 실행 ---
     loadAndRenderTabs();
 }
