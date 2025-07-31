@@ -1,13 +1,12 @@
-// list-script.js (새 파일 버튼 기능이 수정된 최종 버전)
+// js/chat-list-script.js (채팅 목록 전용 스크립트 - 인라인 제목 편집 기능 포함)
 
 document.addEventListener('DOMContentLoaded', () => {
     const auth = firebase.auth();
     const db = firebase.firestore();
 
     const postsCollection = db.collection('posts');
-    let currentCategory = '';
+    const currentCategory = 'chat'; // 이 스크립트는 항상 'chat' 카테고리만 다룹니다.
     let posts = [];
-    const categoryNames = { prompt: '프롬프트', chat: '채팅백업', novel: '소설' };
 
     const listTitle = document.getElementById('list-title');
     const newPostBtn = document.querySelector('.new-post-btn');
@@ -15,7 +14,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const normalItemList = document.querySelector('.normal-list .item-list');
     const logoutButton = document.querySelector('.logout-button');
 
-    // ... (토스트 알림 관련 코드는 그대로 유지) ...
     const toastNotification = document.getElementById('toast-notification');
     const toastMessage = toastNotification ? toastNotification.querySelector('.toast-message') : null;
     let toastTimer;
@@ -27,39 +25,30 @@ document.addEventListener('DOMContentLoaded', () => {
         toastTimer = setTimeout(() => { toastNotification.classList.remove('show'); }, 3000);
     };
 
+    // Firebase 인증 상태 변화 감지
     auth.onAuthStateChanged(async user => {
         if (user) {
-            initializePage();
-            await fetchPosts(user.uid);
-            renderList();
-            addEventListeners();
+            initializePage(); // 페이지 초기 설정
+            await fetchPosts(user.uid); // 데이터 불러오기
+            renderList(); // 화면에 목록 그리기
+            addEventListeners(user); // 이벤트 리스너 연결
         } else {
             window.location.href = 'index.html';
         }
     });
 
+    // 페이지 제목 설정
     function initializePage() {
-        const params = new URLSearchParams(window.location.search);
-        const categoryParam = params.get('category');
-        if (categoryParam && categoryNames[categoryParam]) {
-            currentCategory = categoryParam;
-            listTitle.textContent = categoryNames[currentCategory];
-        if (currentCategory === 'chat') {
-            newPostBtn.textContent = '+ JSON 불러오기';
-        } else {
-            newPostBtn.textContent = '+📝';
-        }
-    } else {
-        alert('잘못된 접근입니다.');
-        window.location.href = 'main.html';
-    }
+        listTitle.textContent = '채팅백업'; // 제목을 '채팅백업'으로 고정
     }
 
+    // Firestore에서 'chat' 카테고리 데이터만 불러오기
     async function fetchPosts(userId) {
         try {
             const snapshot = await postsCollection
                 .where('userId', '==', userId)
-                .where('category', '==', currentCategory)
+                .where('category', '==', currentCategory) // 항상 'chat' 카테고리만 조회
+                .orderBy('order', 'asc') // 순서대로 정렬
                 .get();
             posts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         } catch (error) {
@@ -70,53 +59,201 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // renderList, renderItem 함수는 수정할 필요 없이 그대로 사용합니다.
-    function renderList() {
-        // ... (기존 renderList 함수 코드는 그대로) ...
-        if (!normalItemList) return;
-        const openFolderIds = new Set();
-        document.querySelectorAll('.list-item.open').forEach(li => {
-            openFolderIds.add(li.dataset.id);
+    // ★★★ 모든 클릭 이벤트를 한번에 처리하는 통합 이벤트 리스너 ★★★
+    function addEventListeners(user) {
+        logoutButton.addEventListener('click', e => {
+            e.preventDefault();
+            auth.signOut().then(() => window.location.href = 'index.html');
         });
+
+        newFolderBtn.addEventListener('click', () => handleNewFolder(user.uid));
+        newPostBtn.addEventListener('click', handleJsonUpload);
+        
+        // 목록 아이템에 대한 모든 클릭 이벤트를 여기서 위임하여 처리
+        normalItemList.addEventListener('click', e => {
+            const target = e.target; // 클릭된 요소
+            const li = target.closest('.list-item');
+            if (!li) return;
+
+            const itemId = li.dataset.id;
+
+            // 1. 제목(span)을 클릭했을 때 -> 인라인 편집 모드로 전환
+            if (target.classList.contains('item-title') && !normalItemList.querySelector('.title-edit-input')) {
+                const currentTitle = target.textContent;
+                
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.className = 'title-edit-input';
+                input.value = currentTitle;
+
+                target.style.display = 'none';
+                target.parentNode.insertBefore(input, target.nextSibling);
+                input.focus();
+                input.select();
+
+                const saveTitle = async () => {
+                    const newTitle = input.value.trim();
+                    input.remove(); // input 태그 제거
+                    target.style.display = 'inline'; // 원래 제목 보이기
+
+                    if (newTitle && newTitle !== currentTitle) {
+                        target.textContent = newTitle;
+                        try {
+                            await db.collection('posts').doc(itemId).update({ title: newTitle });
+                            showToast('제목이 변경되었습니다.');
+                            const post = posts.find(p => p.id === itemId);
+                            if (post) post.title = newTitle;
+                        } catch (error) {
+                            showToast('제목 변경에 실패했습니다.');
+                            target.textContent = currentTitle; // 실패 시 원상복구
+                        }
+                    }
+                };
+                input.addEventListener('blur', saveTitle);
+                input.addEventListener('keydown', e => {
+                    if (e.key === 'Enter') input.blur();
+                    if (e.key === 'Escape') {
+                        input.remove();
+                        target.style.display = 'inline';
+                    }
+                });
+                return; // 다른 클릭 이벤트와 중복 실행 방지
+            }
+
+            // 2. 폴더 삭제 버튼 클릭
+            if (target.classList.contains('delete-folder-btn')) {
+                e.stopPropagation();
+                if (confirm('폴더를 삭제하시겠습니까?\n(안에 있는 파일은 밖으로 이동됩니다)')) {
+                    deleteFolder(user.uid, itemId);
+                }
+                return;
+            }
+            
+            // 3. (일반 글 목록용 - 지금은 사용 안함) 폴더 수정 버튼 클릭 
+            if (target.classList.contains('edit-folder-btn')) {
+                e.stopPropagation();
+                // editFolderName(user.uid, itemId); // prompt 방식이므로 사용하지 않음
+                showToast('제목을 직접 클릭하여 수정하세요.');
+                return;
+            }
+
+            // 4. 아이콘이나 제목이 아닌, 아이템 전체(wrapper)를 클릭했을 때
+            const wrapper = target.closest('.item-content-wrapper');
+            if(wrapper) {
+                if (li.classList.contains('item-folder')) {
+                    handleFolderClick(li); // 폴더 열기/닫기
+                } else {
+                    handleFileClick(li); // 파일(채팅) 열기
+                }
+            }
+        });
+    }
+
+    // 파일을 클릭하면 항상 chat-viewer.html 로 이동
+    function handleFileClick(liElement) {
+        const post = posts.find(p => p.id === liElement.dataset.id);
+        if (post) {
+            localStorage.setItem('currentPost', JSON.stringify(post));
+            localStorage.setItem('currentCategory', currentCategory);
+            window.location.href = 'chat-viewer.html';
+        }
+    }
+    
+    // JSON 파일 업로드 기능
+    function handleJsonUpload() {
+        // ... (기존과 동일)
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.json';
+
+        input.onchange = e => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const fileContent = event.target.result;
+                const title = file.name.replace(/\.json$/, ''); 
+                createPostFromJson(title, fileContent);
+            };
+            reader.onerror = () => showToast('파일을 읽는 데 실패했습니다.');
+            reader.readAsText(file);
+        };
+        input.click();
+    }
+
+    async function createPostFromJson(title, content) {
+        // ... (기존과 동일)
+        const user = auth.currentUser;
+        if (!user) return;
+
+        try {
+            JSON.parse(content);
+        } catch (error) {
+            alert('올바른 JSON 파일이 아닙니다. 파일 내용을 확인해주세요.');
+            return;
+        }
+
+        try {
+            const maxOrder = posts.length > 0 ? Math.max(...posts.map(p => p.order || 0).filter(o => typeof o === 'number')) : -1;
+            await postsCollection.add({
+                type: 'post',
+                title: title,
+                content: content,
+                category: currentCategory,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                userId: user.uid,
+                order: maxOrder + 1,
+                parentId: 'root'
+            });
+
+            showToast(`'${title}' 파일이 추가되었습니다.`);
+            await fetchPosts(user.uid);
+            renderList();
+        } catch (error) {
+            console.error("JSON 파일로 게시글 생성 실패:", error);
+            showToast('게시글 생성에 실패했습니다.');
+        }
+    }
+    
+    /* 
+      아래 함수들은 기존 list-script.js와 거의 동일합니다.
+    */
+    function renderList() {
+        if (!normalItemList) return;
+        const openFolderIds = new Set(Array.from(document.querySelectorAll('.list-item.open')).map(li => li.dataset.id));
         normalItemList.innerHTML = '';
         const rootItems = posts
             .filter(p => !p.parentId || p.parentId === 'root')
             .sort((a, b) => (a.order || 0) - (b.order || 0));
-        rootItems.forEach(item => {
-            renderItem(item, normalItemList);
+        rootItems.forEach(item => renderItem(item, normalItemList));
+        openFolderIds.forEach(id => {
+            const folderLi = normalItemList.querySelector(`.list-item[data-id="${id}"]`);
+            if (folderLi) handleFolderClick(folderLi, false);
         });
-        if (openFolderIds.size > 0) {
-            openFolderIds.forEach(id => {
-                const folderLi = normalItemList.querySelector(`.list-item[data-id="${id}"]`);
-                if (folderLi) {
-                    handleFolderClick(folderLi, false);
-                }
-            });
-        }
-        document.querySelectorAll('.sub-list').forEach(subList => {
-            initializeSortable(subList);
-        });
+        document.querySelectorAll('.sub-list').forEach(initializeSortable);
         initializeSortable(normalItemList);
     }
     
     function renderItem(itemData, parentElement) {
-        // ... (기존 renderItem 함수 코드는 그대로) ...
+        // ... (기존과 동일, ✏️ 버튼은 일단 유지)
         const li = document.createElement('li');
         li.className = 'list-item';
         li.dataset.id = itemData.id;
         const wrapper = document.createElement('div');
         wrapper.className = 'item-content-wrapper';
-        let iconHtml;
-        if (itemData.type === 'folder') {
-            iconHtml = '<span class="icon-closed">📁</span><span class="icon-open">📂</span>';
-        } else {
-            iconHtml = '📝';
-        }
+        let iconHtml = itemData.type === 'folder' 
+            ? '<span class="icon-closed">📁</span><span class="icon-open">📂</span>' 
+            : '💬';
         wrapper.innerHTML = `
-        <span class="drag-handle">⠿</span>
-        <span class="item-icon">${iconHtml}</span>
-        <span class="item-title">${itemData.title}</span>
-        ${itemData.type === 'folder' ? '<button class="edit-folder-btn" title="이름 변경">✏️</button><button class="delete-folder-btn">🗑️</button>' : ''}
+            <span class="drag-handle">⠿</span>
+            <span class="item-icon">${iconHtml}</span>
+            <span class="item-title">${itemData.title}</span>
+            ${itemData.type === 'folder' 
+                ? `<button class="edit-folder-btn" title="제목을 클릭하여 수정">✏️</button>
+                   <button class="delete-folder-btn" title="폴더 삭제">🗑️</button>` 
+                : ''
+            }
         `;
         li.appendChild(wrapper);
         if (itemData.type === 'folder') {
@@ -127,119 +264,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         parentElement.appendChild(li);
     }
-    
-    // ===============================================
-    // ★★★ 핵심 수정 부분 1: 이벤트 리스너 변경 ★★★
-    // ===============================================
-    function addEventListeners() {
-    logoutButton.addEventListener('click', e => {
-        e.preventDefault();
-        auth.signOut().then(() => window.location.href = 'index.html');
-    });
 
-    newFolderBtn.addEventListener('click', () => handleNewItem('folder'));
-    
-    // ▼▼▼ 새 파일 버튼의 이벤트 리스너를 수정합니다. ▼▼▼
-    newPostBtn.addEventListener('click', () => {
-        // 현재 카테고리가 'chat'일 경우와 아닐 경우를 나눕니다.
-        if (currentCategory === 'chat') {
-            // 'JSON 불러오기' 버튼을 클릭한 경우
-            handleJsonUpload();
-        } else {
-            // 기존의 '새 글 작성' 버튼을 클릭한 경우
-            window.location.href = `post.html?category=${currentCategory}&new=true`;
-        }
-    });
-        
-        normalItemList.addEventListener('click', e => {
-            const wrapper = e.target.closest('.item-content-wrapper');
-            if (!wrapper) return;
-            const li = wrapper.closest('.list-item');
-            if (!li) return;
-            if (e.target.classList.contains('edit-folder-btn')) {
-        e.stopPropagation(); // 이벤트 전파 중지
-        const folderId = li.dataset.id;
-        const currentTitle = posts.find(p => p.id === folderId).title;
-        const newTitle = prompt("폴더의 새 이름을 입력하세요.", currentTitle);
-
-        if (newTitle && newTitle.trim() !== '' && newTitle !== currentTitle) {
-            // Firestore에 새 이름 업데이트
-            db.collection('posts').doc(folderId).update({ title: newTitle })
-                .then(() => {
-                    showToast('폴더 이름이 변경되었습니다.');
-                    return fetchPosts(auth.currentUser.uid); // 데이터 다시 불러오기
-                })
-                .then(() => {
-                    renderList(); // 목록 새로 그리기
-                })
-                .catch(error => {
-                    console.error("이름 변경 실패:", error);
-                    showToast('이름 변경에 실패했습니다.');
-                });
-        }
-        return; // 아래 로직이 실행되지 않도록 여기서 종료
-    }
-            if (e.target.classList.contains('delete-folder-btn')) {
-                e.stopPropagation();
-                if (confirm('폴더를 삭제하시겠습니까?\n(안에 있는 파일은 밖으로 이동됩니다)')) {
-                    deleteFolder(li.dataset.id);
-                }
-                return;
-            }
-            if (li.classList.contains('item-folder')) {
-                handleFolderClick(li);
-            } else {
-                handleFileClick(li);
-            }
-        });
-    }
-
-    // ===============================================
-    // ★★★ 핵심 수정 부분 2: 함수 간소화 ★★★
-    // ===============================================
-
-    // handleNewItem 함수에서 'post' 관련 로직을 제거합니다. 이제 폴더 생성만 담당합니다.
-    async function handleNewItem(type) {
-        // 이 함수는 이제 type이 'folder'일 때만 호출됩니다.
-        const title = prompt(`새 폴더의 이름을 입력하세요.`);
-        if (!title) return;
-
-        const user = auth.currentUser;
-        if (!user) return;
-
-        const batch = db.batch();
-
-        const rootItems = posts.filter(p => !p.parentId || p.parentId === 'root');
-        rootItems.forEach(item => {
-            const itemRef = postsCollection.doc(item.id);
-            batch.update(itemRef, { order: (item.order || 0) + 1 });
-        });
-
-        const newFolderRef = postsCollection.doc();
-        batch.set(newFolderRef, {
-            type: 'folder',
-            title: title,
-            content: '',
-            category: currentCategory,
-            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-            userId: user.uid,
-            order: 0,
-            parentId: 'root'
-        });
-
-        try {
-            await batch.commit();
-            await fetchPosts(user.uid);
-            renderList();
-        } catch(error) {
-            console.error("항목 추가 실패:", error);
-            showToast('항목 추가에 실패했습니다.');
-        }
-    }
-
-    // handleFolderClick, handleFileClick, deleteFolder, initializeSortable 함수는
-    // 수정할 필요 없이 그대로 사용합니다.
-    function handleFolderClick(liElement, withAnimation = true) { /* ... 기존 코드 ... */ 
+    function handleFolderClick(liElement, withAnimation = true) {
+        // ... (기존과 동일)
         if (withAnimation) {
             liElement.classList.toggle('open');
         } else {
@@ -250,66 +277,57 @@ document.addEventListener('DOMContentLoaded', () => {
             const children = posts
                 .filter(p => p.parentId === liElement.dataset.id)
                 .sort((a, b) => (a.order || 0) - (b.order || 0));
-            children.forEach(child => {
-                renderItem(child, subList);
-            });
+            children.forEach(child => renderItem(child, subList));
         }
     }
-    function handleFileClick(liElement) {
-    const post = posts.find(p => p.id === liElement.dataset.id);
-    if (post) {
-        // 로컬 스토리지에 데이터를 저장하는 것은 동일합니다.
-        localStorage.setItem('currentPost', JSON.stringify(post));
-        localStorage.setItem('currentCategory', currentCategory);
 
-        // ★★★ 여기가 핵심 변경사항 ★★★
-        // 현재 카테고리가 'chat'이면 chat-viewer.html로,
-        // 그 외에는 기존처럼 post.html로 이동합니다.
-        if (currentCategory === 'chat') {
-            window.location.href = 'chat-viewer.html';
-        } else {
-            window.location.href = 'post.html';
+    async function handleNewFolder(userId) {
+        // ... (기존과 동일, order만 수정)
+        const title = prompt(`새 폴더의 이름을 입력하세요.`);
+        if (!title) return;
+        try {
+            const minOrder = posts.length > 0 ? Math.min(...posts.map(p => p.order || 0).filter(o => typeof o === 'number')) : 0;
+            await postsCollection.add({
+                type: 'folder',
+                title: title,
+                content: '',
+                category: currentCategory,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                userId: userId,
+                order: minOrder - 1, // 새 폴더가 항상 위로 가도록
+                parentId: 'root'
+            });
+            await fetchPosts(userId);
+            renderList();
+        } catch(error) {
+            console.error("폴더 추가 실패:", error);
+            showToast('폴더 추가에 실패했습니다.');
         }
     }
-    }
-    async function deleteFolder(folderId) { /* ... 기존 코드 ... */
-        const user = auth.currentUser;
-        if (!user || !folderId) return;
-        const folderToDelete = posts.find(p => p.id === folderId);
-        if (!folderToDelete) return;
-        const childrenOfFolder = posts
-            .filter(p => p.parentId === folderId)
-            .sort((a, b) => (a.order || 0) - (b.order || 0));
-        const originalRootItems = posts
-            .filter(p => (!p.parentId || p.parentId === 'root'))
-            .sort((a, b) => (a.order || 0) - (b.order || 0));
-        const folderIndex = originalRootItems.findIndex(p => p.id === folderId);
-        if (folderIndex > -1) {
-            originalRootItems.splice(folderIndex, 1, ...childrenOfFolder);
-        }
+
+    async function deleteFolder(userId, folderId) {
+        // ... (기존과 동일)
+        const children = posts.filter(p => p.parentId === folderId);
         const batch = db.batch();
-        originalRootItems.forEach((item, index) => {
-            const itemRef = postsCollection.doc(item.id);
-            const wasChild = childrenOfFolder.some(child => child.id === item.id);
-            if (wasChild) {
-                batch.update(itemRef, { parentId: 'root', order: index });
-            } else {
-                batch.update(itemRef, { order: index });
-            }
+        children.forEach(child => {
+            const docRef = postsCollection.doc(child.id);
+            batch.update(docRef, { parentId: 'root', order: Date.now() });
         });
         batch.delete(postsCollection.doc(folderId));
         try {
             await batch.commit();
             showToast('폴더가 삭제되었습니다.');
-            await fetchPosts(user.uid);
+            await fetchPosts(userId);
             renderList();
         } catch (error) {
             console.error("폴더 삭제 실패:", error);
             showToast('폴더 삭제에 실패했습니다.');
         }
     }
-    function initializeSortable(targetUl) { /* ... 기존 코드 ... */
-        if (!targetUl) return;
+    
+    function initializeSortable(targetUl) {
+        // ... (기존과 동일)
+        if (!targetUl || targetUl.sortable) return;
         new Sortable(targetUl, {
             group: 'nested',
             handle: '.drag-handle',
@@ -322,24 +340,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (newParentEl.classList.contains('sub-list')) {
                     newParentId = newParentEl.closest('.list-item').dataset.id;
                 }
-                try {
-                    await postsCollection.doc(itemId).update({ parentId: newParentId });
-                } catch (error) {
-                    console.error('Parent ID 업데이트 실패:', error);
-                    return; 
-                }
-                const involvedLists = new Set([evt.from, evt.to]);
                 const batch = db.batch();
+                batch.update(postsCollection.doc(itemId), { parentId: newParentId });
+                const involvedLists = new Set([evt.from, evt.to]);
                 involvedLists.forEach(listEl => {
-                    const items = listEl.children;
-                    Array.from(items).forEach((item, index) => {
-                        const docRef = postsCollection.doc(item.dataset.id);
-                        batch.update(docRef, { order: index });
+                    Array.from(listEl.children).forEach((item, index) => {
+                        batch.update(postsCollection.doc(item.dataset.id), { order: index });
                     });
                 });
                 try {
                     await batch.commit();
-                    console.log('순서가 성공적으로 저장되었습니다.');
                     await fetchPosts(auth.currentUser.uid);
                     renderList();
                 } catch (error) {
@@ -348,79 +358,4 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
-
-    /**
- * 사용자가 JSON 파일을 선택하도록 하는 숨겨진 input 요소를 다루는 함수
- */
-function handleJsonUpload() {
-    // 1. 눈에 보이지 않는 파일 선택 input 요소를 동적으로 만듭니다.
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = '.json'; // json 파일만 선택할 수 있도록 제한
-
-    // 2. 파일이 선택되면 실행될 로직을 정의합니다.
-    input.onchange = e => {
-        const file = e.target.files[0];
-        if (!file) return;
-
-        const reader = new FileReader();
-        reader.onload = (event) => {
-            // 파일 읽기가 성공하면, 파일 이름과 내용을 다음 함수로 넘겨줍니다.
-            const fileContent = event.target.result;
-            // .json 확장자를 제외한 파일 이름을 제목으로 사용합니다.
-            const title = file.name.replace(/\.json$/, ''); 
-            createPostFromJson(title, fileContent);
-        };
-        reader.onerror = () => {
-            showToast('파일을 읽는 데 실패했습니다.');
-        };
-        reader.readAsText(file); // 파일을 텍스트로 읽기 시작
-    };
-
-    // 3. 동적으로 만든 input 요소를 강제로 클릭하여 파일 선택 창을 엽니다.
-    input.click();
-}
-
-/**
- * 읽어들인 JSON 내용으로 새 게시물을 Firestore에 생성하는 함수
- * @param {string} title - 파일 이름에서 추출한 제목
- * @param {string} content - 파일의 전체 내용 (JSON 텍스트)
- */
-async function createPostFromJson(title, content) {
-    const user = auth.currentUser;
-    if (!user) return;
-
-    // JSON 형식이 올바른지 간단하게 확인합니다.
-    try {
-        JSON.parse(content);
-    } catch (error) {
-        alert('올바른 JSON 파일이 아닙니다. 파일 내용을 확인해주세요.');
-        return;
-    }
-
-    try {
-        // 마지막 순서를 찾아서 그 다음에 새 글을 추가합니다.
-        const maxOrder = posts.length > 0 ? Math.max(...posts.map(p => p.order || 0)) : -1;
-        const newOrder = maxOrder + 1;
-
-        await postsCollection.add({
-            type: 'post',
-            title: title,
-            content: content,
-            category: currentCategory,
-            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-            userId: user.uid,
-            order: newOrder,
-            parentId: 'root'
-        });
-
-        showToast(`'${title}' 파일이 추가되었습니다.`);
-        await fetchPosts(user.uid); // 목록을 다시 불러와서
-        renderList(); // 화면을 새로 그립니다.
-
-    } catch (error) {
-        console.error("JSON 파일로 게시글 생성 실패:", error);
-        showToast('게시글 생성에 실패했습니다.');
-    }
-}
 });
