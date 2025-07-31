@@ -243,3 +243,28 @@
 .delete-bubble-btn:hover {
     color: #f00; /* 마우스 올리면 빨간색으로 */
 }
+
+/* --- 인라인 편집 전용 스타일 --- */
+
+/* 말풍선 안의 컨텐츠 영역 */
+.message-content {
+    cursor: pointer; /* 클릭할 수 있다는 것을 암시 */
+}
+
+/* 편집 가능한 textarea의 기본 스타일 (평소엔 숨겨져 있음) */
+.message-bubble .editable-textarea {
+    display: none; /* 평소엔 완전히 숨김 */
+    width: 100%;
+    background: transparent;
+    border: 1px solid var(--primary-color);
+    border-radius: 4px;
+    color: inherit;
+    font-family: inherit;
+    font-size: 16px;
+    line-height: 1.6;
+    padding: 2px;
+    margin: 0;
+    resize: none;
+    overflow: hidden;
+    outline: none;
+}
