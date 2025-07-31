@@ -261,3 +261,39 @@
     overflow: hidden;
     outline: none;
 }
+
+/* 수정 모드 액션 버튼 컨테이너 */
+.edit-actions {
+    display: none; /* 평소엔 숨김 */
+    text-align: right; /* 버튼들을 오른쪽으로 정렬 */
+    margin-top: 5px;
+}
+
+/* V, X 버튼 공통 스타일 */
+.edit-actions button {
+    background-color: var(--surface-color);
+    border: 1px solid var(--border-color);
+    border-radius: 50%; /* 동그랗게 */
+    width: 28px;
+    height: 28px;
+    margin-left: 5px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background-color 0.2s;
+}
+
+/* 저장 버튼(V) 스타일 */
+.edit-actions .save-edit-btn {
+    color: #4CAF50; /* 초록색 */
+}
+.edit-actions .save-edit-btn:hover {
+    background-color: #e8f5e9;
+}
+
+/* 취소 버튼(X) 스타일 */
+.edit-actions .cancel-edit-btn {
+    color: #f44336; /* 빨간색 */
+}
+.edit-actions .cancel-edit-btn:hover {
+    background-color: #ffebee;
+}
