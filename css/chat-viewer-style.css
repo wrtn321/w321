@@ -298,6 +298,7 @@
     background-color: #ffebee;
 }
 
+.assistant-message.editing,
 .user-message.editing {
     width: 100%;
 }
