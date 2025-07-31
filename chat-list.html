@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0, minimum-scale=1.0">
+    <title>콘텐츠</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/list-style.css">
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+</head>
+<body>
+
+    <!--헤더-->
+    <header class="main-header">
+        <a href="main.html" class="back-button"><</a>
+        <h1 id="list-title">목록</h1>
+        <a href="index.html" class="logout-button">로그아웃</a> 
+    </header>
+
+    <!--게시글 리스트-->
+    <main class="list-container">
+        <!-- 액션바 -->
+        <section class="action-bar">
+            <div class="action-button">
+                <button class="new-folder-btn">+📁</button>
+                <button class="new-post-btn">+json 추가</button>
+            </div>
+        </section>
+        <section class="normal-list">
+            <ul class="item-list"></ul>          
+        </section>
+    </main>
+    <footer class="site-footer">
+    <p>© 2025. 삼이일. All rights reserved.</p>
+    </footer>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <script src="firebase-init.js"></script>
+    <script src="js/list-script.js"></script>
+    <div id="toast-notification"><p class="toast-message"></p></div>
+</body>
+</html>
