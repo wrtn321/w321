@@ -32,7 +32,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // ... (이 함수는 기존과 동일)
         const postDataString = localStorage.getItem('currentPost');
         const category = localStorage.getItem('currentCategory');
-        if (category) backToListBtn.href = `list.html?category=${category}`;
+        if (category) backToListBtn.href = `chat-list.html?category=${category}`;
         if (!postDataString) {
             alert("채팅 기록을 찾을 수 없습니다.");
             window.location.href = 'main.html';
