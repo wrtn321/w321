@@ -7,8 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const postsCollection = db.collection('posts');
     let currentCategory = '';
     let posts = [];
-    const categoryNames = { prompt: '프롬프트', novel: '소설' };
-
+    
     const listTitle = document.getElementById('list-title');
     const newPostBtn = document.querySelector('.new-post-btn');
     const newFolderBtn = document.querySelector('.new-folder-btn');
@@ -30,12 +29,14 @@ document.addEventListener('DOMContentLoaded', () => {
     function initializePage() {
         const params = new URLSearchParams(window.location.search);
         const categoryParam = params.get('category');
-        if (categoryParam && categoryNames[categoryParam]) {
+        const titleFromStorage = localStorage.getItem('currentListTitle');
+        
+        if (categoryParam) {
             currentCategory = categoryParam;
-            listTitle.textContent = categoryNames[currentCategory];
+            listTitle.textContent = titleFromStorage || currentCategory; 
             newPostBtn.textContent = '+📝';
         } else {
-            alert('잘못된 접근입니다.');
+            alert('잘못된 접근입니다. (카테고리 정보 없음)');
             window.location.href = 'main.html';
             currentCategory = null;
         }
@@ -63,13 +64,16 @@ document.addEventListener('DOMContentLoaded', () => {
             auth.signOut().then(() => window.location.href = 'index.html');
         });
         newFolderBtn.addEventListener('click', () => handleNewFolder(user.uid));
+        
         newPostBtn.addEventListener('click', () => {
             window.location.href = `post.html?category=${currentCategory}&new=true`;
         });
+        
         normalItemList.addEventListener('click', e => {
             const li = e.target.closest('.list-item');
             if (!li) return;
             const itemId = li.dataset.id;
+            
             if (e.target.classList.contains('edit-folder-btn')) {
                 e.stopPropagation();
                 editFolderName(user.uid, itemId);
@@ -82,10 +86,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 return;
             }
+
             const wrapper = e.target.closest('.item-content-wrapper');
             if(wrapper) {
-                if (li.classList.contains('item-folder')) handleFolderClick(li);
-                else handleFileClick(li);
+                if (li.classList.contains('item-folder')) {
+                    handleFolderClick(li);
+                } else {
+                    handleFileClick(li);
+                }
             }
         });
     }
@@ -121,7 +129,9 @@ document.addEventListener('DOMContentLoaded', () => {
         wrapper.className = 'item-content-wrapper';
         let iconHtml = itemData.type === 'folder' ? '<span class="icon-closed">📁</span><span class="icon-open">📂</span>' : '📝';
         wrapper.innerHTML = `
-            <span class="drag-handle">⠿</span><span class="item-icon">${iconHtml}</span><span class="item-title">${itemData.title}</span>
+            <span class="drag-handle">⠿</span>
+            <span class="item-icon">${iconHtml}</span>
+            <span class="item-title">${itemData.title}</span>
             ${itemData.type === 'folder' ? `<button class="edit-folder-btn" title="폴더 이름 변경">✏️</button><button class="delete-folder-btn" title="폴더 삭제">🗑️</button>` : ''}
         `;
         li.appendChild(wrapper);
@@ -196,14 +206,11 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
     }
-    
+
     function initializeSortable(targetUl) {
         if (!targetUl || targetUl.sortable) return;
         new Sortable(targetUl, {
-            group: 'nested',
-            handle: '.drag-handle',
-            animation: 150,
-            ghostClass: 'sortable-ghost',
+            group: 'nested', handle: '.drag-handle', animation: 150, ghostClass: 'sortable-ghost',
             onEnd: async (evt) => {
                 const itemId = evt.item.dataset.id;
                 const newParentEl = evt.to;
