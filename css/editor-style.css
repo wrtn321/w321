@@ -34,14 +34,12 @@ body.sticky-footer-layout > .main-header a {
     top: 10px;         /* 상단에서 10px 떨어진 위치 */
     float: right;      /* 오른쪽으로 띄움 */
     z-index: 50;       /* 헤더보다는 아래, 본문보다는 위에 있도록 */
-    background-color: var(--surface-color); /* 배경과 섞이지 않게 */
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    margin-top: 16px;
 }
 
 .editor-container {
     max-width: 800px;
     width: 100%;
-    margin: 20px auto;
     padding: 0 15px;
 }
 
