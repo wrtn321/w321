@@ -44,10 +44,10 @@ body.sticky-footer-layout main {
 }
 
 /* =======================================
-   3. 공통 컴포넌트 (헤더, 푸터, 버튼 등)
+   3. 공통 컴포넌트 (기본 헤더, 푸터, 버튼 등)
    ======================================= */
 
-/* --- 헤더 --- */
+/* --- 기본 헤더 (main.html, list.html, chat-list.html 등에서 사용) --- */
 .main-header {
     display: flex;
     justify-content: space-between;
@@ -132,6 +132,10 @@ body.sticky-footer-layout main {
 .dropdown-content a.danger:hover {
     background-color: #ffdddd;
     color: #d32f2f;
+}
+
+.dropdown-content a.textdown:hover{
+    background-color: #e3f6ff;
 }
 
 /* =======================================
