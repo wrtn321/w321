@@ -40,7 +40,7 @@ body.sticky-footer-layout > .main-header a {
     max-width: 800px;
     width: 100%;
     padding: 0 15px;
-    margin: 20px auto; /* 헤더와 겹치지 않게 마진 추가 */
+    margin: auto;
 }
 
 /* 제목 입력창과 보기 제목 스타일 */
