@@ -149,3 +149,32 @@
     border-radius: 4px;
     outline: none;
 }
+
+/* 핀 아이콘 버튼 스타일 */
+.pin-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    padding: 0 8px 0 5px;
+    visibility: hidden; /* 평소엔 숨김 */
+    opacity: 0;
+    transition: opacity 0.2s;
+    color: var(--text-secondary-color);
+}
+
+/* 아이템에 마우스 올리면 핀 아이콘 보임 */
+.item-content-wrapper:hover .pin-btn {
+    visibility: visible;
+    opacity: 1;
+}
+.pin-btn:hover {
+    color: var(--primary-hover-color);
+}
+.pin-btn.pinned {
+    color: var(--primary-color); /* 고정된 아이템은 핀 색상 변경 */
+}
+
+/* 상단 고정된 리스트 아이템의 배경 스타일 */
+.list-item.is-pinned > .item-content-wrapper {
+    background-color: #f0f8ff; /* 연한 하늘색 배경 */
