@@ -201,24 +201,30 @@
 
 /* 편집 모드일 때 카드에 표시될 버튼들 */
 .card .edit-controls {
-    display: none; /* 평소엔 숨김 */
+    display: none; 
     position: absolute;
-    top: 5px;
-    right: 5px;
-    background-color: rgba(255, 255, 255, 0.8);
-    border-radius: 5px;
-    padding: 2px;
+    top: 8px; 
+    right: 8px; 
+    background-color: rgba(255, 255, 255, 0.9);
+    border-radius: 8px; 
+    padding: 4px; 
+    z-index: 10; 
 }
+
 .edit-mode-active .card .edit-controls {
-    display: flex; /* 편집 모드일 때만 보임 */
-    gap: 5px;
+    display: flex; 
+    gap: 8px; 
 }
+
 .card .control-btn {
     background: none;
     border: none;
-    font-size: 18px;
+    font-size: 22px; 
     cursor: pointer;
+    padding: 5px; 
+    line-height: 1; 
 }
+
 .card .drag-handle { cursor: grab; }
 .card .delete-btn { color: #f44336; }
 
