@@ -154,7 +154,7 @@ async function setupMainPage(db, user) {
                 const newBtn = document.createElement('button');
                 newBtn.id = 'add-tab-btn';
                 newBtn.textContent = '+ 탭 추가';
-                newBtn.style.cssText = 'padding: 10px 20px; margin: 20px auto; display: block; border-radius: 8px; border: 1px solid #ccc; cursor: pointer;';
+                newBtn.style.cssText = 'padding: 10px 20px; margin: 0 auto 30px; display: block; border-radius: 8px; border: 1px solid #ccc; cursor: pointer;';
                 dashboardContainer.insertAdjacentElement('afterend', newBtn);
                 newBtn.addEventListener('click', () => showTabModal());
             }

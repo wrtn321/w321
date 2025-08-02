@@ -1,4 +1,4 @@
-// js/editor-script.js (일반 글 에디터 전용)
+// js/editor-script.js (삭제 버튼 기능 수정 최종본)
 
 document.addEventListener('DOMContentLoaded', () => {
     const auth = firebase.auth();
@@ -9,8 +9,9 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     let currentPost = null;
-    const backToListBtn = document.getElementById('back-to-list-btn');
 
+    // --- HTML 요소 가져오기 ---
+    const backToListBtn = document.getElementById('back-to-list-btn');
     const viewModeHeader = document.getElementById('view-mode-elements-header');
     const editModeHeader = document.getElementById('edit-mode-elements-header');
     const viewModeContent = document.getElementById('view-mode-elements-content');
@@ -19,6 +20,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const viewContent = viewModeContent.querySelector('.view-content');
     const viewCopyBtn = document.getElementById('view-copy-btn');
     const viewModeActions = document.getElementById('view-mode-actions');
+    const toggleMenuBtn = document.getElementById('toggle-menu-btn');
     const dropdownMenu = document.getElementById('dropdown-menu');
     const dropdownEditBtn = document.getElementById('dropdown-edit-btn');
     const dropdownDownloadBtn = document.getElementById('dropdown-download-btn');
@@ -28,6 +30,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const editModeActions = document.getElementById('edit-mode-actions');
     const charCounter = editModeContent.querySelector('#char-counter');
 
+    // --- 페이지 로드 ---
     function loadPostData() {
         const params = new URLSearchParams(window.location.search);
         const isNewPost = params.get('new') === 'true';
@@ -58,6 +61,7 @@ document.addEventListener('DOMContentLoaded', () => {
         autoResizeTextarea();
     }
     
+    // --- UI 제어 함수 ---
     const toggleMode = (mode) => {
         if (mode === 'edit') {
             viewModeHeader.hidden = true; editModeHeader.hidden = false;
@@ -94,12 +98,44 @@ document.addEventListener('DOMContentLoaded', () => {
         document.body.removeChild(link); URL.revokeObjectURL(url);
     }
 
+    // --- 이벤트 리스너 연결 ---
     backToListBtn.addEventListener('click', (e) => { e.preventDefault(); window.location.replace(backToListBtn.href); });
-    document.getElementById('toggle-menu-btn').addEventListener('click', () => { dropdownMenu.hidden = !dropdownMenu.hidden; });
+    toggleMenuBtn.addEventListener('click', () => { dropdownMenu.hidden = !dropdownMenu.hidden; });
     window.addEventListener('click', (e) => { if (!e.target.closest('.dropdown-menu-container')) dropdownMenu.hidden = true; });
     dropdownEditBtn.addEventListener('click', (e) => { e.preventDefault(); toggleMode('edit'); dropdownMenu.hidden = true; });
     dropdownDownloadBtn.addEventListener('click', (e) => { e.preventDefault(); downloadTxtFile(); dropdownMenu.hidden = true; });
-    // ---- 읽기 모드의 플로팅 '복사' 버튼 ----
+
+    // ★★★ 핵심: 삭제 버튼 이벤트 리스너 (완성된 버전) ★★★
+    dropdownDeleteBtn.addEventListener('click', async (e) => {
+        e.preventDefault();
+        dropdownMenu.hidden = true;
+        
+        // 새 글(ID가 없는 글)은 삭제할 수 없으므로 바로 종료
+        if (!currentPost || !currentPost.id) {
+             showToast('저장되지 않은 새 글은 삭제할 수 없습니다.');
+             return;
+        }
+
+        if (confirm('정말로 이 게시글을 삭제하시겠습니까?')) {
+            try {
+                // Firestore에서 문서 삭제
+                await db.collection('posts').doc(currentPost.id).delete();
+                
+                // 로컬 스토리지에서 관련 데이터 제거
+                localStorage.removeItem('currentPost');
+                
+                showToast('게시글이 삭제되었습니다.');
+                
+                // 삭제 후 목록 페이지로 이동
+                window.location.replace(backToListBtn.href);
+
+            } catch (error) {
+                console.error("삭제 실패:", error);
+                showToast('삭제에 실패했습니다.');
+            }
+        }
+    });
+
     viewCopyBtn.addEventListener('click', () => {
         if (!currentPost.content) {
             showToast('복사할 내용이 없습니다.');
@@ -113,30 +149,22 @@ document.addEventListener('DOMContentLoaded', () => {
             });
     });
 
-    // ---- 수정 모드의 '취소' 버튼 ----
     editModeActions.querySelector('#edit-cancel-btn').addEventListener('click', () => {
-        // 새 글 작성 중 취소하면 목록으로, 기존 글 수정 중 취소하면 읽기 모드로
-        if (!currentPost.id) {
+        if (!currentPost.id) { // 새 글 작성 중 취소하면 목록으로
             window.location.replace(backToListBtn.href);
-        } else {
+        } else { // 기존 글 수정 중 취소하면 읽기 모드로
             toggleMode('view');
         }
     });
-    
-    // ---- 수정 모드의 '저장' 버튼 ----
+
     editModeActions.querySelector('#edit-save-btn').addEventListener('click', async () => {
         const user = auth.currentUser;
-        if (!user) {
-            showToast('로그인 정보가 없습니다. 다시 로그인해주세요.');
-            return;
-        }
+        if (!user) { showToast('로그인 정보가 없습니다.'); return; }
 
         const dataToSave = {
             title: titleInput.value.trim() || "제목 없음",
             content: contentTextarea.value,
             category: currentPost.category,
-            // 수정 시간을 기록하려면 아래 줄의 주석을 푸세요
-            // updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         };
 
         try {
@@ -146,15 +174,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 const docRef = await db.collection('posts').add({
                     ...dataToSave,
                     userId: user.uid,
-                    type: 'post', // 기본 타입은 post
-                    parentId: 'root', // 기본적으로 최상위에 생성
-                    order: Date.now(), // 순서 정렬을 위해 현재 시간 사용
+                    type: 'post',
+                    parentId: 'root',
+                    order: Date.now(),
                     createdAt: firebase.firestore.FieldValue.serverTimestamp(),
                 });
                 currentPost.id = docRef.id;
             }
 
-            // 로컬 데이터 및 UI 업데이트
             currentPost.title = dataToSave.title;
             currentPost.content = dataToSave.content;
             viewTitle.textContent = currentPost.title;
@@ -163,19 +190,15 @@ document.addEventListener('DOMContentLoaded', () => {
             
             showToast('저장되었습니다.');
             toggleMode('view');
-
         } catch (error) {
             console.error("저장 실패:", error);
             showToast('저장에 실패했습니다.');
         }
     });
 
-    // ---- 입력창 이벤트 ----
     contentTextarea.addEventListener('input', updateCharCount);
     contentTextarea.addEventListener('input', autoResizeTextarea);
 
-    // =====================================================
-    // 최초 실행
-    // =====================================================
+    // --- 최초 실행 ---
     loadPostData();
 });
