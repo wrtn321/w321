@@ -1,4 +1,4 @@
-// js/list-script.js (일반 글/소설 전용 - 상단 고정 기능 추가)
+// js/list-script.js (일반 글/소설 전용 스크립트)
 
 document.addEventListener('DOMContentLoaded', () => {
     const auth = firebase.auth();
@@ -47,14 +47,13 @@ document.addEventListener('DOMContentLoaded', () => {
             const snapshot = await postsCollection
                 .where('userId', '==', userId)
                 .where('category', '==', currentCategory)
-                .orderBy('isPinned', 'desc')
                 .orderBy('order', 'asc')
                 .get();
             posts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         } catch (error) {
             console.error("데이터 불러오기 실패:", error);
             if (error.code === 'failed-precondition') {
-                alert("데이터 정렬을 위해 Firestore 색인이 필요합니다. 개발자 콘솔(F12)의 에러 메시지에 있는 링크를 클릭하여 색인을 생성해주세요.");
+                alert("Firestore 색인이 필요합니다. 개발자 콘솔(F12)의 에러 메시지에 있는 링크를 클릭하여 색인을 생성해주세요.");
             }
         }
     }
@@ -64,7 +63,6 @@ document.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();
             auth.signOut().then(() => window.location.href = 'index.html');
         });
-        
         newFolderBtn.addEventListener('click', () => handleNewFolder(user.uid));
         
         newPostBtn.addEventListener('click', () => {
@@ -76,26 +74,11 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!li) return;
             const itemId = li.dataset.id;
             
-            if (e.target.classList.contains('pin-btn')) {
-                e.stopPropagation();
-                const post = posts.find(p => p.id === itemId);
-                if (post) {
-                    postsCollection.doc(itemId).update({ isPinned: !post.isPinned })
-                        .then(() => {
-                            showToast(post.isPinned ? '상단 고정 해제됨' : '상단 고정됨');
-                            return fetchPosts(user.uid);
-                        })
-                        .then(() => renderList());
-                }
-                return;
-            }
-
             if (e.target.classList.contains('edit-folder-btn')) {
                 e.stopPropagation();
                 editFolderName(user.uid, itemId);
                 return;
             }
-
             if (e.target.classList.contains('delete-folder-btn')) {
                 e.stopPropagation();
                 if (confirm('폴더를 삭제하시겠습니까?\n(안에 있는 파일은 밖으로 이동됩니다)')) {
@@ -108,7 +91,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if(wrapper) {
                 if (li.classList.contains('item-folder')) {
                     handleFolderClick(li);
-
                 } else {
                     handleFileClick(li);
                 }
@@ -143,21 +125,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const li = document.createElement('li');
         li.className = 'list-item';
         li.dataset.id = itemData.id;
-        if (itemData.isPinned) {
-            li.classList.add('is-pinned');
-        }
-
         const wrapper = document.createElement('div');
         wrapper.className = 'item-content-wrapper';
         let iconHtml = itemData.type === 'folder' ? '<span class="icon-closed">📁</span><span class="icon-open">📂</span>' : '📝';
-        const pinClass = itemData.isPinned ? 'pinned' : '';
-        const pinIcon = '📌';
-
         wrapper.innerHTML = `
             <span class="drag-handle">⠿</span>
             <span class="item-icon">${iconHtml}</span>
             <span class="item-title">${itemData.title}</span>
-            <button class="pin-btn ${pinClass}" title="상단 고정">${pinIcon}</button>
             ${itemData.type === 'folder' ? `<button class="edit-folder-btn" title="폴더 이름 변경">✏️</button><button class="delete-folder-btn" title="폴더 삭제">🗑️</button>` : ''}
         `;
         li.appendChild(wrapper);
@@ -188,8 +162,7 @@ document.addEventListener('DOMContentLoaded', () => {
             await postsCollection.add({
                 type: 'folder', title: title, content: '', category: currentCategory,
                 createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                userId: userId, order: minOrder - 1, parentId: 'root',
-                isPinned: false // 새 폴더는 기본적으로 고정 아님
+                userId: userId, order: minOrder - 1, parentId: 'root'
             });
             await fetchPosts(userId);
             renderList();
