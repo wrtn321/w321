@@ -41,8 +41,20 @@ body.sticky-footer-layout > .main-header .action-btn {
     border-radius: 18px;
     max-width: 100%;
     line-height: 1.6;
-    white-space: pre-wrap;
     word-wrap: break-word; 
+}
+
+.message-bubble h1,
+.message-bubble h2,
+.message-bubble h3,
+.message-bubble h4,
+.message-bubble h5,
+.message-bubble p{
+    margin-bottom:12px;
+}
+
+.message-bubble p:last-child{
+    margin-bottom: 0px;
 }
 
 .user-message {
