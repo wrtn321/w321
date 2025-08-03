@@ -41,7 +41,7 @@ body.sticky-footer-layout > .main-header .action-btn {
     border-radius: 18px;
     max-width: 100%;
     line-height: 1.6;
-    white-space: break-spaces;
+    white-space: pre-wrap;
     word-wrap: break-word; 
 }
 
