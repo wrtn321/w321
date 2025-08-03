@@ -73,79 +73,73 @@ document.addEventListener('DOMContentLoaded', () => {
         const bubble = document.createElement('div');
         bubble.className = `message-bubble ${message.role}-message`;
 
-        const cleanContent = (message.content || '').trim();
+        const viewContent = document.createElement('div');
+        viewContent.className = 'message-content';
+        viewContent.innerHTML = marked.parse(message.content || '');
+        viewContent.title = '더블클릭하여 수정';
 
-    const viewContent = document.createElement('div');
-    viewContent.className = 'message-content';
-    // 깨끗해진 데이터를 marked로 변환
-    viewContent.innerHTML = marked.parse(cleanContent); 
-    viewContent.title = '더블클릭하여 수정';
+        const editContent = document.createElement('textarea');
+        editContent.className = 'editable-textarea';
+        editContent.value = message.content || '';
 
-    const editContent = document.createElement('textarea');
-    editContent.className = 'editable-textarea';
-    // textarea에도 깨끗해진 데이터를 할당
-    editContent.value = cleanContent; 
+        const editActions = document.createElement('div');
+        editActions.className = 'edit-actions';
+        editActions.innerHTML = `
+            <button class="save-edit-btn" title="저장">✓</button>
+            <button class="cancel-edit-btn" title="취소">✕</button>
+        `;
 
-    const editActions = document.createElement('div');
-    editActions.className = 'edit-actions';
-    editActions.innerHTML = `
-        <button class="save-edit-btn" title="저장">✓</button>
-        <button class="cancel-edit-btn" title="취소">✕</button>
-    `;
+        bubble.appendChild(viewContent);
+        bubble.appendChild(editContent);
+        bubble.appendChild(editActions);
 
-    bubble.appendChild(viewContent);
-    bubble.appendChild(editContent);
-    bubble.appendChild(editActions);
+        viewContent.addEventListener('dblclick', () => {
+            if (activeEditingIndex !== null && activeEditingIndex !== index) {
+                showToast('먼저 다른 항목의 수정을 완료해주세요.');
+                return;
+            }
+            activeEditingIndex = index;
+            bubble.classList.add('editing');
+            const originalHeight = viewContent.offsetHeight;
+            editContent.style.height = originalHeight + 'px';
+            viewContent.style.display = 'none';
+            editContent.style.display = 'block';
+            editActions.style.display = 'block';
+            autoResizeTextarea({ target: editContent });
+            editContent.focus();
+            editContent.setSelectionRange(editContent.value.length, editContent.value.length);
+        });
 
-    // --- 이벤트 리스너 (이하 동일) ---
-    viewContent.addEventListener('dblclick', () => {
-        if (activeEditingIndex !== null && activeEditingIndex !== index) {
-            showToast('먼저 다른 항목의 수정을 완료해주세요.');
-            return;
-        }
-        activeEditingIndex = index;
-        bubble.classList.add('editing');
-        const originalHeight = viewContent.offsetHeight;
-        editContent.style.height = originalHeight + 'px';
-        viewContent.style.display = 'none';
-        editContent.style.display = 'block';
-        editActions.style.display = 'block';
-        autoResizeTextarea({ target: editContent });
-        editContent.focus();
-        editContent.setSelectionRange(editContent.value.length, editContent.value.length);
-    });
+        editActions.querySelector('.save-edit-btn').addEventListener('click', async () => {
+            bubble.classList.remove('editing');
+            const newText = editContent.value;
+            showToast('저장 중...');
+            originalMessages[index].content = newText;
+            const success = await saveChanges();
+            if (success) {
+                viewContent.innerHTML = marked.parse(newText);
+                showToast('성공적으로 저장되었습니다!');
+            } else {
+                showToast('저장에 실패했습니다.');
+            }
+            viewContent.style.display = 'block';
+            editContent.style.display = 'none';
+            editActions.style.display = 'none';
+            activeEditingIndex = null;
+        });
 
-    editActions.querySelector('.save-edit-btn').addEventListener('click', async () => {
-        bubble.classList.remove('editing');
-        // 저장할 때도 trim()을 한번 더 해주면 데이터가 항상 깨끗하게 유지됩니다.
-        const newText = editContent.value.trim(); 
-        showToast('저장 중...');
-        originalMessages[index].content = newText;
-        const success = await saveChanges();
-        if (success) {
-            viewContent.innerHTML = marked.parse(newText);
-            showToast('성공적으로 저장되었습니다!');
-        } else {
-            showToast('저장에 실패했습니다.');
-        }
-        viewContent.style.display = 'block';
-        editContent.style.display = 'none';
-        editActions.style.display = 'none';
-        activeEditingIndex = null;
-    });
+        editActions.querySelector('.cancel-edit-btn').addEventListener('click', () => {
+            bubble.classList.remove('editing');
+            editContent.value = originalMessages[index].content;
+            viewContent.style.display = 'block';
+            editContent.style.display = 'none';
+            editActions.style.display = 'none';
+            activeEditingIndex = null;
+        });
 
-    editActions.querySelector('.cancel-edit-btn').addEventListener('click', () => {
-        bubble.classList.remove('editing');
-        editContent.value = originalMessages[index].content; // 취소 시에는 원래 데이터로
-        viewContent.style.display = 'block';
-        editContent.style.display = 'none';
-        editActions.style.display = 'none';
-        activeEditingIndex = null;
-    });
-
-    editContent.addEventListener('input', autoResizeTextarea);
-    return bubble;
-}
+        editContent.addEventListener('input', autoResizeTextarea);
+        return bubble;
+    }
 
     // --- 헬퍼 함수들 (저장, 리사이즈, 토스트, 다운로드 등) ---
 
