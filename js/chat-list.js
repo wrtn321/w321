@@ -66,7 +66,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (isEditing) {
                 savePinChanges(user.uid);
                 listContainer.classList.remove('pin-edit-mode');
-                pinEditBtn.textContent = '📌 고정 편집';
+                pinEditBtn.textContent = '📌';
                 pinEditBtn.classList.remove('editing');
             } else {
                 listContainer.classList.add('pin-edit-mode');
