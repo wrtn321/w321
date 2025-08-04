@@ -1,3 +1,5 @@
+// js/script.js (메인 페이지 최종 수정본)
+
 document.addEventListener('DOMContentLoaded', () => {
     const auth = firebase.auth();
     const db = firebase.firestore();
@@ -74,13 +76,12 @@ async function loadPinnedItems(db, user, cardElement, categoryKey, tabType) {
 
     cardBody.innerHTML = '<p style="padding: 10px; font-size: 14px; color: #999;">고정된 항목을 불러오는 중...</p>';
 
-    // chat 타입일 때의 categoryKey는 'chat'으로 고정
     const queryCategory = tabType === 'chat-list' ? 'chat' : categoryKey;
 
     try {
         const snapshot = await db.collection('posts')
             .where('userId', '==', user.uid)
-            .where('category', '==', queryCategory) // 수정된 카테고리 키 사용
+            .where('category', '==', queryCategory)
             .where('isPinned', '==', true)
             .orderBy('order', 'asc')
             .limit(5)
@@ -96,8 +97,7 @@ async function loadPinnedItems(db, user, cardElement, categoryKey, tabType) {
             const post = { id: doc.id, ...doc.data() };
             const itemLink = document.createElement('a');
             
-            // ▼▼▼ 타입에 따라 링크와 아이콘을 다르게 설정 ▼▼▼
-            if(tabType === 'chat-list') {
+            if (tabType === 'chat-list') {
                 itemLink.href = 'chat-viewer.html';
                 itemLink.textContent = `💬 ${post.title}`;
             } else {
@@ -122,7 +122,6 @@ async function loadPinnedItems(db, user, cardElement, categoryKey, tabType) {
         console.error("고정 항목 로딩 실패:", error);
         cardBody.innerHTML = '<p style="padding: 10px; font-size: 14px; color: red;">항목을 불러올 수 없습니다.</p>';
         if (error.code === 'failed-precondition') {
-             // ★★★★★ 여기도 색인 생성이 필요할 수 있습니다! ★★★★★
             alert(`'${categoryKey}' 탭의 고정된 항목을 불러오려면 Firestore 색인이 필요할 수 있습니다. 개발자 콘솔(F12)을 확인해주세요.`);
         }
     }
@@ -157,9 +156,8 @@ async function setupMainPage(db, user) {
                     const card = createTabCard(tabData);
                     dashboardContainer.appendChild(card);
                 
-                    if (tabData.type !== 'chat-list') {
-                        loadPinnedItems(db, user, card, tabData.categoryKey, tabData.type);
-                    }
+                    // ★★★ 바로 이 부분입니다! if문을 제거했습니다. ★★★
+                    loadPinnedItems(db, user, card, tabData.categoryKey, tabData.type);
                 });
             }
         } catch (error) {
@@ -339,5 +337,3 @@ async function setupMainPage(db, user) {
 
     loadAndRenderTabs();
 }
-
-
