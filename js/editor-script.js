@@ -165,6 +165,7 @@ document.addEventListener('DOMContentLoaded', () => {
             title: titleInput.value.trim() || "제목 없음",
             content: contentTextarea.value,
             category: currentPost.category,
+            isPinned: currentPost.isPinned || false,
         };
 
         try {
@@ -201,4 +202,5 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- 최초 실행 ---
     loadPostData();
+
 });
