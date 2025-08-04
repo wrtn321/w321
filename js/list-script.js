@@ -13,6 +13,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const newFolderBtn = document.querySelector('.new-folder-btn');
     const normalItemList = document.querySelector('.normal-list .item-list');
     const logoutButton = document.querySelector('.logout-button');
+    const listContainer = document.querySelector('.list-container'); // 컨테이너 변수 추가
+    const pinEditBtn = document.querySelector('.pin-edit-btn'); // 핀 편집 버튼 변수 추가
 
     auth.onAuthStateChanged(async user => {
         if (user) {
@@ -72,6 +74,23 @@ document.addEventListener('DOMContentLoaded', () => {
         
         newPostBtn.addEventListener('click', () => {
             window.location.href = `post.html?category=${currentCategory}&new=true`;
+        });
+
+        pinEditBtn.addEventListener('click', () => {
+            const isEditing = listContainer.classList.contains('pin-edit-mode');
+
+            if (isEditing) {
+                // 편집 완료 시: 변경사항 저장
+                savePinChanges(user.uid);
+                listContainer.classList.remove('pin-edit-mode');
+                pinEditBtn.textContent = '📌 고정 편집';
+                pinEditBtn.classList.remove('editing');
+            } else {
+                // 편집 시작
+                listContainer.classList.add('pin-edit-mode');
+                pinEditBtn.textContent = '✓ 편집 완료';
+                pinEditBtn.classList.add('editing');
+            }
         });
         
          normalItemList.addEventListener('click', e => {
@@ -138,38 +157,75 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     function renderItem(itemData, parentElement) {
-    const li = document.createElement('li');
-    li.className = 'list-item';
-    li.dataset.id = itemData.id;
-    
-    // ▼▼▼ 고정 상태에 따라 'pinned' 클래스 추가 ▼▼▼
-    if (itemData.isPinned) {
-        li.classList.add('pinned');
-    }
+        const li = document.createElement('li');
+        li.className = 'list-item';
+        li.dataset.id = itemData.id;
+        
+        if (itemData.isPinned) {
+            li.classList.add('pinned');
+        }
 
-    const wrapper = document.createElement('div');
-    wrapper.className = 'item-content-wrapper';
-    let iconHtml = itemData.type === 'folder' ? '<span class="icon-closed">📁</span><span class="icon-open">📂</span>' : '📝';
-    
-    // ▼▼▼ HTML 구조 안에 pin-btn 추가 ▼▼▼
-    const pinTitle = itemData.isPinned ? '고정 해제' : '고정하기';
-    const pinIcon = itemData.isPinned ? '📌' : '📍';
+        const wrapper = document.createElement('div');
+        wrapper.className = 'item-content-wrapper';
 
-    wrapper.innerHTML = `
-        <span class="drag-handle">⠿</span>
-        <button class="pin-btn" title="${pinTitle}">${pinIcon}</button> <!-- 고정 버튼 -->
-        <span class="item-icon">${iconHtml}</span>
-        <span class="item-title">${itemData.title}</span>
-        ${itemData.type === 'folder' ? `<button class="edit-folder-btn" title="폴더 이름 변경">✏️</button><button class="delete-folder-btn" title="폴더 삭제">🗑️</button>` : ''}
-    `;
-    li.appendChild(wrapper);
-        if (itemData.type === 'folder') {
+        // 폴더가 아닌 경우에만 핀 관련 UI 추가
+        const isFolder = itemData.type === 'folder';
+        const pinCheckboxHTML = isFolder ? '' : `<input type="checkbox" class="pin-checkbox" ${itemData.isPinned ? 'checked' : ''}>`;
+        const pinIndicatorHTML = isFolder ? '' : '<span class="pin-indicator">📌</span>';
+        
+        let iconHtml = isFolder ? '<span class="icon-closed">📁</span><span class="icon-open">📂</span>' : '📝';
+
+        wrapper.innerHTML = `
+            <span class="drag-handle">⠿</span>
+            ${pinCheckboxHTML}  <!-- 체크박스 (편집 모드용) -->
+            ${pinIndicatorHTML} <!-- 핀 아이콘 (일반 모드용) -->
+            <span class="item-icon">${iconHtml}</span>
+            <span class="item-title">${itemData.title}</span>
+            ${isFolder ? `<button class="edit-folder-btn" title="폴더 이름 변경">✏️</button><button class="delete-folder-btn" title="폴더 삭제">🗑️</button>` : ''}
+        `;
+        li.appendChild(wrapper);
+
+        if (isFolder) {
             li.classList.add('item-folder');
             const subList = document.createElement('ul');
             subList.className = 'sub-list item-list';
             li.appendChild(subList);
         }
         parentElement.appendChild(li);
+    }
+
+    async function savePinChanges(userId) {
+        const batch = db.batch(); // 여러 업데이트를 한 번에 보내기 위한 Batch 생성
+        const listItems = normalItemList.querySelectorAll('.list-item:not(.item-folder)');
+        let hasChanges = false;
+
+        listItems.forEach(li => {
+            const postId = li.dataset.id;
+            const post = posts.find(p => p.id === postId);
+            const checkbox = li.querySelector('.pin-checkbox');
+            
+            if (post && checkbox) {
+                const isNowPinned = checkbox.checked;
+                // 기존 상태와 현재 체크박스 상태가 다를 경우에만 업데이트 목록에 추가
+                if (post.isPinned !== isNowPinned) {
+                    hasChanges = true;
+                    const postRef = postsCollection.doc(postId);
+                    batch.update(postRef, { isPinned: isNowPinned });
+                }
+            }
+        });
+
+        if (hasChanges) {
+            try {
+                await batch.commit(); // 변경사항이 있을 때만 DB에 전송
+                showToast('고정 상태가 저장되었습니다.');
+                await fetchPosts(userId); // DB와 동기화
+                renderList(); // 화면 새로고침
+            } catch (error) {
+                console.error("고정 상태 저장 실패:", error);
+                showToast('저장에 실패했습니다.');
+            }
+        }
     }
 
     function handleFolderClick(liElement, withAnimation = true) {
@@ -277,4 +333,5 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 });
+
 
