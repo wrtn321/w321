@@ -179,3 +179,50 @@
     font-weight: 600; /* 글씨를 살짝 굵게 */
 }
 
+
+/* 핀 편집 버튼 */
+.pin-edit-btn {
+    padding: 8px 12px;
+    border: 1px solid #FFC107; /* 눈에 띄는 색 */
+    background-color: transparent;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+.pin-edit-btn.editing { /* 편집 모드일 때 버튼 스타일 */
+    background-color: #FFC107;
+    color: white;
+}
+
+/* 일반 모드에서 고정된 항목에 표시될 아이콘 */
+.pin-indicator {
+    display: none; /* 평소엔 숨김 */
+    font-size: 14px;
+    margin-right: 8px;
+}
+/* isPinned된 항목의 아이콘만 표시 */
+.list-item.pinned .pin-indicator {
+    display: inline-block;
+}
+
+/* 핀 편집 모드에서만 보일 체크박스 */
+.pin-checkbox {
+    display: none; /* 평소엔 숨김 */
+    margin: 0 10px 0 5px;
+    cursor: pointer;
+}
+
+/* "pin-edit-mode"가 활성화 됐을 때의 스타일 변화 */
+.list-container.pin-edit-mode .pin-checkbox {
+    display: inline-block; /* 체크박스 보이기 */
+}
+.list-container.pin-edit-mode .drag-handle {
+    display: none; /* 드래그 핸들 숨기기 (혼동 방지) */
+}
+.list-container.pin-edit-mode .item-content-wrapper {
+    background-color: #f9f9f9; /* 편집 중인 항목 배경색 */
+}
+.list-container.pin-edit-mode .item-content-wrapper:hover {
+    background-color: #f0f0f0;
+}
