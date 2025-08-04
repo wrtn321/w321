@@ -43,20 +43,25 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function fetchPosts(userId) {
-        try {
-            const snapshot = await postsCollection
-                .where('userId', '==', userId)
-                .where('category', '==', currentCategory)
-                .orderBy('order', 'asc')
-                .get();
-            posts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        } catch (error) {
-            console.error("데이터 불러오기 실패:", error);
-            if (error.code === 'failed-precondition') {
-                alert("Firestore 색인이 필요합니다. 개발자 콘솔(F12)의 에러 메시지에 있는 링크를 클릭하여 색인을 생성해주세요.");
-            }
+    try {
+        // ▼▼▼ 여기에 .orderBy('isPinned', 'desc') 를 추가합니다. ▼▼▼
+        const snapshot = await postsCollection
+            .where('userId', '==', userId)
+            .where('category', '==', currentCategory)
+            .orderBy('isPinned', 'desc') // 1. 고정된 항목을 위로
+            .orderBy('order', 'asc')      // 2. 그 안에서 기존 순서대로 정렬
+            .get();
+        posts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    } catch (error) {
+        console.error("데이터 불러오기 실패:", error);
+        if (error.code === 'failed-precondition') {
+            // ★★★★★ 중요 ★★★★★
+            // 이 메시지가 콘솔에 나타나면, 에러 메시지에 포함된 링크를 클릭해서
+            // Firestore 색인을 꼭 생성해주셔야 합니다!
+            alert("Firestore 색인이 필요합니다. 개발자 콘솔(F12)의 에러 메시지에 있는 링크를 클릭하여 색인을 생성해주세요.");
         }
     }
+}
 
     function addEventListeners(user) {
         logoutButton.addEventListener('click', e => {
@@ -69,12 +74,23 @@ document.addEventListener('DOMContentLoaded', () => {
             window.location.href = `post.html?category=${currentCategory}&new=true`;
         });
         
-        normalItemList.addEventListener('click', e => {
-            const li = e.target.closest('.list-item');
-            if (!li) return;
-            const itemId = li.dataset.id;
-            
-            if (e.target.classList.contains('edit-folder-btn')) {
+         normalItemList.addEventListener('click', e => {
+        const li = e.target.closest('.list-item');
+        if (!li) return;
+        const itemId = li.dataset.id;
+        
+        // ▼▼▼ 고정 버튼 클릭 이벤트 처리 로직 추가 ▼▼▼
+        if (e.target.classList.contains('pin-btn')) {
+            e.stopPropagation(); // 다른 이벤트와 충돌 방지
+            const post = posts.find(p => p.id === itemId);
+            if(post) {
+                // 현재 고정 상태의 반대 값으로 업데이트
+                togglePinStatus(user.uid, itemId, !post.isPinned);
+            }
+            return;
+        }
+
+        if (e.target.classList.contains('edit-folder-btn')) {
                 e.stopPropagation();
                 editFolderName(user.uid, itemId);
                 return;
@@ -122,19 +138,31 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     function renderItem(itemData, parentElement) {
-        const li = document.createElement('li');
-        li.className = 'list-item';
-        li.dataset.id = itemData.id;
-        const wrapper = document.createElement('div');
-        wrapper.className = 'item-content-wrapper';
-        let iconHtml = itemData.type === 'folder' ? '<span class="icon-closed">📁</span><span class="icon-open">📂</span>' : '📝';
-        wrapper.innerHTML = `
-            <span class="drag-handle">⠿</span>
-            <span class="item-icon">${iconHtml}</span>
-            <span class="item-title">${itemData.title}</span>
-            ${itemData.type === 'folder' ? `<button class="edit-folder-btn" title="폴더 이름 변경">✏️</button><button class="delete-folder-btn" title="폴더 삭제">🗑️</button>` : ''}
-        `;
-        li.appendChild(wrapper);
+    const li = document.createElement('li');
+    li.className = 'list-item';
+    li.dataset.id = itemData.id;
+    
+    // ▼▼▼ 고정 상태에 따라 'pinned' 클래스 추가 ▼▼▼
+    if (itemData.isPinned) {
+        li.classList.add('pinned');
+    }
+
+    const wrapper = document.createElement('div');
+    wrapper.className = 'item-content-wrapper';
+    let iconHtml = itemData.type === 'folder' ? '<span class="icon-closed">📁</span><span class="icon-open">📂</span>' : '📝';
+    
+    // ▼▼▼ HTML 구조 안에 pin-btn 추가 ▼▼▼
+    const pinTitle = itemData.isPinned ? '고정 해제' : '고정하기';
+    const pinIcon = itemData.isPinned ? '📌' : '📍';
+
+    wrapper.innerHTML = `
+        <span class="drag-handle">⠿</span>
+        <button class="pin-btn" title="${pinTitle}">${pinIcon}</button> <!-- 고정 버튼 -->
+        <span class="item-icon">${iconHtml}</span>
+        <span class="item-title">${itemData.title}</span>
+        ${itemData.type === 'folder' ? `<button class="edit-folder-btn" title="폴더 이름 변경">✏️</button><button class="delete-folder-btn" title="폴더 삭제">🗑️</button>` : ''}
+    `;
+    li.appendChild(wrapper);
         if (itemData.type === 'folder') {
             li.classList.add('item-folder');
             const subList = document.createElement('ul');
@@ -236,4 +264,17 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+
+    async function togglePinStatus(userId, postId, shouldBePinned) {
+        try {
+            await postsCollection.doc(postId).update({ isPinned: shouldBePinned });
+            showToast(shouldBePinned ? '상단에 고정되었습니다.' : '고정이 해제되었습니다.');
+            await fetchPosts(userId); // 데이터를 다시 불러와서
+            renderList();             // 목록을 새로고침
+        } catch (error) {
+            console.error("고정 상태 변경 실패:", error);
+            showToast('상태 변경에 실패했습니다.');
+        }
+    }
 });
+
