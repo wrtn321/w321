@@ -68,6 +68,57 @@ function setupAuthPage(auth) {
     }
 }
 
+async function loadPinnedItems(db, user, cardElement, categoryKey) {
+    const cardBody = cardElement.querySelector('.card-body');
+    if (!cardBody) return;
+
+    cardBody.innerHTML = '<p style="padding: 10px; font-size: 14px; color: #999;">고정된 항목을 불러오는 중...</p>';
+
+    try {
+        const snapshot = await db.collection('posts')
+            .where('userId', '==', user.uid)
+            .where('category', '==', categoryKey)
+            .where('isPinned', '==', true) // 고정된 항목만!
+            .orderBy('order', 'asc')
+            .limit(5) // 최대 5개만 가져오기
+            .get();
+
+        if (snapshot.empty) {
+            cardBody.innerHTML = '<p style="padding: 10px; font-size: 14px; color: #999;">📌 고정된 항목이 없습니다.</p>';
+            return;
+        }
+
+        cardBody.innerHTML = ''; // 기존 내용 삭제
+        snapshot.docs.forEach(doc => {
+            const post = { id: doc.id, ...doc.data() };
+            const itemLink = document.createElement('a');
+            itemLink.href = 'post.html'; // post.html로 바로 연결
+            itemLink.className = 'recent-item';
+            itemLink.textContent = `📝 ${post.title}`;
+
+            // 링크 클릭 시 게시물 정보를 localStorage에 저장 (list-script.js와 동일한 방식)
+            itemLink.addEventListener('click', (e) => {
+                 // 편집 모드에서는 링크 이동 방지
+                if (document.body.classList.contains('edit-mode-active')) {
+                    e.preventDefault();
+                    return;
+                }
+                localStorage.setItem('currentPost', JSON.stringify(post));
+                localStorage.setItem('currentCategory', categoryKey);
+            });
+            cardBody.appendChild(itemLink);
+        });
+
+    } catch (error) {
+        console.error("고정 항목 로딩 실패:", error);
+        cardBody.innerHTML = '<p style="padding: 10px; font-size: 14px; color: red;">항목을 불러올 수 없습니다.</p>';
+        if (error.code === 'failed-precondition') {
+             // ★★★★★ 여기도 색인 생성이 필요할 수 있습니다! ★★★★★
+            alert(`'${categoryKey}' 탭의 고정된 항목을 불러오려면 Firestore 색인이 필요할 수 있습니다. 개발자 콘솔(F12)을 확인해주세요.`);
+        }
+    }
+}
+
 async function setupMainPage(db, user) {
     const tabsCollection = db.collection('tabs');
     let sortableInstance = null;
@@ -93,7 +144,15 @@ async function setupMainPage(db, user) {
                 dashboardContainer.innerHTML = '<p style="text-align:center; color:#999; padding: 20px;">탭이 없습니다. 편집 버튼을 눌러 추가해보세요.</p>';
             } else {
                 snapshot.docs.forEach(doc => {
-                    dashboardContainer.appendChild(createTabCard({ id: doc.id, ...doc.data() }));
+                    const tabData = { id: doc.id, ...doc.data() };
+                    const card = createTabCard(tabData);
+                    dashboardContainer.appendChild(card);
+                    
+                    // ▼▼▼ 카드 생성 후, 고정된 아이템을 로드하는 함수 호출 ▼▼▼
+                    // (채팅 목록이 아닌 경우에만 실행)
+                    if (tabData.type !== 'chat-list') {
+                        loadPinnedItems(db, user, card, tabData.categoryKey);
+                    }
                 });
             }
         } catch (error) {
@@ -273,3 +332,4 @@ async function setupMainPage(db, user) {
 
     loadAndRenderTabs();
 }
+
