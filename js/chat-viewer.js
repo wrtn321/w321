@@ -72,17 +72,15 @@ document.addEventListener('DOMContentLoaded', () => {
     function createMessageBubble(message, index) {
         const bubble = document.createElement('div');
         bubble.className = `message-bubble ${message.role}-message`;
+
         const viewContent = document.createElement('div');
         viewContent.className = 'message-content';
-
-        // ★★★ 1. 보여주기 전에 끝 공백 제거 ★★★
-        const cleanContent = (message.content || '').trimEnd();
-        viewContent.innerHTML = marked.parse(cleanContent);
+        viewContent.innerHTML = marked.parse(message.content || '');
         viewContent.title = '더블클릭하여 수정';
 
         const editContent = document.createElement('textarea');
         editContent.className = 'editable-textarea';
-        editContent.value = message.content || ''; // 수정창에는 원본 그대로
+        editContent.value = message.content || '';
 
         const editActions = document.createElement('div');
         editActions.className = 'edit-actions';
@@ -114,13 +112,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         editActions.querySelector('.save-edit-btn').addEventListener('click', async () => {
             bubble.classList.remove('editing');
-
-            // ★★★ 2. 저장하기 전에 끝 공백 제거 ★★★
-            const newText = editContent.value.trimEnd();
+            const newText = editContent.value;
             showToast('저장 중...');
-            
-            originalMessages[index].content = newText; // 깨끗한 데이터로 교체
-            
+            originalMessages[index].content = newText;
             const success = await saveChanges();
             if (success) {
                 viewContent.innerHTML = marked.parse(newText);
@@ -133,7 +127,7 @@ document.addEventListener('DOMContentLoaded', () => {
             editActions.style.display = 'none';
             activeEditingIndex = null;
         });
-        
+
         editActions.querySelector('.cancel-edit-btn').addEventListener('click', () => {
             bubble.classList.remove('editing');
             editContent.value = originalMessages[index].content;
