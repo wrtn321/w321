@@ -83,7 +83,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 // 편집 완료 시: 변경사항 저장
                 savePinChanges(user.uid);
                 listContainer.classList.remove('pin-edit-mode');
-                pinEditBtn.textContent = '📌 고정 편집';
+                pinEditBtn.textContent = '📌';
                 pinEditBtn.classList.remove('editing');
             } else {
                 // 편집 시작
@@ -326,3 +326,4 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
+
