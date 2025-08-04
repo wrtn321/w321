@@ -1,4 +1,4 @@
-// js/list-script.js (일반 글/소설 전용 스크립트)
+// js/list-script.js (삭제 버튼 기능 수정 최종본)
 
 document.addEventListener('DOMContentLoaded', () => {
     const auth = firebase.auth();
@@ -8,14 +8,16 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentCategory = '';
     let posts = [];
     
+    // --- HTML 요소 가져오기 ---
+    const listContainer = document.querySelector('.list-container');
     const listTitle = document.getElementById('list-title');
+    const pinEditBtn = document.querySelector('.pin-edit-btn');
     const newPostBtn = document.querySelector('.new-post-btn');
     const newFolderBtn = document.querySelector('.new-folder-btn');
     const normalItemList = document.querySelector('.normal-list .item-list');
     const logoutButton = document.querySelector('.logout-button');
-    const listContainer = document.querySelector('.list-container'); // 컨테이너 변수 추가
-    const pinEditBtn = document.querySelector('.pin-edit-btn'); // 핀 편집 버튼 변수 추가
 
+    // --- Firebase 인증 및 데이터 로드 ---
     auth.onAuthStateChanged(async user => {
         if (user) {
             initializePage();
@@ -45,37 +47,35 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function fetchPosts(userId) {
-    try {
-        // ▼▼▼ 여기에 .orderBy('isPinned', 'desc') 를 추가합니다. ▼▼▼
-        const snapshot = await postsCollection
-            .where('userId', '==', userId)
-            .where('category', '==', currentCategory)
-            .orderBy('isPinned', 'desc') // 1. 고정된 항목을 위로
-            .orderBy('order', 'asc')      // 2. 그 안에서 기존 순서대로 정렬
-            .get();
-        posts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    } catch (error) {
-        console.error("데이터 불러오기 실패:", error);
-        if (error.code === 'failed-precondition') {
-            // ★★★★★ 중요 ★★★★★
-            // 이 메시지가 콘솔에 나타나면, 에러 메시지에 포함된 링크를 클릭해서
-            // Firestore 색인을 꼭 생성해주셔야 합니다!
-            alert("Firestore 색인이 필요합니다. 개발자 콘솔(F12)의 에러 메시지에 있는 링크를 클릭하여 색인을 생성해주세요.");
+        try {
+            const snapshot = await postsCollection
+                .where('userId', '==', userId)
+                .where('category', '==', currentCategory)
+                .orderBy('isPinned', 'desc') // 1. 고정된 항목을 위로
+                .orderBy('order', 'asc')      // 2. 그 안에서 기존 순서대로 정렬
+                .get();
+            posts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        } catch (error) {
+            console.error("데이터 불러오기 실패:", error);
+            if (error.code === 'failed-precondition') {
+                alert("Firestore 색인이 필요합니다. 개발자 콘솔(F12)의 에러 메시지에 있는 링크를 클릭하여 색인을 생성해주세요.");
+            }
         }
     }
-}
 
     function addEventListeners(user) {
         logoutButton.addEventListener('click', e => {
             e.preventDefault();
             auth.signOut().then(() => window.location.href = 'index.html');
         });
+        
         newFolderBtn.addEventListener('click', () => handleNewFolder(user.uid));
         
         newPostBtn.addEventListener('click', () => {
             window.location.href = `post.html?category=${currentCategory}&new=true`;
         });
-
+        
+        // ▼▼▼ 핀 편집 버튼 이벤트 리스너 ▼▼▼
         pinEditBtn.addEventListener('click', () => {
             const isEditing = listContainer.classList.contains('pin-edit-mode');
 
@@ -93,23 +93,28 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
         
-         normalItemList.addEventListener('click', e => {
-        const li = e.target.closest('.list-item');
-        if (!li) return;
-        const itemId = li.dataset.id;
-        
-        // ▼▼▼ 고정 버튼 클릭 이벤트 처리 로직 추가 ▼▼▼
-        if (e.target.classList.contains('pin-btn')) {
-            e.stopPropagation(); // 다른 이벤트와 충돌 방지
-            const post = posts.find(p => p.id === itemId);
-            if(post) {
-                // 현재 고정 상태의 반대 값으로 업데이트
-                togglePinStatus(user.uid, itemId, !post.isPinned);
+        // ▼▼▼ 목록 클릭 이벤트 리스너 (핵심 수정 부분) ▼▼▼
+        normalItemList.addEventListener('click', e => {
+            const li = e.target.closest('.list-item');
+            if (!li) return;
+            const itemId = li.dataset.id;
+            
+            // --- 핀 편집 모드일 때의 로직 ---
+            if (listContainer.classList.contains('pin-edit-mode')) {
+                // 폴더가 아닌 항목의 체크박스만 토글
+                if (!li.classList.contains('item-folder')) {
+                    const checkbox = li.querySelector('.pin-checkbox');
+                    if (checkbox && e.target !== checkbox) {
+                        // 체크박스 자체가 아닌 주변 영역을 클릭했을 때도 체크되도록
+                        checkbox.checked = !checkbox.checked;
+                    }
+                }
+                // 편집 모드에서는 파일 클릭으로 페이지가 넘어가지 않도록 여기서 종료!
+                return; 
             }
-            return;
-        }
 
-        if (e.target.classList.contains('edit-folder-btn')) {
+            // --- 일반 모드일 때의 로직 (기존과 동일) ---
+            if (e.target.classList.contains('edit-folder-btn')) {
                 e.stopPropagation();
                 editFolderName(user.uid, itemId);
                 return;
@@ -156,6 +161,7 @@ document.addEventListener('DOMContentLoaded', () => {
         initializeSortable(normalItemList);
     }
     
+    // ▼▼▼ renderItem 함수 수정 ▼▼▼
     function renderItem(itemData, parentElement) {
         const li = document.createElement('li');
         li.className = 'list-item';
@@ -168,7 +174,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const wrapper = document.createElement('div');
         wrapper.className = 'item-content-wrapper';
 
-        // 폴더가 아닌 경우에만 핀 관련 UI 추가
         const isFolder = itemData.type === 'folder';
         const pinCheckboxHTML = isFolder ? '' : `<input type="checkbox" class="pin-checkbox" ${itemData.isPinned ? 'checked' : ''}>`;
         const pinIndicatorHTML = isFolder ? '' : '<span class="pin-indicator">📌</span>';
@@ -177,8 +182,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         wrapper.innerHTML = `
             <span class="drag-handle">⠿</span>
-            ${pinCheckboxHTML}  <!-- 체크박스 (편집 모드용) -->
-            ${pinIndicatorHTML} <!-- 핀 아이콘 (일반 모드용) -->
+            ${pinCheckboxHTML}
+            ${pinIndicatorHTML}
             <span class="item-icon">${iconHtml}</span>
             <span class="item-title">${itemData.title}</span>
             ${isFolder ? `<button class="edit-folder-btn" title="폴더 이름 변경">✏️</button><button class="delete-folder-btn" title="폴더 삭제">🗑️</button>` : ''}
@@ -194,8 +199,19 @@ document.addEventListener('DOMContentLoaded', () => {
         parentElement.appendChild(li);
     }
 
+    function handleFolderClick(liElement, withAnimation = true) {
+        if (withAnimation) liElement.classList.toggle('open');
+        else liElement.classList.add('open');
+        const subList = liElement.querySelector('.sub-list');
+        if (liElement.classList.contains('open') && subList.children.length === 0) {
+            const children = posts.filter(p => p.parentId === liElement.dataset.id).sort((a, b) => (a.order || 0) - (b.order || 0));
+            children.forEach(child => renderItem(child, subList));
+        }
+    }
+
+    // ▼▼▼ 변경사항을 한 번에 저장하는 함수 추가 ▼▼▼
     async function savePinChanges(userId) {
-        const batch = db.batch(); // 여러 업데이트를 한 번에 보내기 위한 Batch 생성
+        const batch = db.batch();
         const listItems = normalItemList.querySelectorAll('.list-item:not(.item-folder)');
         let hasChanges = false;
 
@@ -206,8 +222,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             if (post && checkbox) {
                 const isNowPinned = checkbox.checked;
-                // 기존 상태와 현재 체크박스 상태가 다를 경우에만 업데이트 목록에 추가
-                if (post.isPinned !== isNowPinned) {
+                if ((post.isPinned || false) !== isNowPinned) {
                     hasChanges = true;
                     const postRef = postsCollection.doc(postId);
                     batch.update(postRef, { isPinned: isNowPinned });
@@ -217,24 +232,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (hasChanges) {
             try {
-                await batch.commit(); // 변경사항이 있을 때만 DB에 전송
+                await batch.commit();
                 showToast('고정 상태가 저장되었습니다.');
-                await fetchPosts(userId); // DB와 동기화
-                renderList(); // 화면 새로고침
+                await fetchPosts(userId);
+                renderList();
             } catch (error) {
                 console.error("고정 상태 저장 실패:", error);
                 showToast('저장에 실패했습니다.');
             }
-        }
-    }
-
-    function handleFolderClick(liElement, withAnimation = true) {
-        if (withAnimation) liElement.classList.toggle('open');
-        else liElement.classList.add('open');
-        const subList = liElement.querySelector('.sub-list');
-        if (liElement.classList.contains('open') && subList.children.length === 0) {
-            const children = posts.filter(p => p.parentId === liElement.dataset.id).sort((a, b) => (a.order || 0) - (b.order || 0));
-            children.forEach(child => renderItem(child, subList));
         }
     }
 
@@ -246,7 +251,7 @@ document.addEventListener('DOMContentLoaded', () => {
             await postsCollection.add({
                 type: 'folder', title: title, content: '', category: currentCategory,
                 createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                userId: userId, order: minOrder - 1, parentId: 'root'
+                userId: userId, order: minOrder - 1, parentId: 'root', isPinned: false
             });
             await fetchPosts(userId);
             renderList();
@@ -320,18 +325,4 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
-
-    async function togglePinStatus(userId, postId, shouldBePinned) {
-        try {
-            await postsCollection.doc(postId).update({ isPinned: shouldBePinned });
-            showToast(shouldBePinned ? '상단에 고정되었습니다.' : '고정이 해제되었습니다.');
-            await fetchPosts(userId); // 데이터를 다시 불러와서
-            renderList();             // 목록을 새로고침
-        } catch (error) {
-            console.error("고정 상태 변경 실패:", error);
-            showToast('상태 변경에 실패했습니다.');
-        }
-    }
 });
-
-
