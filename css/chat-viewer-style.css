@@ -59,7 +59,7 @@ body.sticky-footer-layout > .main-header .action-btn {
 .user-message p, .user-message li, .user-message code {
     color: #fff;
 }
-.user-message em {
+.message-bubble .user-message em {
     color: #c7c5bd;
 }
 
