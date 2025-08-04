@@ -147,8 +147,38 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // ▼▼▼ 여기에 isPinned 필드 추가 로직이 들어갑니다 (아래 2번 항목에서 설명)
     async function createPostFromJson(title, content) {
-        // ... (수정될 부분)
+    const user = auth.currentUser;
+    if (!user) return;
+    try {
+        JSON.parse(content);
+    } catch (error) {
+        alert('올바른 JSON 파일이 아닙니다. 파일 내용을 확인해주세요.');
+        return;
     }
+    try {
+        const maxOrder = posts.length > 0 ? Math.max(0, ...posts.map(p => p.order).filter(o => typeof o === 'number')) : -1;
+        
+        // ▼▼▼ DB에 데이터를 추가하는 이 객체에 isPinned: false를 추가합니다. ▼▼▼
+        await postsCollection.add({
+            type: 'post',
+            title: title,
+            content: content,
+            category: currentCategory,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+            userId: user.uid,
+            order: maxOrder + 1,
+            parentId: 'root',
+            isPinned: false // ★★★ 바로 이 부분입니다! ★★★
+        });
+        
+        showToast(`'${title}' 파일이 추가되었습니다.`);
+        await fetchPosts(user.uid);
+        renderList();
+    } catch (error) {
+        console.error("JSON 파일로 게시글 생성 실패:", error);
+        showToast('게시글 생성에 실패했습니다.');
+    }
+}
     
     // --- 렌더링 및 UI 관련 함수 ---
 
