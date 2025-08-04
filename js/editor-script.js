@@ -1,4 +1,4 @@
-// js/editor-script.js (삭제 버튼 기능 수정 최종본)
+// js/editor-script.js (다시 커밋)
 
 document.addEventListener('DOMContentLoaded', () => {
     const auth = firebase.auth();
@@ -204,3 +204,4 @@ document.addEventListener('DOMContentLoaded', () => {
     loadPostData();
 
 });
+
