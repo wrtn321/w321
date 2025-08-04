@@ -68,19 +68,22 @@ function setupAuthPage(auth) {
     }
 }
 
-async function loadPinnedItems(db, user, cardElement, categoryKey) {
+async function loadPinnedItems(db, user, cardElement, categoryKey, tabType) {
     const cardBody = cardElement.querySelector('.card-body');
     if (!cardBody) return;
 
     cardBody.innerHTML = '<p style="padding: 10px; font-size: 14px; color: #999;">고정된 항목을 불러오는 중...</p>';
 
+    // chat 타입일 때의 categoryKey는 'chat'으로 고정
+    const queryCategory = tabType === 'chat-list' ? 'chat' : categoryKey;
+
     try {
         const snapshot = await db.collection('posts')
             .where('userId', '==', user.uid)
-            .where('category', '==', categoryKey)
-            .where('isPinned', '==', true) // 고정된 항목만!
+            .where('category', '==', queryCategory) // 수정된 카테고리 키 사용
+            .where('isPinned', '==', true)
             .orderBy('order', 'asc')
-            .limit(5) // 최대 5개만 가져오기
+            .limit(5)
             .get();
 
         if (snapshot.empty) {
@@ -88,23 +91,29 @@ async function loadPinnedItems(db, user, cardElement, categoryKey) {
             return;
         }
 
-        cardBody.innerHTML = ''; // 기존 내용 삭제
+        cardBody.innerHTML = '';
         snapshot.docs.forEach(doc => {
             const post = { id: doc.id, ...doc.data() };
             const itemLink = document.createElement('a');
-            itemLink.href = 'post.html'; // post.html로 바로 연결
-            itemLink.className = 'recent-item';
-            itemLink.textContent = `📝 ${post.title}`;
+            
+            // ▼▼▼ 타입에 따라 링크와 아이콘을 다르게 설정 ▼▼▼
+            if(tabType === 'chat-list') {
+                itemLink.href = 'chat-viewer.html';
+                itemLink.textContent = `💬 ${post.title}`;
+            } else {
+                itemLink.href = 'post.html';
+                itemLink.textContent = `📝 ${post.title}`;
+            }
 
-            // 링크 클릭 시 게시물 정보를 localStorage에 저장 (list-script.js와 동일한 방식)
+            itemLink.className = 'recent-item';
+            
             itemLink.addEventListener('click', (e) => {
-                 // 편집 모드에서는 링크 이동 방지
                 if (document.body.classList.contains('edit-mode-active')) {
                     e.preventDefault();
                     return;
                 }
                 localStorage.setItem('currentPost', JSON.stringify(post));
-                localStorage.setItem('currentCategory', categoryKey);
+                localStorage.setItem('currentCategory', queryCategory);
             });
             cardBody.appendChild(itemLink);
         });
@@ -147,11 +156,9 @@ async function setupMainPage(db, user) {
                     const tabData = { id: doc.id, ...doc.data() };
                     const card = createTabCard(tabData);
                     dashboardContainer.appendChild(card);
-                    
-                    // ▼▼▼ 카드 생성 후, 고정된 아이템을 로드하는 함수 호출 ▼▼▼
-                    // (채팅 목록이 아닌 경우에만 실행)
+                
                     if (tabData.type !== 'chat-list') {
-                        loadPinnedItems(db, user, card, tabData.categoryKey);
+                        loadPinnedItems(db, user, card, tabData.categoryKey, tabData.type);
                     }
                 });
             }
@@ -332,4 +339,5 @@ async function setupMainPage(db, user) {
 
     loadAndRenderTabs();
 }
+
 
