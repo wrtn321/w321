@@ -150,3 +150,32 @@
     outline: none;
 }
 
+/* 고정 버튼 스타일 */
+.pin-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    padding: 0 8px 0 0;
+    color: var(--text-secondary-color);
+    line-height: 1;
+    opacity: 0.5;
+    transition: opacity 0.2s;
+}
+
+.item-content-wrapper:hover .pin-btn,
+.list-item.pinned .pin-btn {
+    opacity: 1;
+}
+
+
+/* 고정된 아이템 스타일 */
+.list-item.pinned {
+    background-color: #fffde7; /* 연한 노란색 배경 */
+    border-radius: 6px;
+}
+
+.list-item.pinned .item-title {
+    font-weight: 600; /* 글씨를 살짝 굵게 */
+}
+
