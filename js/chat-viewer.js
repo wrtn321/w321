@@ -1,4 +1,4 @@
-// js/chat-viewer.js (제목 인라인 편집, 더블클릭 수정 적용 최종 버전 - 생략 없음)
+// js/chat-viewer.js (파일명 깨짐 문제 해결 최종본)
 
 document.addEventListener('DOMContentLoaded', () => {
     const auth = firebase.auth();
@@ -6,7 +6,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let currentPost = null;
     let originalMessages = [];
-    let activeEditingIndex = null; // 현재 수정 중인 말풍선의 인덱스 저장
+    let activeEditingIndex = null;
 
     // --- HTML 요소 가져오기 ---
     const backToListBtn = document.getElementById('back-to-list-btn');
@@ -28,7 +28,7 @@ document.addEventListener('DOMContentLoaded', () => {
             window.location.href = 'index.html';
         } else {
             loadChatData();
-            addPageEventListeners(); // 페이지 레벨 이벤트 리스너 연결
+            addPageEventListeners();
         }
     });
 
@@ -37,7 +37,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const category = localStorage.getItem('currentCategory');
 
         if (category) {
-            backToListBtn.href = `chat-list.html?category=${category}`;
+            const listPage = category === 'chat' ? 'chat-list.html' : `list.html?category=${category}`;
+            backToListBtn.href = listPage;
         }
 
         if (!postDataString) {
@@ -141,8 +142,6 @@ document.addEventListener('DOMContentLoaded', () => {
         return bubble;
     }
 
-    // --- 헬퍼 함수들 (저장, 리사이즈, 토스트, 다운로드 등) ---
-
     async function saveChanges() {
         try {
             const newContent = JSON.stringify({ messages: originalMessages }, null, 2);
@@ -191,11 +190,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }).join('\n\n');
     }
 
-    // --- 페이지 전체 이벤트 리스너 ---
     function addPageEventListeners() {
         backToListBtn.addEventListener('click', (e) => {
             e.preventDefault();
-            window.location.replace('chat-list.html');
+            const listPage = (localStorage.getItem('currentCategory') === 'chat') ? 'chat-list.html' : 'list.html';
+            window.location.replace(listPage);
         });
         
         toggleMenuBtn.addEventListener('click', () => {
@@ -218,7 +217,6 @@ document.addEventListener('DOMContentLoaded', () => {
             input.value = currentTitle;
 
             viewerTitle.style.display = 'none';
-            // h1의 부모(header)에 input을 h1 대신 삽입
             viewerTitle.parentNode.insertBefore(input, viewerTitle);
             input.focus();
             input.select();
@@ -259,7 +257,9 @@ document.addEventListener('DOMContentLoaded', () => {
         // --- 드롭다운 메뉴 버튼 이벤트 리스너 ---
         downloadJsonBtn.addEventListener('click', (e) => {
             e.preventDefault();
-            const filename = (currentPost.title.trim() || 'chat') + '.json';
+            // ▼▼▼ 핵심 수정 부분 ▼▼▼
+            const title = (currentPost.title.trim() || 'chat').normalize('NFC');
+            const filename = title + '.json';
             const formattedJson = JSON.stringify(JSON.parse(currentPost.content), null, 2);
             downloadFile(formattedJson, filename, 'application/json');
             dropdownMenu.hidden = true;
@@ -267,7 +267,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         downloadTxtBtn.addEventListener('click', (e) => {
             e.preventDefault();
-            const filename = (currentPost.title.trim() || 'chat') + '.txt';
+            // ▼▼▼ 핵심 수정 부분 ▼▼▼
+            const title = (currentPost.title.trim() || 'chat').normalize('NFC');
+            const filename = title + '.txt';
             const txtContent = generateTxtFromChat();
             downloadFile(txtContent, filename, 'text/plain');
             dropdownMenu.hidden = true;
@@ -281,8 +283,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 try {
                     await db.collection('posts').doc(currentPost.id).delete();
                     localStorage.removeItem('currentPost');
+                    const category = localStorage.getItem('currentCategory');
+                    const listPage = category === 'chat' ? 'chat-list.html' : 'list.html';
                     localStorage.removeItem('currentCategory');
-                    window.location.replace('chat-list.html');
+                    window.location.replace(listPage);
                 } catch (error) {
                     console.error("삭제 실패:", error);
                     showToast('삭제에 실패했습니다.');
