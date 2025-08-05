@@ -36,8 +36,8 @@
         
         <!-- 탭 메뉴 -->
         <div class="info-panel-tabs">
-            <button class="tab-link active" data-tab="persona">대화 프로필</button>
-            <button class="tab-link" data-tab="usernote">유저노트</button>
+            <button class="tab-link active" data-tab="persona">프로필</button>
+            <button class="tab-link" data-tab="usernote">노트</button>
             <button class="tab-link" data-tab="memo">메모</button>
             <button class="tab-link" data-tab="file">파일</button> 
         </div>
@@ -46,13 +46,42 @@
         <div class="info-panel-body">
             <!-- 1. 대화 프로필 (페르소나) 콘텐츠 -->
             <div id="persona-content" class="tab-content active">
-                <h3 id="persona-name"></h3>
-                <div id="persona-info" class="content-box"></div>
+                <div class="content-header">
+                    <h3 id="persona-name"></h3>
+                    <!-- ▼▼▼ 수정 버튼 추가 ▼▼▼ -->
+                    <button id="edit-persona-btn" class="panel-edit-btn">✏️</button>
+                </div>
+                <!-- ▼▼▼ 보기 모드와 수정 모드를 나눔 ▼▼▼ -->
+                <div id="persona-view-mode">
+                    <div id="persona-info" class="content-box"></div>
+                </div>
+                <div id="persona-edit-mode" hidden>
+                    <textarea id="persona-textarea"></textarea>
+                    <div class="edit-actions">
+                        <button id="save-persona-btn" class="panel-save-btn">저장</button>
+                        <button id="cancel-persona-btn" class="panel-cancel-btn">취소</button>
+                    </div>
+                </div>
             </div>
 
             <!-- 2. 유저노트 콘텐츠 -->
             <div id="usernote-content" class="tab-content">
-                <div id="usernote-info" class="content-box"></div>
+                 <div class="content-header">
+                    <h3>유저노트</h3>
+                     <!-- ▼▼▼ 수정 버튼 추가 ▼▼▼ -->
+                    <button id="edit-usernote-btn" class="panel-edit-btn">✏️</button>
+                </div>
+                <!-- ▼▼▼ 보기 모드와 수정 모드를 나눔 ▼▼▼ -->
+                <div id="usernote-view-mode">
+                    <div id="usernote-info" class="content-box"></div>
+                </div>
+                <div id="usernote-edit-mode" hidden>
+                    <textarea id="usernote-textarea"></textarea>
+                    <div class="edit-actions">
+                        <button id="save-usernote-btn" class="panel-save-btn">저장</button>
+                        <button id="cancel-usernote-btn" class="panel-cancel-btn">취소</button>
+                    </div>
+                </div>
             </div>
 
             <!-- 3. 메모 콘텐츠 -->
