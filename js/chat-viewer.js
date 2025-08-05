@@ -1,116 +1,180 @@
-// js/chat-viewer.js (햄버거 메뉴 및 인터랙티브 헤더 적용 최종본)
+// js/chat-viewer.js (데이터 동기화 문제 해결 최종본)
 
 document.addEventListener('DOMContentLoaded', () => {
     const auth = firebase.auth();
     const db = firebase.firestore();
 
+    // --- 전역 변수 ---
     let currentPost = null;
-    let originalMessages = [];
+    let currentChatData = {}; // ★ 파싱된 JSON 데이터를 담는 유일한 최신 정보 소스
+    let lastScrollY = 0;
     let activeEditingIndex = null;
-    let chatExtraData = { memo: '' };
-
+    
     // --- HTML 요소 가져오기 ---
     const header = document.querySelector('.main-header');
     const backToListBtn = document.getElementById('back-to-list-btn');
     const viewerTitle = document.getElementById('viewer-title');
     const chatLogContainer = document.getElementById('chat-log-container');
     const hamburgerMenuBtn = document.getElementById('hamburger-menu-btn');
-    
-    // 정보 패널 UI 요소
     const infoPanelOverlay = document.getElementById('info-panel-overlay');
     const infoPanel = document.getElementById('info-panel');
     const infoPanelCloseBtn = document.getElementById('info-panel-close-btn');
     const infoPanelTabs = document.querySelector('.info-panel-tabs');
-    
-    // 페르소나, 유저노트, 메모 관련 요소
     const personaNameEl = document.getElementById('persona-name');
+    const personaContent = document.getElementById('persona-content');
+    const editPersonaBtn = document.getElementById('edit-persona-btn');
+    const personaViewMode = document.getElementById('persona-view-mode');
+    const personaEditMode = document.getElementById('persona-edit-mode');
     const personaInfoEl = document.getElementById('persona-info');
+    const personaTextarea = document.getElementById('persona-textarea');
+    const usernoteContent = document.getElementById('usernote-content');
+    const editUsernoteBtn = document.getElementById('edit-usernote-btn');
+    const usernoteViewMode = document.getElementById('usernote-view-mode');
+    const usernoteEditMode = document.getElementById('usernote-edit-mode');
     const usernoteInfoEl = document.getElementById('usernote-info');
+    const usernoteTextarea = document.getElementById('usernote-textarea');
     const memoTextarea = document.getElementById('memo-textarea');
     const memoCharCounter = document.getElementById('memo-char-counter');
     const memoSaveBtn = document.getElementById('memo-save-btn');
-    
-    // 패널 내부 파일/삭제 버튼
     const downloadJsonBtn = document.getElementById('download-json-btn');
     const downloadTxtBtn = document.getElementById('download-txt-btn');
     const dropdownDeleteBtn = document.getElementById('dropdown-delete-btn');
-
-    // 토스트 알림
     const toastNotification = document.getElementById('toast-notification');
     const toastMessage = toastNotification ? toastNotification.querySelector('.toast-message') : null;
     let toastTimer;
 
-    // 인터랙티브 헤더용 변수
-    let lastScrollY = 0;
-
-    // --- 초기화 및 데이터 로드 ---
+    // --- 초기화 ---
     auth.onAuthStateChanged(user => {
-        if (!user) {
-            window.location.href = 'index.html';
-        } else {
+        if (!user) { window.location.href = 'index.html'; } 
+        else {
             loadChatData();
             addPageEventListeners();
             window.addEventListener('scroll', handleHeaderVisibility);
         }
     });
 
+    // --- 데이터 로드 및 파싱 ---
     function loadChatData() {
         const postDataString = localStorage.getItem('currentPost');
-        if (!postDataString) {
-            alert("채팅 기록을 찾을 수 없습니다.");
-            window.location.href = 'main.html';
-            return;
-        }
+        if (!postDataString) { alert("채팅 기록을 찾을 수 없습니다."); window.location.href = 'main.html'; return; }
 
         currentPost = JSON.parse(postDataString);
         viewerTitle.textContent = currentPost.title;
 
-        // 뒤로가기 버튼 링크 설정
         const category = localStorage.getItem('currentCategory');
-        if (category) {
-            backToListBtn.href = category === 'chat' ? 'chat-list.html' : `list.html?category=${category}`;
-        }
+        if (category) { backToListBtn.href = category === 'chat' ? 'chat-list.html' : `list.html?category=${category}`; }
         
         try {
-            const chatData = JSON.parse(currentPost.content);
-            if (!Array.isArray(chatData.messages)) throw new Error("Invalid format");
+            currentChatData = JSON.parse(currentPost.content);
+            if (!Array.isArray(currentChatData.messages)) throw new Error("Invalid format");
             
-            originalMessages = chatData.messages;
             renderMessages();
-            renderInfoPanel(chatData);
+            renderInfoPanel();
 
-            chatExtraData.memo = localStorage.getItem(`memo_${currentPost.id}`) || '';
-            memoTextarea.value = chatExtraData.memo;
-            memoCharCounter.textContent = `${chatExtraData.memo.length}자`;
+            const savedMemo = localStorage.getItem(`memo_${currentPost.id}`) || '';
+            memoTextarea.value = savedMemo;
+            memoCharCounter.textContent = `${savedMemo.length}자`;
 
         } catch (error) {
             console.error("채팅 데이터 파싱 오류:", error);
             chatLogContainer.innerHTML = `<p style="text-align: center; color: red;">채팅 기록을 불러올 수 없습니다.</p>`;
         }
     }
-
-    function renderInfoPanel(data) {
-        if (data.userPersona) {
-            personaNameEl.textContent = data.userPersona.name || '이름 없음';
-            personaInfoEl.textContent = data.userPersona.information || '정보 없음';
-        } else {
-            personaNameEl.textContent = '페르소나 정보 없음';
-            personaInfoEl.textContent = '';
-        }
-        usernoteInfoEl.textContent = data.userNote || '유저노트가 없습니다.';
-    }
     
+    // --- 렌더링 함수 ---
+    function renderInfoPanel() {
+        personaNameEl.textContent = currentChatData.userPersona?.name || '프로필';
+        personaInfoEl.textContent = currentChatData.userPersona?.information || '정보 없음';
+        personaTextarea.value = currentChatData.userPersona?.information || '';
+
+        usernoteInfoEl.textContent = currentChatData.userNote || '유저노트가 없습니다.';
+        usernoteTextarea.value = currentChatData.userNote || '';
+    }
+
     function renderMessages() {
         chatLogContainer.innerHTML = '';
-        originalMessages.forEach((message, index) => {
+        currentChatData.messages.forEach((message, index) => {
             const bubble = createMessageBubble(message, index);
             chatLogContainer.appendChild(bubble);
         });
     }
 
+    // --- 데이터 저장 함수 (단일화) ---
+    async function updateFirestoreContent() {
+        try {
+            const newContent = JSON.stringify(currentChatData, null, 2);
+            await db.collection('posts').doc(currentPost.id).update({ content: newContent });
+            currentPost.content = newContent;
+            localStorage.setItem('currentPost', JSON.stringify(currentPost));
+            return true;
+        } catch (error) {
+            console.error("Firestore 업데이트 실패:", error);
+            showToast('저장에 실패했습니다.');
+            return false;
+        }
+    }
+
+    // --- 이벤트 리스너 설정 ---
+    function addPageEventListeners() {
+        // ... (backToListBtn, hamburgerMenu, 탭 전환, 메모장, 제목 수정 등 이전과 동일)
+        backToListBtn.addEventListener('click', (e) => { e.preventDefault(); window.location.replace(backToListBtn.href); });
+        const openPanel = () => { infoPanelOverlay.classList.remove('hidden'); infoPanel.classList.remove('hidden'); };
+        const closePanel = () => { infoPanelOverlay.classList.add('hidden'); infoPanel.classList.add('hidden'); };
+        hamburgerMenuBtn.addEventListener('click', openPanel);
+        infoPanelCloseBtn.addEventListener('click', closePanel);
+        infoPanelOverlay.addEventListener('click', closePanel);
+        infoPanelTabs.addEventListener('click', (e) => { if (e.target.classList.contains('tab-link')) { const tabName = e.target.dataset.tab; infoPanelTabs.querySelectorAll('.tab-link').forEach(btn => btn.classList.remove('active')); infoPanel.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active')); e.target.classList.add('active'); document.getElementById(`${tabName}-content`).classList.add('active'); }});
+        memoTextarea.addEventListener('input', () => { memoCharCounter.textContent = `${memoTextarea.value.length}자`; });
+        memoSaveBtn.addEventListener('click', () => { localStorage.setItem(`memo_${currentPost.id}`, memoTextarea.value); showToast('메모가 저장되었습니다!'); });
+        viewerTitle.addEventListener('click', () => { if (document.querySelector('.title-edit-input')) return; const currentTitleText = viewerTitle.textContent; const input = document.createElement('input'); input.type = 'text'; input.className = 'title-edit-input'; input.value = currentTitleText; viewerTitle.style.display = 'none'; viewerTitle.parentNode.insertBefore(input, viewerTitle); input.focus(); input.select(); const saveNewTitle = async () => { const newTitle = input.value.trim(); if(input.parentNode) input.parentNode.removeChild(input); viewerTitle.style.display = 'block'; if (newTitle && newTitle !== currentTitleText) { viewerTitle.textContent = newTitle; try { await db.collection('posts').doc(currentPost.id).update({ title: newTitle }); currentPost.title = newTitle; localStorage.setItem('currentPost', JSON.stringify(currentPost)); showToast('제목이 변경되었습니다.'); } catch(err) { showToast('제목 변경에 실패했습니다.'); viewerTitle.textContent = currentTitleText; } } }; input.addEventListener('blur', saveNewTitle); input.addEventListener('keydown', e => { if (e.key === 'Enter') input.blur(); if (e.key === 'Escape') { if(input.parentNode) input.parentNode.removeChild(input); viewerTitle.style.display = 'block'; }}); });
+        
+        // --- 패널 수정 모드 토글 함수 ---
+        const toggleEditMode = (mode, type) => {
+            document.getElementById(`${type}-view-mode`).hidden = (mode === 'edit');
+            document.getElementById(`${type}-edit-mode`).hidden = (mode !== 'edit');
+        };
+
+        // --- 프로필 수정 이벤트 리스너 ---
+        editPersonaBtn.addEventListener('click', () => toggleEditMode('edit', 'persona'));
+        personaContent.querySelector('#cancel-persona-btn').addEventListener('click', () => {
+            renderInfoPanel(); // 원본 데이터로 복구
+            toggleEditMode('view', 'persona');
+        });
+        personaContent.querySelector('#save-persona-btn').addEventListener('click', async () => {
+            if (!currentChatData.userPersona) { currentChatData.userPersona = { name: '프로필', information: '' }; }
+            currentChatData.userPersona.information = personaTextarea.value;
+            if (await updateFirestoreContent()) {
+                renderInfoPanel();
+                toggleEditMode('view', 'persona');
+                showToast('프로필 정보가 저장되었습니다.');
+            }
+        });
+
+        // --- 유저노트 수정 이벤트 리스너 ---
+        editUsernoteBtn.addEventListener('click', () => toggleEditMode('edit', 'usernote'));
+        usernoteContent.querySelector('#cancel-usernote-btn').addEventListener('click', () => {
+            renderInfoPanel(); // 원본 데이터로 복구
+            toggleEditMode('view', 'usernote');
+        });
+        usernoteContent.querySelector('#save-usernote-btn').addEventListener('click', async () => {
+            currentChatData.userNote = usernoteTextarea.value;
+            if (await updateFirestoreContent()) {
+                renderInfoPanel();
+                toggleEditMode('view', 'usernote');
+                showToast('유저노트가 저장되었습니다.');
+            }
+        });
+
+        // --- 파일/삭제 버튼 이벤트 리스너 ---
+        downloadJsonBtn.addEventListener('click', (e) => { e.preventDefault(); const title = (currentPost.title.trim() || 'chat').normalize('NFC'); downloadFile(currentPost.content, title + '.json', 'application/json'); closePanel(); });
+        downloadTxtBtn.addEventListener('click', (e) => { e.preventDefault(); const title = (currentPost.title.trim() || 'chat').normalize('NFC'); downloadFile(generateTxtFromChat(), title + '.txt', 'text/plain'); closePanel(); });
+        dropdownDeleteBtn.addEventListener('click', async (e) => { e.preventDefault(); closePanel(); if (!currentPost.id) return; if (confirm('정말로 이 채팅 기록을 삭제하시겠습니까?')) { try { await db.collection('posts').doc(currentPost.id).delete(); localStorage.removeItem('currentPost'); localStorage.removeItem(`memo_${currentPost.id}`); window.location.replace(backToListBtn.href); } catch (error) { console.error("삭제 실패:", error); showToast('삭제에 실패했습니다.'); } } });
+    }
+
+    // --- 동적 UI 생성 및 이벤트 바인딩 ---
     function createMessageBubble(message, index) {
-        // 이 함수는 이전과 동일 (수정 없음)
         const bubble = document.createElement('div');
+        // ... (이하 HTML 생성 부분은 기존과 동일)
         bubble.className = `message-bubble ${message.role}-message`;
         const viewContent = document.createElement('div');
         viewContent.className = 'message-content';
@@ -121,15 +185,14 @@ document.addEventListener('DOMContentLoaded', () => {
         editContent.value = message.content || '';
         const editActions = document.createElement('div');
         editActions.className = 'edit-actions';
-        editActions.innerHTML = `
-            <button class="save-edit-btn" title="저장">✓</button>
-            <button class="cancel-edit-btn" title="취소">✕</button>
-        `;
+        editActions.innerHTML = `<button class="save-edit-btn" title="저장">✓</button><button class="cancel-edit-btn" title="취소">✕</button>`;
         bubble.appendChild(viewContent);
         bubble.appendChild(editContent);
         bubble.appendChild(editActions);
+
+        // 이벤트 리스너
         viewContent.addEventListener('dblclick', () => {
-            if (activeEditingIndex !== null && activeEditingIndex !== index) { showToast('먼저 다른 항목의 수정을 완료해주세요.'); return; }
+            if (activeEditingIndex !== null) { showToast('먼저 다른 항목의 수정을 완료해주세요.'); return; }
             activeEditingIndex = index;
             bubble.classList.add('editing');
             editContent.style.height = viewContent.offsetHeight + 'px';
@@ -139,188 +202,42 @@ document.addEventListener('DOMContentLoaded', () => {
             autoResizeTextarea({ target: editContent });
             editContent.focus();
         });
+
         editActions.querySelector('.save-edit-btn').addEventListener('click', async () => {
-            bubble.classList.remove('editing');
-            originalMessages[index].content = editContent.value;
-            showToast('저장 중...');
-            const success = await saveChanges();
-            if (success) { viewContent.innerHTML = marked.parse(editContent.value); showToast('성공적으로 저장되었습니다!'); } 
-            else { showToast('저장에 실패했습니다.'); }
-            viewContent.style.display = 'block'; editContent.style.display = 'none'; editActions.style.display = 'none'; activeEditingIndex = null;
+            // ★★★ 핵심 수정 부분 ★★★
+            // 1. 최신 데이터 객체(currentChatData)의 messages를 직접 수정
+            currentChatData.messages[index].content = editContent.value;
+            
+            // 2. 단일화된 저장 함수 호출
+            if (await updateFirestoreContent()) {
+                // 3. 성공 시 UI 업데이트
+                viewContent.innerHTML = marked.parse(editContent.value);
+                bubble.classList.remove('editing');
+                viewContent.style.display = 'block';
+                editContent.style.display = 'none';
+                editActions.style.display = 'none';
+                activeEditingIndex = null;
+                showToast('메시지가 수정되었습니다.');
+            }
         });
+
         editActions.querySelector('.cancel-edit-btn').addEventListener('click', () => {
             bubble.classList.remove('editing');
-            editContent.value = originalMessages[index].content;
-            viewContent.style.display = 'block'; editContent.style.display = 'none'; editActions.style.display = 'none'; activeEditingIndex = null;
+            editContent.value = currentChatData.messages[index].content; // 원본으로 복구
+            viewContent.style.display = 'block';
+            editContent.style.display = 'none';
+            editActions.style.display = 'none';
+            activeEditingIndex = null;
         });
+
         editContent.addEventListener('input', autoResizeTextarea);
         return bubble;
     }
-
-    async function saveChanges() {
-        try {
-            const newContent = JSON.stringify({
-                // 저장 시점에 현재 데이터를 다시 한 번 읽어서 합침
-                title: currentPost.title,
-                userPersona: JSON.parse(currentPost.content).userPersona,
-                userNote: JSON.parse(currentPost.content).userNote,
-                messages: originalMessages
-            }, null, 2);
-            await db.collection('posts').doc(currentPost.id).update({ content: newContent });
-            currentPost.content = newContent;
-            localStorage.setItem('currentPost', JSON.stringify(currentPost));
-            return true;
-        } catch (error) {
-            console.error("저장 실패:", error);
-            return false;
-        }
-    }
-
-    // --- 페이지 전체 이벤트 리스너 ---
-    function addPageEventListeners() {
-        backToListBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            window.location.replace(backToListBtn.href);
-        });
-        
-        // 패널 열고 닫기 로직
-        const openPanel = () => {
-            infoPanelOverlay.classList.remove('hidden');
-            infoPanel.classList.remove('hidden');
-        };
-        const closePanel = () => {
-            infoPanelOverlay.classList.add('hidden');
-            infoPanel.classList.add('hidden');
-        };
-
-        hamburgerMenuBtn.addEventListener('click', openPanel);
-        infoPanelCloseBtn.addEventListener('click', closePanel);
-        infoPanelOverlay.addEventListener('click', closePanel);
-
-        // 탭 전환 로직
-        infoPanelTabs.addEventListener('click', (e) => {
-            if (e.target.classList.contains('tab-link')) {
-                const tabName = e.target.dataset.tab;
-                infoPanelTabs.querySelectorAll('.tab-link').forEach(btn => btn.classList.remove('active'));
-                infoPanel.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-                e.target.classList.add('active');
-                document.getElementById(`${tabName}-content`).classList.add('active');
-            }
-        });
-
-        // 메모장 기능
-        memoTextarea.addEventListener('input', () => {
-            memoCharCounter.textContent = `${memoTextarea.value.length}자`;
-        });
-        memoSaveBtn.addEventListener('click', () => {
-            chatExtraData.memo = memoTextarea.value;
-            localStorage.setItem(`memo_${currentPost.id}`, chatExtraData.memo);
-            showToast('메모가 저장되었습니다!');
-        });
-        
-        // 제목 수정 로직
-        viewerTitle.addEventListener('click', () => {
-            if (document.querySelector('.title-edit-input')) return;
-            const currentTitleText = viewerTitle.textContent;
-            const input = document.createElement('input');
-            input.type = 'text'; input.className = 'title-edit-input'; input.value = currentTitleText;
-            viewerTitle.style.display = 'none';
-            viewerTitle.parentNode.insertBefore(input, viewerTitle);
-            input.focus(); input.select();
-            const saveNewTitle = async () => {
-                const newTitle = input.value.trim();
-                if(input.parentNode) input.parentNode.removeChild(input);
-                viewerTitle.style.display = 'block';
-                if (newTitle && newTitle !== currentTitleText) {
-                    viewerTitle.textContent = newTitle;
-                    try {
-                        await db.collection('posts').doc(currentPost.id).update({ title: newTitle });
-                        currentPost.title = newTitle;
-                        localStorage.setItem('currentPost', JSON.stringify(currentPost));
-                        showToast('제목이 변경되었습니다.');
-                    } catch(err) {
-                        showToast('제목 변경에 실패했습니다.');
-                        viewerTitle.textContent = currentTitleText;
-                    }
-                }
-            };
-            input.addEventListener('blur', saveNewTitle);
-            input.addEventListener('keydown', e => { if (e.key === 'Enter') input.blur(); if (e.key === 'Escape') { if(input.parentNode) input.parentNode.removeChild(input); viewerTitle.style.display = 'block'; }});
-        });
-
-        // 파일 다운로드 및 삭제 이벤트 리스너
-        downloadJsonBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            const title = (currentPost.title.trim() || 'chat').normalize('NFC');
-            downloadFile(currentPost.content, title + '.json', 'application/json');
-            closePanel();
-        });
-
-        downloadTxtBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            const title = (currentPost.title.trim() || 'chat').normalize('NFC');
-            downloadFile(generateTxtFromChat(), title + '.txt', 'text/plain');
-            closePanel();
-        });
-        
-        dropdownDeleteBtn.addEventListener('click', async (e) => {
-            e.preventDefault();
-            closePanel();
-            if (!currentPost.id) return;
-            if (confirm('정말로 이 채팅 기록을 삭제하시겠습니까?')) {
-                try {
-                    await db.collection('posts').doc(currentPost.id).delete();
-                    localStorage.removeItem('currentPost');
-                    localStorage.removeItem(`memo_${currentPost.id}`);
-                    window.location.replace(backToListBtn.href);
-                } catch (error) {
-                    console.error("삭제 실패:", error);
-                    showToast('삭제에 실패했습니다.');
-                }
-            }
-        });
-    }
-
-    // --- 헬퍼 함수들 ---
-    const showToast = message => {
-        if (!toastNotification || !toastMessage) return;
-        clearTimeout(toastTimer);
-        toastMessage.textContent = message;
-        toastNotification.classList.add('show');
-        toastTimer = setTimeout(() => { toastNotification.classList.remove('show'); }, 3000);
-    };
-
-    function downloadFile(content, filename, contentType) {
-        const blob = new Blob([content], { type: contentType });
-        const link = document.createElement("a");
-        const url = URL.createObjectURL(blob);
-        link.href = url; link.download = filename;
-        document.body.appendChild(link); link.click();
-        document.body.removeChild(link); URL.revokeObjectURL(url);
-    }
-
-    function generateTxtFromChat() {
-        if (!originalMessages || originalMessages.length === 0) return "채팅 기록이 없습니다.";
-        return originalMessages.map(msg => {
-            const roleName = msg.role === 'user' ? 'USER' : 'ASSISTANT';
-            return `${roleName}:\n${msg.content}`;
-        }).join('\n\n');
-    }
-
-    function autoResizeTextarea(event) {
-        const textarea = event.target;
-        textarea.style.height = 'auto';
-        textarea.style.height = (textarea.scrollHeight) + 'px';
-    }
     
-    // 인터랙티브 헤더 함수
-    function handleHeaderVisibility() {
-        const currentScrollY = window.scrollY;
-        if (currentScrollY > lastScrollY && currentScrollY > header.offsetHeight) {
-            header.style.transform = 'translateY(-100%)';
-        } else {
-            header.style.transform = 'translateY(0)';
-        }
-        lastScrollY = currentScrollY;
-    }
+    // --- 헬퍼 함수 ---
+    const showToast = message => { if (!toastNotification || !toastMessage) return; clearTimeout(toastTimer); toastMessage.textContent = message; toastNotification.classList.add('show'); toastTimer = setTimeout(() => { toastNotification.classList.remove('show'); }, 3000); };
+    function downloadFile(content, filename, contentType) { const blob = new Blob([content], { type: contentType }); const link = document.createElement("a"); const url = URL.createObjectURL(blob); link.href = url; link.download = filename; document.body.appendChild(link); link.click(); document.body.removeChild(link); URL.revokeObjectURL(url); }
+    function generateTxtFromChat() { return currentChatData.messages.map(msg => `${msg.role === 'user' ? 'USER' : 'ASSISTANT'}:\n${msg.content}`).join('\n\n') || "채팅 기록이 없습니다."; }
+    function autoResizeTextarea(event) { const textarea = event.target; textarea.style.height = 'auto'; textarea.style.height = (textarea.scrollHeight) + 'px'; }
+    function handleHeaderVisibility() { if (header) { const currentScrollY = window.scrollY; header.style.transform = (currentScrollY > lastScrollY && currentScrollY > header.offsetHeight) ? 'translateY(-100%)' : 'translateY(0)'; lastScrollY = currentScrollY; } }
 });
