@@ -9,6 +9,10 @@ body.sticky-footer-layout > .main-header {
     border-bottom: 1px solid var(--border-color);
     padding: 10px 15px;
     color: var(--text-secondary-color);
+    position: sticky; /* 스크롤 영역에 붙어있도록 설정 */
+    top: 0;           /* 화면 맨 위에 고정 */
+    z-index: 100;     /* 다른 요소들보다 위에 있도록 설정 */
+    transition: transform 0.3s ease-in-out; /* 부드러운 애니메이션 효과 */
 }
 
 body.sticky-footer-layout > .main-header a,
@@ -208,15 +212,12 @@ body.sticky-footer-layout > .main-header .action-btn {
 #hamburger-menu-btn {
     font-size: 24px; /* 아이콘 크기 조정 */
     padding: 8px;
-    background-color: transparent;
+    background-color:var(--background-color);
     border: none;
     border-radius: 8px;
     cursor: pointer;
     line-height: 1;
     color: var(--text-primary-color);
-}
-#hamburger-menu-btn:hover {
-    background-color: var(--background-color);
 }
 
 /* --- 사이드 패널과 오버레이 --- */
@@ -288,7 +289,7 @@ body.sticky-footer-layout > .main-header .action-btn {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 15px 20px;
+    padding: 5px 15px;
     border-bottom: 1px solid var(--border-color);
     flex-shrink: 0; /* 헤더는 줄어들지 않음 */
 }
@@ -301,6 +302,7 @@ body.sticky-footer-layout > .main-header .action-btn {
     border: none;
     font-size: 24px;
     cursor: pointer;
+    padding: 5px 12px;
 }
 
 .info-panel-tabs {

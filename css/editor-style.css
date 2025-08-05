@@ -8,6 +8,10 @@ body.sticky-footer-layout > .main-header {
     border-bottom: 1px solid var(--border-color);
     padding: 15px;
     color: var(--text-secondary-color);
+    position: sticky; /* 스크롤 영역에 붙어있도록 설정 */
+    top: 0;           /* 화면 맨 위에 고정 */
+    z-index: 100;     /* 다른 요소들보다 위에 있도록 설정 */
+    transition: transform 0.3s ease-in-out; /* 부드러운 애니메이션 효과 */
 }
 
 body.sticky-footer-layout > .main-header a {
@@ -163,7 +167,7 @@ body.sticky-footer-layout > .main-header a {
     color: var(--text-secondary-color);
     border: 2px solid var(--background-color);
     border-left: 0.25em solid var(--border-color);
-    background-color: #E6F2FFf;
+    background-color: #E6F2FF;
 }
 
 .view-content pre {
