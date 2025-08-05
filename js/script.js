@@ -99,10 +99,10 @@ async function loadPinnedItems(db, user, cardElement, categoryKey, tabType) {
             
             if (tabType === 'chat-list') {
                 itemLink.href = 'chat-viewer.html';
-                itemLink.textContent = `💬 ${post.title}`;
+                itemLink.textContent = `${post.title}`;
             } else {
                 itemLink.href = 'post.html';
-                itemLink.textContent = `📝 ${post.title}`;
+                itemLink.textContent = `${post.title}`;
             }
 
             itemLink.className = 'recent-item';
@@ -337,3 +337,4 @@ async function setupMainPage(db, user) {
 
     loadAndRenderTabs();
 }
+
