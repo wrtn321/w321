@@ -1,16 +1,15 @@
-// js/editor-script.js (다시 커밋)
+// js/editor-script.js (인터랙티브 헤더, isPinned 저장 기능 모두 포함된 최종본)
 
 document.addEventListener('DOMContentLoaded', () => {
     const auth = firebase.auth();
     const db = firebase.firestore();
 
-    auth.onAuthStateChanged(user => {
-        if (!user) window.location.href = 'index.html';
-    });
-
+    // --- 스크립트 전역 변수 ---
     let currentPost = null;
+    let lastScrollY = 0; // 인터랙티브 헤더를 위한 변수
 
     // --- HTML 요소 가져오기 ---
+    const header = document.querySelector('.main-header'); // 헤더 요소
     const backToListBtn = document.getElementById('back-to-list-btn');
     const viewModeHeader = document.getElementById('view-mode-elements-header');
     const editModeHeader = document.getElementById('edit-mode-elements-header');
@@ -30,7 +29,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const editModeActions = document.getElementById('edit-mode-actions');
     const charCounter = editModeContent.querySelector('#char-counter');
 
-    // --- 페이지 로드 ---
+    // --- Firebase 인증 및 초기화 ---
+    auth.onAuthStateChanged(user => {
+        if (!user) {
+            window.location.href = 'index.html';
+        } else {
+            // 사용자가 로그인 되어 있으면 스크롤 이벤트 리스너 추가
+            window.addEventListener('scroll', handleHeaderVisibility);
+        }
+    });
+
+    // --- 페이지 로드 및 데이터 처리 ---
     function loadPostData() {
         const params = new URLSearchParams(window.location.search);
         const isNewPost = params.get('new') === 'true';
@@ -43,7 +52,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         if (isNewPost && categoryFromURL) {
-            currentPost = { title: '', content: '', category: categoryFromURL };
+            currentPost = { title: '', content: '', category: categoryFromURL, isPinned: false };
             toggleMode('edit');
         } else {
             const postDataString = localStorage.getItem('currentPost');
@@ -71,6 +80,7 @@ document.addEventListener('DOMContentLoaded', () => {
             titleInput.value = currentPost.title;
             contentTextarea.value = currentPost.content;
             updateCharCount(); autoResizeTextarea();
+            titleInput.focus();
         } else {
             viewModeHeader.hidden = false; editModeHeader.hidden = true;
             viewModeContent.hidden = false; editModeContent.hidden = true;
@@ -89,7 +99,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function downloadTxtFile() {
         const content = currentPost.content || '';
-        const filename = (currentPost.title.trim() || '제목없음') + '.txt';
+        const filename = (currentPost.title.trim() || '제목없음').normalize('NFC') + '.txt';
         const blob = new Blob([content], { type: 'text/plain;charset=utf-8;' });
         const link = document.createElement("a");
         const url = URL.createObjectURL(blob);
@@ -105,12 +115,10 @@ document.addEventListener('DOMContentLoaded', () => {
     dropdownEditBtn.addEventListener('click', (e) => { e.preventDefault(); toggleMode('edit'); dropdownMenu.hidden = true; });
     dropdownDownloadBtn.addEventListener('click', (e) => { e.preventDefault(); downloadTxtFile(); dropdownMenu.hidden = true; });
 
-    // ★★★ 핵심: 삭제 버튼 이벤트 리스너 (완성된 버전) ★★★
     dropdownDeleteBtn.addEventListener('click', async (e) => {
         e.preventDefault();
         dropdownMenu.hidden = true;
         
-        // 새 글(ID가 없는 글)은 삭제할 수 없으므로 바로 종료
         if (!currentPost || !currentPost.id) {
              showToast('저장되지 않은 새 글은 삭제할 수 없습니다.');
              return;
@@ -118,17 +126,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (confirm('정말로 이 게시글을 삭제하시겠습니까?')) {
             try {
-                // Firestore에서 문서 삭제
                 await db.collection('posts').doc(currentPost.id).delete();
-                
-                // 로컬 스토리지에서 관련 데이터 제거
                 localStorage.removeItem('currentPost');
-                
                 showToast('게시글이 삭제되었습니다.');
-                
-                // 삭제 후 목록 페이지로 이동
                 window.location.replace(backToListBtn.href);
-
             } catch (error) {
                 console.error("삭제 실패:", error);
                 showToast('삭제에 실패했습니다.');
@@ -165,6 +166,7 @@ document.addEventListener('DOMContentLoaded', () => {
             title: titleInput.value.trim() || "제목 없음",
             content: contentTextarea.value,
             category: currentPost.category,
+            // ▼▼▼ isPinned 상태를 보존하거나 기본값 false를 부여합니다. ▼▼▼
             isPinned: currentPost.isPinned || false,
         };
 
@@ -185,6 +187,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             currentPost.title = dataToSave.title;
             currentPost.content = dataToSave.content;
+            currentPost.isPinned = dataToSave.isPinned; // 로컬 데이터도 동기화
             viewTitle.textContent = currentPost.title;
             viewContent.innerHTML = marked.parse(currentPost.content || '');
             localStorage.setItem('currentPost', JSON.stringify(currentPost));
@@ -200,8 +203,21 @@ document.addEventListener('DOMContentLoaded', () => {
     contentTextarea.addEventListener('input', updateCharCount);
     contentTextarea.addEventListener('input', autoResizeTextarea);
 
+    // --- 인터랙티브 헤더를 위한 함수 ---
+    function handleHeaderVisibility() {
+        const currentScrollY = window.scrollY;
+        if (header) {
+            if (currentScrollY > lastScrollY && currentScrollY > header.offsetHeight) {
+                // 아래로 스크롤
+                header.style.transform = 'translateY(-100%)';
+            } else {
+                // 위로 스크롤
+                header.style.transform = 'translateY(0)';
+            }
+        }
+        lastScrollY = currentScrollY;
+    }
+
     // --- 최초 실행 ---
     loadPostData();
-
 });
-
