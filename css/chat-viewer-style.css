@@ -203,3 +203,168 @@ body.sticky-footer-layout > .main-header .action-btn {
     background-color: var(--border-color);
     border: 0;
 }
+
+/* --- 정보 패널 버튼 (Floating Action Button) --- */
+#info-panel-btn {
+    position: fixed;
+    top: 15px;
+    left: 15px;
+    z-index: 998; /* 스크롤 버튼보다 아래 */
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    cursor: pointer;
+    font-size: 24px;
+    font-weight: bold;
+    line-height: 45px;
+    text-align: center;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    transition: transform 0.2s ease-in-out;
+}
+#info-panel-btn:hover {
+    transform: scale(1.1);
+}
+
+/* --- 사이드 패널과 오버레이 --- */
+#info-panel-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    transition: opacity 0.3s;
+}
+
+#info-panel {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 90%;
+    max-width: 350px;
+    height: 100%;
+    background-color: var(--surface-color);
+    z-index: 1001;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+    transform: translateX(-100%); /* 처음엔 화면 왼쪽에 숨김 */
+    transition: transform 0.3s ease-in-out;
+}
+
+/* .is-visible 클래스가 붙으면 보이도록 처리 */
+#info-panel-overlay:not(.hidden) {
+    opacity: 1;
+}
+#info-panel:not(.hidden) {
+    transform: translateX(0);
+}
+.hidden {
+    display: none;
+    opacity: 0;
+    pointer-events: none; /* 숨겨졌을 때 클릭 안되게 */
+}
+
+
+/* --- 패널 내부 스타일 --- */
+.info-panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    border-bottom: 1px solid var(--border-color);
+    flex-shrink: 0; /* 헤더는 줄어들지 않음 */
+}
+.info-panel-header h2 {
+    margin: 0;
+    font-size: 18px;
+}
+#info-panel-close-btn {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+}
+
+.info-panel-tabs {
+    display: flex;
+    padding: 10px;
+    border-bottom: 1px solid var(--border-color);
+    flex-shrink: 0;
+}
+.tab-link {
+    flex: 1;
+    padding: 10px;
+    text-align: center;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 15px;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+}
+.tab-link:hover {
+    background-color: var(--background-color);
+}
+.tab-link.active {
+    font-weight: bold;
+    color: var(--primary-hover-color);
+    border-bottom-color: var(--primary-hover-color);
+}
+
+.info-panel-body {
+    padding: 20px;
+    overflow-y: auto; /* 내용 길어지면 스크롤 */
+    flex-grow: 1;
+}
+
+.tab-content {
+    display: none; /* 모든 탭 내용은 일단 숨김 */
+}
+.tab-content.active {
+    display: block; /* 활성화된 탭만 보임 */
+}
+
+/* --- 각 탭의 콘텐츠 스타일 --- */
+.content-box {
+    background-color: var(--background-color);
+    border: 1px solid var(--border-color);
+    padding: 15px;
+    border-radius: 8px;
+    white-space: pre-wrap; /* 줄바꿈 유지 */
+    word-break: break-word;
+    min-height: 100px;
+}
+#persona-name {
+    margin-top: 0;
+    margin-bottom: 10px;
+}
+
+#memo-textarea {
+    width: 100%;
+    min-height: 200px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 10px;
+    resize: vertical;
+}
+.memo-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 10px;
+    font-size: 14px;
+    color: var(--text-secondary-color);
+}
+#memo-save-btn {
+    padding: 6px 12px;
+    border-radius: 6px;
+    border: none;
+    background-color: var(--primary-color);
+    color: white;
+    cursor: pointer;
+}
