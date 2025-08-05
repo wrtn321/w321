@@ -22,6 +22,25 @@ document.addEventListener('DOMContentLoaded', () => {
     const downloadTxtBtn = document.getElementById('download-txt-btn');
     const dropdownDeleteBtn = document.getElementById('dropdown-delete-btn');
 
+    // --- 정보 패널 UI 요소 가져오기 ---
+    const infoPanelBtn = document.getElementById('info-panel-btn');
+    const infoPanelOverlay = document.getElementById('info-panel-overlay');
+    const infoPanel = document.getElementById('info-panel');
+    const infoPanelCloseBtn = document.getElementById('info-panel-close-btn');
+    const infoPanelTabs = document.querySelector('.info-panel-tabs');
+    
+    // 페르소나, 유저노트, 메모 관련 요소
+    const personaNameEl = document.getElementById('persona-name');
+    const personaInfoEl = document.getElementById('persona-info');
+    const usernoteInfoEl = document.getElementById('usernote-info');
+    const memoTextarea = document.getElementById('memo-textarea');
+    const memoCharCounter = document.getElementById('memo-char-counter');
+    const memoSaveBtn = document.getElementById('memo-save-btn');
+    
+    let chatExtraData = { // 메모 등을 저장할 객체
+        memo: ''
+    };
+
     // --- 초기화 및 데이터 로드 ---
     auth.onAuthStateChanged(user => {
         if (!user) {
@@ -51,11 +70,21 @@ document.addEventListener('DOMContentLoaded', () => {
         viewerTitle.textContent = currentPost.title;
 
         try {
-            const chatData = JSON.parse(currentPost.content);
-            if (!Array.isArray(chatData.messages)) throw new Error("Invalid format");
-            
-            originalMessages = chatData.messages;
-            renderMessages();
+        const chatData = JSON.parse(currentPost.content);
+        // ▼▼▼ 여기서 새 데이터를 파싱합니다. ▼▼▼
+        if (!Array.isArray(chatData.messages)) throw new Error("Invalid format");
+        
+        originalMessages = chatData.messages;
+        renderMessages();
+
+        // 파싱한 페르소나, 유저노트 정보를 패널에 채워넣는 함수 호출
+        renderInfoPanel(chatData);
+
+        // 저장된 메모 로드 (localStorage 사용 예시)
+        chatExtraData.memo = localStorage.getItem(`memo_${currentPost.id}`) || '';
+        memoTextarea.value = chatExtraData.memo;
+        memoCharCounter.textContent = `${chatExtraData.memo.length}자`;
+
         } catch (error) {
             chatLogContainer.innerHTML = `<p style="text-align: center; color: red;">채팅 기록을 불러올 수 없습니다.</p>`;
         }
@@ -293,5 +322,67 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
         });
+
+        const openPanel = () => {
+        infoPanelOverlay.classList.remove('hidden');
+        infoPanel.classList.remove('hidden');
+        infoPanelOverlay.style.display = 'block'; // плавный переход을 위해
+        infoPanel.style.display = 'flex';
+    };
+    const closePanel = () => {
+        infoPanelOverlay.classList.add('hidden');
+        infoPanel.classList.add('hidden');
+        setTimeout(() => { // transition 끝난 후 display: none 처리
+            infoPanelOverlay.style.display = 'none';
+            infoPanel.style.display = 'none';
+        }, 300);
+    };
+
+    infoPanelBtn.addEventListener('click', openPanel);
+    infoPanelCloseBtn.addEventListener('click', closePanel);
+    infoPanelOverlay.addEventListener('click', closePanel);
+
+    // 탭 전환 로직
+    infoPanelTabs.addEventListener('click', (e) => {
+        if (e.target.classList.contains('tab-link')) {
+            const tabName = e.target.dataset.tab;
+            
+            // 모든 탭 버튼과 콘텐츠에서 active 클래스 제거
+            infoPanelTabs.querySelectorAll('.tab-link').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+            // 클릭된 탭 버튼과 해당 콘텐츠에 active 클래스 추가
+            e.target.classList.add('active');
+            document.getElementById(`${tabName}-content`).classList.add('active');
+        }
+    });
+
+    // 메모장 기능
+    memoTextarea.addEventListener('input', () => {
+        memoCharCounter.textContent = `${memoTextarea.value.length}자`;
+    });
+
+    memoSaveBtn.addEventListener('click', () => {
+        chatExtraData.memo = memoTextarea.value;
+        // 각 채팅마다 고유한 키로 메모를 저장
+        localStorage.setItem(`memo_${currentPost.id}`, chatExtraData.memo);
+        showToast('메모가 저장되었습니다!');
+    });
+
     }
+
+    function renderInfoPanel(data) {
+    // 페르소나 탭 채우기
+    if (data.userPersona) {
+        personaNameEl.textContent = data.userPersona.name || '이름 없음';
+        personaInfoEl.textContent = data.userPersona.information || '정보 없음';
+    } else {
+        personaNameEl.textContent = '페르소나 정보 없음';
+        personaInfoEl.textContent = '';
+    }
+
+    // 유저노트 탭 채우기
+    usernoteInfoEl.textContent = data.userNote || '유저노트가 없습니다.';
+}
+
 });
