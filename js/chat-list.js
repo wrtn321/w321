@@ -1,4 +1,4 @@
-// js/chat-list.js (핀 편집 모드 및 폴더 기능 모두 적용된 최종본)
+// js/chat-list.js (핀 편집 모드, 폴더, 아이콘 제거 등 모든 기능 적용 최종본)
 
 document.addEventListener('DOMContentLoaded', () => {
     const auth = firebase.auth();
@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- HTML 요소 가져오기 ---
     const listContainer = document.querySelector('.list-container');
     const listTitle = document.getElementById('list-title');
-    const pinEditBtn = document.querySelector('.pin-edit-btn'); // 핀 편집 버튼
+    const pinEditBtn = document.querySelector('.pin-edit-btn');
     const newPostBtn = document.querySelector('.new-post-btn');
     const newFolderBtn = document.querySelector('.new-folder-btn');
     const normalItemList = document.querySelector('.normal-list .item-list');
@@ -30,7 +30,8 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     function initializePage() {
-        listTitle.textContent = localStorage.getItem('currentListTitle') || '채팅백업';
+        // localStorage에 저장된 제목이 있으면 사용하고, 없으면 기본 제목을 사용합니다.
+        listTitle.textContent = localStorage.getItem('currentListTitle') || '채팅 목록';
     }
 
     async function fetchPosts(userId) {
@@ -38,7 +39,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const snapshot = await postsCollection
                 .where('userId', '==', userId)
                 .where('category', '==', currentCategory)
-                .orderBy('isPinned', 'desc') // 고정된 항목 우선 정렬
+                .orderBy('isPinned', 'desc')
                 .orderBy('order', 'asc')
                 .get();
             posts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -50,7 +51,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // --- 이벤트 리스너 ---
     function addEventListeners(user) {
         logoutButton.addEventListener('click', e => {
             e.preventDefault();
@@ -60,13 +60,12 @@ document.addEventListener('DOMContentLoaded', () => {
         newFolderBtn.addEventListener('click', () => handleNewFolder(user.uid));
         newPostBtn.addEventListener('click', handleJsonUpload);
         
-        // 핀 편집 버튼 이벤트 리스너
         pinEditBtn.addEventListener('click', () => {
             const isEditing = listContainer.classList.contains('pin-edit-mode');
             if (isEditing) {
                 savePinChanges(user.uid);
                 listContainer.classList.remove('pin-edit-mode');
-                pinEditBtn.textContent = '📌';
+                pinEditBtn.textContent = '📌 고정 편집';
                 pinEditBtn.classList.remove('editing');
             } else {
                 listContainer.classList.add('pin-edit-mode');
@@ -75,7 +74,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
         
-        // 목록 클릭 이벤트 리스너
         normalItemList.addEventListener('click', e => {
             const li = e.target.closest('.list-item');
             if (!li) return;
@@ -115,8 +113,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- 핵심 기능 함수 ---
-
     function handleFileClick(liElement) {
         const post = posts.find(p => p.id === liElement.dataset.id);
         if (post) {
@@ -144,51 +140,38 @@ document.addEventListener('DOMContentLoaded', () => {
         };
         input.click();
     }
-    
-    // ▼▼▼ 여기에 isPinned 필드 추가 로직이 들어갑니다 (아래 2번 항목에서 설명)
+
     async function createPostFromJson(title, content) {
-    const user = auth.currentUser;
-    if (!user) return;
-    try {
-        JSON.parse(content);
-    } catch (error) {
-        alert('올바른 JSON 파일이 아닙니다. 파일 내용을 확인해주세요.');
-        return;
+        const user = auth.currentUser;
+        if (!user) return;
+        try {
+            JSON.parse(content);
+        } catch (error) {
+            alert('올바른 JSON 파일이 아닙니다. 파일 내용을 확인해주세요.');
+            return;
+        }
+        try {
+            const maxOrder = posts.length > 0 ? Math.max(0, ...posts.map(p => p.order).filter(o => typeof o === 'number')) : -1;
+            await postsCollection.add({
+                type: 'post', title: title, content: content, category: currentCategory,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                userId: user.uid, order: maxOrder + 1, parentId: 'root',
+                isPinned: false // ★★★ isPinned 기본값 추가 ★★★
+            });
+            showToast(`'${title}' 파일이 추가되었습니다.`);
+            await fetchPosts(user.uid);
+            renderList();
+        } catch (error) {
+            console.error("JSON 파일로 게시글 생성 실패:", error);
+            showToast('게시글 생성에 실패했습니다.');
+        }
     }
-    try {
-        const maxOrder = posts.length > 0 ? Math.max(0, ...posts.map(p => p.order).filter(o => typeof o === 'number')) : -1;
-        
-        // ▼▼▼ DB에 데이터를 추가하는 이 객체에 isPinned: false를 추가합니다. ▼▼▼
-        await postsCollection.add({
-            type: 'post',
-            title: title,
-            content: content,
-            category: currentCategory,
-            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-            userId: user.uid,
-            order: maxOrder + 1,
-            parentId: 'root',
-            isPinned: false // ★★★ 바로 이 부분입니다! ★★★
-        });
-        
-        showToast(`'${title}' 파일이 추가되었습니다.`);
-        await fetchPosts(user.uid);
-        renderList();
-    } catch (error) {
-        console.error("JSON 파일로 게시글 생성 실패:", error);
-        showToast('게시글 생성에 실패했습니다.');
-    }
-}
-    
-    // --- 렌더링 및 UI 관련 함수 ---
 
     function renderList() {
         if (!normalItemList) return;
         const openFolderIds = new Set(Array.from(document.querySelectorAll('.list-item.open')).map(li => li.dataset.id));
         normalItemList.innerHTML = '';
-        const rootItems = posts
-            .filter(p => !p.parentId || p.parentId === 'root')
-            .sort((a, b) => (a.order || 0) - (b.order || 0));
+        const rootItems = posts.filter(p => !p.parentId || p.parentId === 'root').sort((a, b) => (a.order || 0) - (b.order || 0));
         rootItems.forEach(item => renderItem(item, normalItemList));
         openFolderIds.forEach(id => {
             const folderLi = normalItemList.querySelector(`.list-item[data-id="${id}"]`);
@@ -202,35 +185,26 @@ document.addEventListener('DOMContentLoaded', () => {
         const li = document.createElement('li');
         li.className = 'list-item';
         li.dataset.id = itemData.id;
-        
-        if (itemData.isPinned) {
-            li.classList.add('pinned');
-        }
+        if (itemData.isPinned) { li.classList.add('pinned'); }
 
         const wrapper = document.createElement('div');
         wrapper.className = 'item-content-wrapper';
 
         const isFolder = itemData.type === 'folder';
+        const iconHtml = isFolder ? '<span class="icon-closed">📁</span><span class="icon-open">📂</span>' : '';
         const pinCheckboxHTML = isFolder ? '' : `<input type="checkbox" class="pin-checkbox" ${itemData.isPinned ? 'checked' : ''}>`;
         const pinIndicatorHTML = isFolder ? '' : '<span class="pin-indicator">📌</span>';
         
-        let iconHtml = isFolder 
-            ? '<span class="icon-closed">📁</span><span class="icon-open">📂</span>' 
-            : '💬';
-
         wrapper.innerHTML = `
             <span class="drag-handle">⠿</span>
             ${pinCheckboxHTML}
             ${pinIndicatorHTML}
             <span class="item-icon">${iconHtml}</span>
             <span class="item-title">${itemData.title}</span>
-            ${isFolder 
-                ? `<button class="edit-folder-btn" title="폴더 이름 변경">✏️</button>
-                   <button class="delete-folder-btn" title="폴더 삭제">🗑️</button>` 
-                : ''
-            }
+            ${isFolder ? `<button class="edit-folder-btn" title="폴더 이름 변경">✏️</button><button class="delete-folder-btn" title="폴더 삭제">🗑️</button>` : ''}
         `;
         li.appendChild(wrapper);
+
         if (isFolder) {
             li.classList.add('item-folder');
             const subList = document.createElement('ul');
@@ -240,19 +214,12 @@ document.addEventListener('DOMContentLoaded', () => {
         parentElement.appendChild(li);
     }
 
-    // --- 폴더 및 핀 관련 함수들 (list-script.js와 동일) ---
-
     function handleFolderClick(liElement, withAnimation = true) {
-        if (withAnimation) {
-            liElement.classList.toggle('open');
-        } else {
-            liElement.classList.add('open');
-        }
+        if (withAnimation) { liElement.classList.toggle('open'); } 
+        else { liElement.classList.add('open'); }
         const subList = liElement.querySelector('.sub-list');
         if (liElement.classList.contains('open') && subList.children.length === 0) {
-            const children = posts
-                .filter(p => p.parentId === liElement.dataset.id)
-                .sort((a, b) => (a.order || 0) - (b.order || 0));
+            const children = posts.filter(p => p.parentId === liElement.dataset.id).sort((a, b) => (a.order || 0) - (b.order || 0));
             children.forEach(child => renderItem(child, subList));
         }
     }
@@ -279,8 +246,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const children = posts.filter(p => p.parentId === folderId);
         const batch = db.batch();
         children.forEach(child => {
-            const docRef = postsCollection.doc(child.id);
-            batch.update(docRef, { parentId: 'root', order: Date.now() });
+            batch.update(postsCollection.doc(child.id), { parentId: 'root', order: Date.now() });
         });
         batch.delete(postsCollection.doc(folderId));
         try {
@@ -323,8 +289,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const isNowPinned = checkbox.checked;
                 if ((post.isPinned || false) !== isNowPinned) {
                     hasChanges = true;
-                    const postRef = postsCollection.doc(postId);
-                    batch.update(postRef, { isPinned: isNowPinned });
+                    batch.update(postsCollection.doc(postId), { isPinned: isNowPinned });
                 }
             }
         });
@@ -341,7 +306,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // --- SortableJS 라이브러리 관련 함수 (list-script.js와 동일) ---
     function initializeSortable(targetUl) {
         if (!targetUl || targetUl.sortable) return;
         new Sortable(targetUl, {

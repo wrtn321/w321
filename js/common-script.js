@@ -60,4 +60,20 @@ document.addEventListener('DOMContentLoaded', () => {
     // '맨 위로 가기' 버튼 기능 실행
     initScrollToTopButton();
 
+     /**
+     * '뒤로가기' 버튼 기능 초기화
+     */
+    const initHistoryBackButton = () => {
+        const backBtn = document.getElementById('history-back-btn');
+        
+        if (backBtn) {
+            backBtn.addEventListener('click', () => {
+                history.back(); // 브라우저의 뒤로가기 기능 실행
+            });
+        }
+    };
+
+    // '뒤로가기' 버튼 기능 실행
+    initHistoryBackButton();
+
 });

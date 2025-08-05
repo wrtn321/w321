@@ -1,4 +1,4 @@
-// js/list-script.js (삭제 버튼 기능 수정 최종본)
+// js/list-script.js (핀 편집 모드, 아이콘 제거 등 모든 기능 적용 최종본)
 
 document.addEventListener('DOMContentLoaded', () => {
     const auth = firebase.auth();
@@ -38,7 +38,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (categoryParam) {
             currentCategory = categoryParam;
             listTitle.textContent = titleFromStorage || currentCategory; 
-            newPostBtn.textContent = '+📝';
         } else {
             alert('잘못된 접근입니다. (카테고리 정보 없음)');
             window.location.href = 'main.html';
@@ -51,8 +50,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const snapshot = await postsCollection
                 .where('userId', '==', userId)
                 .where('category', '==', currentCategory)
-                .orderBy('isPinned', 'desc') // 1. 고정된 항목을 위로
-                .orderBy('order', 'asc')      // 2. 그 안에서 기존 순서대로 정렬
+                .orderBy('isPinned', 'desc')
+                .orderBy('order', 'asc')
                 .get();
             posts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         } catch (error) {
@@ -75,25 +74,20 @@ document.addEventListener('DOMContentLoaded', () => {
             window.location.href = `post.html?category=${currentCategory}&new=true`;
         });
         
-        // ▼▼▼ 핀 편집 버튼 이벤트 리스너 ▼▼▼
         pinEditBtn.addEventListener('click', () => {
             const isEditing = listContainer.classList.contains('pin-edit-mode');
-
             if (isEditing) {
-                // 편집 완료 시: 변경사항 저장
                 savePinChanges(user.uid);
                 listContainer.classList.remove('pin-edit-mode');
-                pinEditBtn.textContent = '📌';
+                pinEditBtn.textContent = '📌 고정 편집';
                 pinEditBtn.classList.remove('editing');
             } else {
-                // 편집 시작
                 listContainer.classList.add('pin-edit-mode');
                 pinEditBtn.textContent = '✓ 편집 완료';
                 pinEditBtn.classList.add('editing');
             }
         });
         
-        // ▼▼▼ 목록 클릭 이벤트 리스너 (핵심 수정 부분) ▼▼▼
         normalItemList.addEventListener('click', e => {
             const li = e.target.closest('.list-item');
             if (!li) return;
@@ -101,19 +95,16 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // --- 핀 편집 모드일 때의 로직 ---
             if (listContainer.classList.contains('pin-edit-mode')) {
-                // 폴더가 아닌 항목의 체크박스만 토글
                 if (!li.classList.contains('item-folder')) {
                     const checkbox = li.querySelector('.pin-checkbox');
                     if (checkbox && e.target !== checkbox) {
-                        // 체크박스 자체가 아닌 주변 영역을 클릭했을 때도 체크되도록
                         checkbox.checked = !checkbox.checked;
                     }
                 }
-                // 편집 모드에서는 파일 클릭으로 페이지가 넘어가지 않도록 여기서 종료!
-                return; 
+                return; // ★★★ 편집 모드에서는 페이지 이동 방지 ★★★
             }
 
-            // --- 일반 모드일 때의 로직 (기존과 동일) ---
+            // --- 일반 모드일 때의 로직 ---
             if (e.target.classList.contains('edit-folder-btn')) {
                 e.stopPropagation();
                 editFolderName(user.uid, itemId);
@@ -161,7 +152,6 @@ document.addEventListener('DOMContentLoaded', () => {
         initializeSortable(normalItemList);
     }
     
-    // ▼▼▼ renderItem 함수 수정 ▼▼▼
     function renderItem(itemData, parentElement) {
         const li = document.createElement('li');
         li.className = 'list-item';
@@ -175,11 +165,11 @@ document.addEventListener('DOMContentLoaded', () => {
         wrapper.className = 'item-content-wrapper';
 
         const isFolder = itemData.type === 'folder';
+        // ★★★ 파일 아이콘 제거 로직 ★★★
+        const iconHtml = isFolder ? '<span class="icon-closed">📁</span><span class="icon-open">📂</span>' : '';
         const pinCheckboxHTML = isFolder ? '' : `<input type="checkbox" class="pin-checkbox" ${itemData.isPinned ? 'checked' : ''}>`;
         const pinIndicatorHTML = isFolder ? '' : '<span class="pin-indicator">📌</span>';
         
-        let iconHtml = isFolder ? '<span class="icon-closed">📁</span><span class="icon-open">📂</span>' : '📝';
-
         wrapper.innerHTML = `
             <span class="drag-handle">⠿</span>
             ${pinCheckboxHTML}
@@ -209,7 +199,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // ▼▼▼ 변경사항을 한 번에 저장하는 함수 추가 ▼▼▼
     async function savePinChanges(userId) {
         const batch = db.batch();
         const listItems = normalItemList.querySelectorAll('.list-item:not(.item-folder)');
@@ -326,4 +315,3 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
-

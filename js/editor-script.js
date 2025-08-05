@@ -1,4 +1,4 @@
-// js/editor-script.js (인터랙티브 헤더, isPinned 저장 기능 모두 포함된 최종본)
+// js/editor-script.js (인터랙티브 헤더, isPinned 저장, 뒤로가기 버튼 로직 정리 등 모든 기능 적용 최종본)
 
 document.addEventListener('DOMContentLoaded', () => {
     const auth = firebase.auth();
@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- HTML 요소 가져오기 ---
     const header = document.querySelector('.main-header'); // 헤더 요소
-    const backToListBtn = document.getElementById('back-to-list-btn');
+    // backToListBtn은 이제 common-script.js에서 처리하므로 여기서 제거합니다.
     const viewModeHeader = document.getElementById('view-mode-elements-header');
     const editModeHeader = document.getElementById('edit-mode-elements-header');
     const viewModeContent = document.getElementById('view-mode-elements-content');
@@ -44,14 +44,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const params = new URLSearchParams(window.location.search);
         const isNewPost = params.get('new') === 'true';
         const categoryFromURL = params.get('category');
-        const finalCategory = categoryFromURL || localStorage.getItem('currentCategory');
-
-        if (finalCategory) {
-            backToListBtn.href = `list.html?category=${finalCategory}`;
-            localStorage.setItem('currentCategory', finalCategory);
+        
+        // localStorage에 현재 카테고리 저장 (뒤로가기 후 목록 유지를 위해)
+        if (categoryFromURL) {
+            localStorage.setItem('currentCategory', categoryFromURL);
         }
 
         if (isNewPost && categoryFromURL) {
+            // 새 글일 경우 isPinned 기본값 false로 초기화
             currentPost = { title: '', content: '', category: categoryFromURL, isPinned: false };
             toggleMode('edit');
         } else {
@@ -91,6 +91,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     const updateCharCount = () => { if(charCounter) charCounter.textContent = contentTextarea.value.length; };
     const autoResizeTextarea = () => {
+        if (!contentTextarea) return;
         const scrollPosition = window.scrollY;
         contentTextarea.style.height = 'auto';
         contentTextarea.style.height = (contentTextarea.scrollHeight) + 'px';
@@ -109,7 +110,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- 이벤트 리스너 연결 ---
-    backToListBtn.addEventListener('click', (e) => { e.preventDefault(); window.location.replace(backToListBtn.href); });
     toggleMenuBtn.addEventListener('click', () => { dropdownMenu.hidden = !dropdownMenu.hidden; });
     window.addEventListener('click', (e) => { if (!e.target.closest('.dropdown-menu-container')) dropdownMenu.hidden = true; });
     dropdownEditBtn.addEventListener('click', (e) => { e.preventDefault(); toggleMode('edit'); dropdownMenu.hidden = true; });
@@ -129,7 +129,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 await db.collection('posts').doc(currentPost.id).delete();
                 localStorage.removeItem('currentPost');
                 showToast('게시글이 삭제되었습니다.');
-                window.location.replace(backToListBtn.href);
+                history.back(); // 목록으로 돌아가기
             } catch (error) {
                 console.error("삭제 실패:", error);
                 showToast('삭제에 실패했습니다.');
@@ -151,8 +151,8 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     editModeActions.querySelector('#edit-cancel-btn').addEventListener('click', () => {
-        if (!currentPost.id) { // 새 글 작성 중 취소하면 목록으로
-            window.location.replace(backToListBtn.href);
+        if (!currentPost.id) { // 새 글 작성 중 취소하면 뒤로가기
+            history.back();
         } else { // 기존 글 수정 중 취소하면 읽기 모드로
             toggleMode('view');
         }
@@ -166,7 +166,7 @@ document.addEventListener('DOMContentLoaded', () => {
             title: titleInput.value.trim() || "제목 없음",
             content: contentTextarea.value,
             category: currentPost.category,
-            // ▼▼▼ isPinned 상태를 보존하거나 기본값 false를 부여합니다. ▼▼▼
+            // ★★★ isPinned 상태를 보존하거나 기본값 false를 부여합니다. ★★★
             isPinned: currentPost.isPinned || false,
         };
 
@@ -185,9 +185,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 currentPost.id = docRef.id;
             }
 
-            currentPost.title = dataToSave.title;
-            currentPost.content = dataToSave.content;
-            currentPost.isPinned = dataToSave.isPinned; // 로컬 데이터도 동기화
+            // 로컬 데이터도 최신으로 동기화
+            currentPost = { ...currentPost, ...dataToSave };
             viewTitle.textContent = currentPost.title;
             viewContent.innerHTML = marked.parse(currentPost.content || '');
             localStorage.setItem('currentPost', JSON.stringify(currentPost));
