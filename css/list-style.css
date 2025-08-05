@@ -82,7 +82,7 @@
 
 .list-item .item-icon {
     font-size: 18px;
-    margin-right: 12px;
+    margin-right: 4px;
     pointer-events: none; 
 }
 
@@ -226,3 +226,4 @@
 .list-container.pin-edit-mode .item-content-wrapper:hover {
     background-color: #f0f0f0;
 }
+
