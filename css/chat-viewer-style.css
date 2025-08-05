@@ -204,28 +204,19 @@ body.sticky-footer-layout > .main-header .action-btn {
     border: 0;
 }
 
-/* --- 정보 패널 버튼 (Floating Action Button) --- */
-#info-panel-btn {
-    position: fixed;
-    top: 15px;
-    left: 15px;
-    z-index: 998; /* 스크롤 버튼보다 아래 */
-    width: 45px;
-    height: 45px;
-    border-radius: 50%;
-    background-color: var(--primary-color);
-    color: white;
+/* --- 햄버거 메뉴 버튼 --- */
+#hamburger-menu-btn {
+    font-size: 24px; /* 아이콘 크기 조정 */
+    padding: 8px;
+    background-color: transparent;
     border: none;
+    border-radius: 8px;
     cursor: pointer;
-    font-size: 24px;
-    font-weight: bold;
-    line-height: 45px;
-    text-align: center;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-    transition: transform 0.2s ease-in-out;
+    line-height: 1;
+    color: var(--text-primary-color);
 }
-#info-panel-btn:hover {
-    transform: scale(1.1);
+#hamburger-menu-btn:hover {
+    background-color: var(--background-color);
 }
 
 /* --- 사이드 패널과 오버레이 --- */
@@ -243,7 +234,7 @@ body.sticky-footer-layout > .main-header .action-btn {
 #info-panel {
     position: fixed;
     top: 0;
-    left: 0;
+    right: 0;
     width: 90%;
     max-width: 350px;
     height: 100%;
@@ -252,7 +243,7 @@ body.sticky-footer-layout > .main-header .action-btn {
     display: flex;
     flex-direction: column;
     box-shadow: 2px 0 10px rgba(0,0,0,0.1);
-    transform: translateX(-100%); /* 처음엔 화면 왼쪽에 숨김 */
+    transform: translateX(100%); /* 처음엔 화면 왼쪽에 숨김 */
     transition: transform 0.3s ease-in-out;
 }
 
@@ -271,6 +262,28 @@ body.sticky-footer-layout > .main-header .action-btn {
 
 
 /* --- 패널 내부 스타일 --- */
+/* --- 패널 내부 액션 링크 스타일 --- */
+.panel-action-link {
+    display: block;
+    padding: 15px 20px;
+    text-decoration: none;
+    color: var(--text-primary-color);
+    border-radius: 8px;
+    margin-bottom: 10px;
+    background-color: var(--background-color);
+    transition: background-color 0.2s;
+}
+.panel-action-link:hover {
+    background-color: #e0e0e0;
+}
+.panel-action-link.danger {
+    background-color: #ffebee;
+    color: #c62828;
+}
+.panel-action-link.danger:hover {
+    background-color: #ffcdd2;
+}
+
 .info-panel-header {
     display: flex;
     justify-content: space-between;
@@ -368,3 +381,4 @@ body.sticky-footer-layout > .main-header .action-btn {
     color: white;
     cursor: pointer;
 }
+
