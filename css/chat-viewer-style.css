@@ -393,7 +393,8 @@ body.sticky-footer-layout > .main-header .action-btn {
 }
 
 /* 수정 모드 액션 버튼 */
-.edit-actions {
+#persona-edit-mode .edit-actions,
+#usernote-edit-mode .edit-actions {
     display: flex;
     justify-content: flex-end;
     gap: 10px;
