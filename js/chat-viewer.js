@@ -253,7 +253,7 @@ document.addEventListener('DOMContentLoaded', () => {
         editActions.querySelector('.save-edit-btn').addEventListener('click', async () => {
             currentChatData.messages[index].content = editContent.value;
             if (await updateFirestoreContent()) {
-                viewContent.innerHTML = marked.parse(editContent.value);
+                viewContent.innerHTML = parseMarkdown(editContent.value);
                 bubble.classList.remove('editing');
                 viewContent.style.display = 'block';
                 editContent.style.display = 'none';
