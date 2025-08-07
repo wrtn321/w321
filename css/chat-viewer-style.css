@@ -162,18 +162,6 @@ body.sticky-footer-layout > .main-header .action-btn {
     border-radius: 8px;
 }
 
-/* 말풍선 안의 제목 태그들 */
-.message-bubble h1 { font-size: 1.5em; }
-.message-bubble h2 { font-size: 1.3em; }
-.message-bubble h3 { font-size: 1.1em; }
-
-/* 말풍선 안의 목록 (ul, ol) */
-.message-bubble ul,
-.message-bubble ol{
-    display: flex;
-    flex-direction: column;
-    padding-left: 16px; /* 목록 들여쓰기 */
-}
 
 /* 말풍선 안의 기울임 텍스트 (*italic*) - 살짝 회색으로 */
 .message-bubble em {
@@ -183,23 +171,12 @@ body.sticky-footer-layout > .main-header .action-btn {
 
 .user-message blockquote {
     margin: 0 0 16px 0;
-    padding: 0 1em;
     color: var(--text-secondary-color);
-    border: 2px solid #61605a;
-    border-left: 0.25em solid var(--border-color);
-    background-color: rgba(255, 255, 255, 0.2);
 }
-
 
 /* 말풍선 안의 코드 블록 (```code```) */
 .message-bubble pre {
-    background-color: #2d2d2d; /* 어두운 배경 */
-    color: #f1f1f1;    /* 밝은 글씨 */
-    border-radius: 6px;
-    padding: 16px;
     margin-bottom: 16px;
-    white-space: pre-wrap;    
-    overflow-x: auto; /* 코드가 길면 가로 스크롤 생성 */
 }
 
 .message-bubble pre code {
@@ -207,15 +184,6 @@ body.sticky-footer-layout > .main-header .action-btn {
     font-size: 90%; /* 코드 폰트 크기 살짝 줄이기 */
     background-color: transparent;
     padding: 0;
-}
-
-/* 말풍선 안의 수평선 (---) */
-.message-bubble hr {
-    height: 0.25em;
-    padding: 0;
-    margin: 6px 0;
-    background-color: var(--border-color);
-    border: 0;
 }
 
 /* --- 햄버거 메뉴 버튼 --- */
