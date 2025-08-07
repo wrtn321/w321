@@ -103,7 +103,7 @@ function parseMarkdown(text) {
         if (hMatch) {
             const level = hMatch[1].length;
             if (level <= 6) {
-                htmlBlocks.push(`<h${level} style="font-weight: bold; font-size: ${2.0 - level * 0.25}em; margin: 0;">${parseInlineMarkdown(hMatch[2])}</h${level}>`);
+                htmlBlocks.push(`<h${level} style="font-weight: bold; font-size: ${2.0 - level * 0.2}em; margin: 0;">${parseInlineMarkdown(hMatch[2])}</h${level}>`);
                 continue;
             }
         }
