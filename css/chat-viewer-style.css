@@ -52,10 +52,10 @@ body.sticky-footer-layout > .main-header .action-btn {
 .message-bubble br{
     display: none;
 }
-.message-bubble p{
+.user-message p{
     margin-bottom: 10px;
 }
-.message-bubble p:last-child{
+.user-message p:last-child{
     margin-bottom:0;
 }
     
