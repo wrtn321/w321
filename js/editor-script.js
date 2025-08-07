@@ -59,7 +59,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (postDataString) {
                 currentPost = JSON.parse(postDataString);
                 viewTitle.textContent = currentPost.title;
-                viewContent.innerHTML = marked.parse(currentPost.content || '');
+                viewContent.innerHTML = parseMarkdown(currentPost.content || '');
                 toggleMode('view');
             } else {
                 alert("게시글 정보를 찾을 수 없습니다.");
@@ -188,7 +188,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // 로컬 데이터도 최신으로 동기화
             currentPost = { ...currentPost, ...dataToSave };
             viewTitle.textContent = currentPost.title;
-            viewContent.innerHTML = marked.parse(currentPost.content || '');
+            viewContent.innerHTML = parseMarkdown(currentPost.content || '');
             localStorage.setItem('currentPost', JSON.stringify(currentPost));
             
             showToast('저장되었습니다.');
