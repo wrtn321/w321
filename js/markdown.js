@@ -1,4 +1,4 @@
-// js/markdown.js (인용문 처리 로직만 수정한 최종본)
+// js/markdown.js
 
 /**
  * 인라인 마크다운(굵게, 링크 등)을 처리하는 헬퍼 함수
@@ -11,8 +11,11 @@ function parseInlineMarkdown(text) {
     
     htmlLine = htmlLine.replace(/!\[(.*?)\]\((.*?)\)/g, '<img src="$2" alt="$1">');
     htmlLine = htmlLine.replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank">$1</a>');
-    htmlLine = htmlLine.replace(/(\*\*\*|__)(.+?)\1/g, '<strong><em>$2</em></strong>'); // 3개짜리는 strong+em으로 변경
-    htmlLine = htmlLine.replace(/(\*\*)(.+?)\1/g, '<strong>$2</strong>');
+    
+    
+    htmlLine = htmlLine.replace(/(\*\*\*|__)(.+?)\1/g, '<strong style="font-weight: bold;">$2</strong>');
+    htmlLine = htmlLine.replace(/(\*\*)(.+?)\1/g, '<strong style="font-weight: bold;">$2</strong>');
+    
     htmlLine = htmlLine.replace(/(\*|_)(.+?)\1/g, '<span style="color: #85837D;">$2</span>');
     htmlLine = htmlLine.replace(/~~(.+?)~~/g, '<del>$1</del>');
     htmlLine = htmlLine.replace(/\^\^(.+?)\^\^/g, '<mark>$1</mark>');
@@ -33,13 +36,12 @@ function parseMarkdown(text) {
     for (let i = 0; i < lines.length; i++) {
         const line = lines[i];
 
-        // ▼▼▼ 인용문 처리 (이 블록만 수정되었습니다) ▼▼▼
+        // 인용문
         if (line.trim().startsWith('>')) {
             const quoteLines = [];
-            // 빈 줄이 나올 때까지 인용문 블록으로 간주합니다.
-            while (i < lines.length && line.trim() !== '') {
+            // 인용문 블록 시작: 빈 줄이 나올 때까지 계속 읽습니다.
+            while (i < lines.length && lines[i].trim() !== '') {
                 const currentLine = lines[i];
-                // '>'로 시작하는 줄만 내용으로 추출하고, 아닌 줄은 무시합니다.
                 if (currentLine.trim().startsWith('>')) {
                     // '> ' 와 '>' 모두 처리
                     const quoteText = currentLine.trim().startsWith('> ') 
@@ -47,18 +49,13 @@ function parseMarkdown(text) {
                                       : currentLine.trim().substring(1);
                     quoteLines.push(quoteText);
                 } else {
-                    // '>'로 시작하지 않는 연속된 줄도 인용문의 일부로 포함합니다.
+                    // '>'가 없어도 빈 줄이 아니면 인용문의 일부로 간주
                     quoteLines.push(currentLine);
                 }
                 i++;
-                // 다음 줄이 없거나, 다음 줄이 빈 줄이면 루프를 멈춥니다.
-                if (i >= lines.length || lines[i].trim() === '') {
-                    break;
-                }
             }
-            i--; // for 루프가 다음 줄부터 시작하도록 인덱스를 보정합니다.
+            i--; // for 루프가 다음 줄부터 시작하도록 인덱스 보정
 
-            // 중첩 인용문은 아직 이 로직에서 지원하지 않으므로, 모든 줄을 합쳐서 하나의 블록으로 만듭니다.
             const fullQuoteText = quoteLines.join('\n');
             const parsedContent = parseInlineMarkdown(fullQuoteText).replace(/\n/g, '<br>');
             htmlBlocks.push(`<blockquote style="background-color:rgba(0, 0, 0, 0.2); color: #fff; border-left: 5px solid #999; padding: 10px; margin: 1em 0;">${parsedContent}</blockquote>`);
