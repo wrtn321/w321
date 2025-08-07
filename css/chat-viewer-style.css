@@ -49,17 +49,16 @@ body.sticky-footer-layout > .main-header .action-btn {
     white-space: pre-wrap;
     margin-bottom: 4px;
 }
+
 .message-bubble br{
     display: none;
 }
-.user-message p{
-    margin-bottom: 10px;
+.message-bubble p{
+    margin-bottom: 14px !important;
 }
-.user-message p:last-child{
-    margin-bottom:0;
+.message-bubble p:last-child{
+    margin-bottom:0 !important;
 }
-    
-
 
 .user-message {
     align-self: flex-end;
@@ -70,11 +69,8 @@ body.sticky-footer-layout > .main-header .action-btn {
 .user-message.editing {
     width: 100%;
 }
-.user-message p, .user-message code {
-    color: #fff;
-}
 .message-bubble.user-message span {
-    color: #c7c5bd;
+    color: #c7c5bd !important;
 }
 
 .assistant-message {
@@ -160,30 +156,6 @@ body.sticky-footer-layout > .main-header .action-btn {
     display: block;
     margin: 12px 0px;
     border-radius: 8px;
-}
-
-
-/* 말풍선 안의 기울임 텍스트 (*italic*) - 살짝 회색으로 */
-.message-bubble em {
-    font-style: normal;
-    color: #85837D;
-}
-
-.user-message blockquote {
-    margin: 0 0 16px 0;
-    color: var(--text-secondary-color);
-}
-
-/* 말풍선 안의 코드 블록 (```code```) */
-.message-bubble pre {
-    margin-bottom: 16px;
-}
-
-.message-bubble pre code {
-    font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
-    font-size: 90%; /* 코드 폰트 크기 살짝 줄이기 */
-    background-color: transparent;
-    padding: 0;
 }
 
 /* --- 햄버거 메뉴 버튼 --- */
