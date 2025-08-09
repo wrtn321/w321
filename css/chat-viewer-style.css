@@ -389,3 +389,95 @@ body.sticky-footer-layout > .main-header .action-btn {
     cursor: pointer;
 }
 
+/* --- 새로운 채팅 입력창 스타일 --- */
+#chat-input-bar {
+    position: sticky; /* 스크롤을 따라다니되, 페이지 맨 아래에 붙음 */
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background-color: var(--surface-color);
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    align-items: flex-end; /* 버튼과 textarea의 아래 라인을 맞춤 */
+    padding: 10px;
+    gap: 10px;
+    z-index: 100; /* 다른 요소들 위에 있도록 */
+}
+
+#new-message-input {
+    flex-grow: 1; /* 남는 공간을 모두 차지 */
+    border: 1px solid var(--border-color);
+    border-radius: 18px;
+    padding: 10px 15px;
+    font-size: 16px;
+    line-height: 1.4;
+    max-height: 150px; /* 너무 길어지는 것을 방지 */
+    resize: none;
+    overflow-y: auto;
+}
+#new-message-input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
+#role-toggle-btn, #add-message-btn {
+    flex-shrink: 0; /* 크기가 줄어들지 않음 */
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--background-color);
+    transition: background-color 0.2s;
+}
+#add-message-btn {
+    background-color: var(--primary-color);
+    color: white;
+}
+#role-toggle-btn:hover, #add-message-btn:hover {
+    filter: brightness(0.9);
+}
+
+/* --- 말풍선 삭제 버튼 스타일 --- */
+.message-bubble {
+    position: relative; /* 삭제 버튼의 위치 기준점 */
+}
+
+.delete-bubble-btn {
+    position: absolute;
+    top: -5px;
+    /* user와 assistant 메시지에 따라 좌우 위치 변경 */
+    background-color: #ff5252;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    font-size: 12px;
+    cursor: pointer;
+    opacity: 0; /* 평소엔 투명하게 숨김 */
+    pointer-events: none; /* 숨겨졌을 때 클릭 안되게 */
+    transition: opacity 0.2s;
+    z-index: 10;
+}
+.user-message .delete-bubble-btn {
+    left: -10px;
+}
+.assistant-message .delete-bubble-btn {
+    right: -10px;
+}
+
+/* 데스크탑: 마우스 올렸을 때 버튼 보이기 */
+.message-bubble:hover .delete-bubble-btn {
+    opacity: 1;
+    pointer-events: auto;
+}
+/* 모바일: 길게 눌러서 .show-delete 클래스가 추가됐을 때 보이기 */
+.message-bubble.show-delete .delete-bubble-btn {
+    opacity: 1;
+    pointer-events: auto;
+}
