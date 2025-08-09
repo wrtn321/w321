@@ -168,7 +168,7 @@ body.sticky-footer-layout main {
 /* --- 맨 위로 가기 버튼 --- */
 #scroll-to-top-btn {
     position: fixed;
-    bottom: 20px;
+    bottom: 80px;
     right: 20px;
     z-index: 999;
     width: 45px;
