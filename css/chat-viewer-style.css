@@ -513,6 +513,7 @@ body.sticky-footer-layout > .main-header .action-btn {
     opacity: 1; /* 기본적으로 보이도록 */
     visibility: visible;
     transition: opacity 0.3s, visibility 0.3s;
+    cursor: pointer;
 }
 
 /* 3. 스크롤이 맨 아래에 있을 때 버튼을 숨기는 스타일 */
