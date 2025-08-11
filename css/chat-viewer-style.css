@@ -482,3 +482,23 @@ body.sticky-footer-layout > .main-header .action-btn {
     opacity: 1;
     pointer-events: auto;
 }
+
+#scroll-to-top-btn{
+    right: auto;
+    left: 50%;
+    transform: translateX(-50%);
+    bottom: 70px;
+    width: 35px;
+    height: 35px;
+    line-height:autofill;
+    font-size:18px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: var(--background-color);
+    color: var(--accent-hover-color);
+    border: 1px solid var(--accent-hover-color);
+}
+#scroll-to-top-btn.show{
+    opacity:1;
+}
