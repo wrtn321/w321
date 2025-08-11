@@ -1,4 +1,4 @@
-// js/chat-viewer.js (채팅 추가/삭제 기능까지 모두 통합된 최종 완성본)
+// js/chat-viewer.js (맨 아래로 가기 버튼 기능까지 모두 통합된 최종 완성본)
 
 document.addEventListener('DOMContentLoaded', () => {
     const auth = firebase.auth();
@@ -10,13 +10,14 @@ document.addEventListener('DOMContentLoaded', () => {
     let lastScrollY = 0;
     let activeEditingIndex = null;
     let longPressTimer;
-    let currentRole = 'user'; // 채팅 추가 시 기본 역할
+    let currentRole = 'user';
 
     // --- HTML 요소 가져오기 ---
     const header = document.querySelector('.main-header');
     const viewerTitle = document.getElementById('viewer-title');
     const chatLogContainer = document.getElementById('chat-log-container');
     const hamburgerMenuBtn = document.getElementById('hamburger-menu-btn');
+    const scrollToBottomBtn = document.getElementById('scroll-to-bottom-btn');
     // 사이드 패널
     const infoPanelOverlay = document.getElementById('info-panel-overlay');
     const infoPanel = document.getElementById('info-panel');
@@ -58,7 +59,11 @@ document.addEventListener('DOMContentLoaded', () => {
         else {
             loadChatData();
             addPageEventListeners();
-            window.addEventListener('scroll', handleHeaderVisibility);
+            window.addEventListener('scroll', () => {
+                handleHeaderVisibility();
+                handleScrollToBottomVisibility();
+            });
+            handleScrollToBottomVisibility(); // 페이지 로드 시 한 번 실행
         }
     });
 
@@ -121,14 +126,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- 이벤트 리스너 설정 ---
     function addPageEventListeners() {
-        // 패널 열고 닫기
         const openPanel = () => { infoPanelOverlay.classList.remove('hidden'); infoPanel.classList.remove('hidden'); };
         const closePanel = () => { infoPanelOverlay.classList.add('hidden'); infoPanel.classList.add('hidden'); };
         hamburgerMenuBtn.addEventListener('click', openPanel);
         infoPanelCloseBtn.addEventListener('click', closePanel);
         infoPanelOverlay.addEventListener('click', closePanel);
 
-        // 탭 전환
         infoPanelTabs.addEventListener('click', (e) => {
             if (e.target.classList.contains('tab-link')) {
                 const tabName = e.target.dataset.tab;
@@ -139,11 +142,9 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
         
-        // 메모장
         memoTextarea.addEventListener('input', () => { memoCharCounter.textContent = `${memoTextarea.value.length}자`; });
         memoSaveBtn.addEventListener('click', () => { localStorage.setItem(`memo_${currentPost.id}`, memoTextarea.value); showToast('메모가 저장되었습니다!'); });
         
-        // 제목 수정
         viewerTitle.addEventListener('click', () => {
             if (document.querySelector('.title-edit-input')) return;
             const currentTitleText = viewerTitle.textContent;
@@ -169,13 +170,11 @@ document.addEventListener('DOMContentLoaded', () => {
             input.addEventListener('keydown', e => { if (e.key === 'Enter') input.blur(); if (e.key === 'Escape') { if(input.parentNode) input.parentNode.removeChild(input); viewerTitle.style.display = 'block'; }});
         });
 
-        // 패널 내부 수정 모드 토글
         const toggleEditMode = (mode, type) => {
             document.getElementById(`${type}-view-mode`).hidden = (mode === 'edit');
             document.getElementById(`${type}-edit-mode`).hidden = (mode !== 'edit');
         };
 
-        // 프로필 수정
         editPersonaBtn.addEventListener('click', () => toggleEditMode('edit', 'persona'));
         personaContent.querySelector('#cancel-persona-btn').addEventListener('click', () => { renderInfoPanel(); toggleEditMode('view', 'persona'); });
         personaContent.querySelector('#save-persona-btn').addEventListener('click', async () => {
@@ -184,7 +183,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if (await updateFirestoreContent()) { renderInfoPanel(); toggleEditMode('view', 'persona'); showToast('프로필 정보가 저장되었습니다.'); }
         });
 
-        // 유저노트 수정
         editUsernoteBtn.addEventListener('click', () => toggleEditMode('edit', 'usernote'));
         usernoteContent.querySelector('#cancel-usernote-btn').addEventListener('click', () => { renderInfoPanel(); toggleEditMode('view', 'usernote'); });
         usernoteContent.querySelector('#save-usernote-btn').addEventListener('click', async () => {
@@ -192,7 +190,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if (await updateFirestoreContent()) { renderInfoPanel(); toggleEditMode('view', 'usernote'); showToast('유저노트가 저장되었습니다.'); }
         });
 
-        // 파일/삭제 버튼
         downloadJsonBtn.addEventListener('click', (e) => { e.preventDefault(); const title = (currentPost.title.trim() || 'chat').normalize('NFC'); downloadFile(currentPost.content, title + '.json', 'application/json'); closePanel(); });
         downloadTxtBtn.addEventListener('click', (e) => { e.preventDefault(); const title = (currentPost.title.trim() || 'chat').normalize('NFC'); downloadFile(generateTxtFromChat(), title + '.txt', 'text/plain'); closePanel(); });
         dropdownDeleteBtn.addEventListener('click', async (e) => {
@@ -208,7 +205,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // 새로운 채팅 추가 기능
         roleToggleBtn.addEventListener('click', () => {
             if (currentRole === 'user') { currentRole = 'assistant'; roleToggleBtn.textContent = '🤖'; roleToggleBtn.title = '역할 전환 (현재: 어시스턴트)'; } 
             else { currentRole = 'user'; roleToggleBtn.textContent = '👤'; roleToggleBtn.title = '역할 전환 (현재: 유저)'; }
@@ -227,6 +223,14 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         const autoResizeInput = () => { newMessageInput.style.height = 'auto'; newMessageInput.style.height = newMessageInput.scrollHeight + 'px'; };
         newMessageInput.addEventListener('input', autoResizeInput);
+
+        // 맨 아래로 가기 버튼 클릭 이벤트
+        scrollToBottomBtn.addEventListener('click', () => {
+            window.scrollTo({
+                top: document.body.scrollHeight,
+                behavior: 'smooth'
+            });
+        });
     }
 
     // --- 동적 UI 생성 및 이벤트 바인딩 ---
@@ -257,17 +261,11 @@ document.addEventListener('DOMContentLoaded', () => {
             e.stopPropagation();
             if (confirm(`이 메시지를 정말 삭제하시겠습니까?\n\n내용: "${message.content.substring(0, 30)}..."`)) {
                 currentChatData.messages.splice(index, 1);
-                if (await updateFirestoreContent()) {
-                    renderMessages();
-                    showToast('메시지가 삭제되었습니다.');
-                }
+                if (await updateFirestoreContent()) { renderMessages(); showToast('메시지가 삭제되었습니다.'); }
             }
         });
 
-        const startPress = (e) => {
-            document.querySelectorAll('.message-bubble.show-delete').forEach(b => b.classList.remove('show-delete'));
-            longPressTimer = setTimeout(() => { bubble.classList.add('show-delete'); }, 800);
-        };
+        const startPress = (e) => { document.querySelectorAll('.message-bubble.show-delete').forEach(b => b.classList.remove('show-delete')); longPressTimer = setTimeout(() => { bubble.classList.add('show-delete'); }, 800); };
         const cancelPress = () => { clearTimeout(longPressTimer); };
         bubble.addEventListener('mousedown', startPress);
         bubble.addEventListener('mouseup', cancelPress);
@@ -317,4 +315,13 @@ document.addEventListener('DOMContentLoaded', () => {
     function generateTxtFromChat() { return currentChatData.messages.map(msg => `${msg.role === 'user' ? 'USER' : 'ASSISTANT'}:\n${msg.content}`).join('\n\n') || "채팅 기록이 없습니다."; }
     function autoResizeTextarea(event) { const textarea = event.target; textarea.style.height = 'auto'; textarea.style.height = (textarea.scrollHeight) + 'px'; }
     function handleHeaderVisibility() { if (header) { const currentScrollY = window.scrollY; header.style.transform = (currentScrollY > lastScrollY && currentScrollY > header.offsetHeight) ? 'translateY(-100%)' : 'translateY(0)'; lastScrollY = currentScrollY; } }
+    
+    function handleScrollToBottomVisibility() {
+        if (!scrollToBottomBtn) return;
+        if (window.scrollY + window.innerHeight >= document.body.scrollHeight - 20) {
+            scrollToBottomBtn.classList.add('hide');
+        } else {
+            scrollToBottomBtn.classList.remove('hide');
+        }
+    }
 });
