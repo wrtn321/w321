@@ -37,6 +37,7 @@ body.sticky-footer-layout > .main-header .action-btn {
     gap: 12px;
     padding: 20px 15px;
     max-width: 800px;
+    width: 100%;
     margin: 0 auto;
 }
 
