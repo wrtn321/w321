@@ -25,6 +25,16 @@ document.addEventListener('DOMContentLoaded', () => {
             await fetchPosts(user.uid);
             renderList();
             addEventListeners(user);
+            window.addEventListener('pageshow', function(event) {
+                // event.persisted가 true이면, 페이지가 bfcache에서 로드된 것입니다.
+                if (event.persisted) {
+                    console.log("페이지가 캐시에서 로드되었습니다. 데이터를 새로고침합니다.");
+                    // 데이터를 다시 불러오고 화면을 새로 그립니다.
+                    fetchPosts(user.uid).then(() => {
+                        renderList();
+                    });
+                }
+            });
         } else {
             window.location.href = 'index.html';
         }
@@ -314,4 +324,5 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+
 });
