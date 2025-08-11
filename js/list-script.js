@@ -317,4 +317,4 @@ document.addEventListener('DOMContentLoaded', () => {
 
 });
 
-혹시 post에 적용해야 하는거 아니야?? list가 맞아?? 아니면 내가 뭘 잘못한걸까??
+
