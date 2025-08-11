@@ -1,4 +1,4 @@
-// js/list-script.js (핀 편집 모드, 아이콘 제거 등 모든 기능 적용 최종본)
+// js/list-script.js (뒤로가기 새로고침 문제 최종 해결본)
 
 document.addEventListener('DOMContentLoaded', () => {
     const auth = firebase.auth();
@@ -25,20 +25,25 @@ document.addEventListener('DOMContentLoaded', () => {
             await fetchPosts(user.uid);
             renderList();
             addEventListeners(user);
+
+            // ▼▼▼ 이 부분을 수정했습니다! (if 조건문 제거) ▼▼▼
             window.addEventListener('pageshow', function(event) {
-                // event.persisted가 true이면, 페이지가 bfcache에서 로드된 것입니다.
-                if (event.persisted) {
-                    console.log("페이지가 캐시에서 로드되었습니다. 데이터를 새로고침합니다.");
-                    // 데이터를 다시 불러오고 화면을 새로 그립니다.
-                    fetchPosts(user.uid).then(() => {
-                        renderList();
-                    });
-                }
+                // 이 페이지가 화면에 보일 때마다 (특히 뒤로가기로 돌아왔을 때)
+                // 무조건 데이터를 새로고침합니다.
+                // 이렇게 하면 어떤 환경에서도 일관되게 작동합니다.
+                console.log("페이지가 표시되었습니다. 데이터를 새로고침합니다.");
+                fetchPosts(user.uid).then(() => {
+                    renderList();
+                });
             });
+            // ▲▲▲ 여기까지 입니다. ▲▲▲
+
         } else {
             window.location.href = 'index.html';
         }
     });
+
+    // ... (이하 나머지 모든 함수는 이전과 완전히 동일합니다) ...
 
     function initializePage() {
         const params = new URLSearchParams(window.location.search);
@@ -103,7 +108,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!li) return;
             const itemId = li.dataset.id;
             
-            // --- 핀 편집 모드일 때의 로직 ---
             if (listContainer.classList.contains('pin-edit-mode')) {
                 if (!li.classList.contains('item-folder')) {
                     const checkbox = li.querySelector('.pin-checkbox');
@@ -111,10 +115,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         checkbox.checked = !checkbox.checked;
                     }
                 }
-                return; // ★★★ 편집 모드에서는 페이지 이동 방지 ★★★
+                return;
             }
 
-            // --- 일반 모드일 때의 로직 ---
             if (e.target.classList.contains('edit-folder-btn')) {
                 e.stopPropagation();
                 editFolderName(user.uid, itemId);
@@ -166,30 +169,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const li = document.createElement('li');
         li.className = 'list-item';
         li.dataset.id = itemData.id;
-        
-        if (itemData.isPinned) {
-            li.classList.add('pinned');
-        }
-
+        if (itemData.isPinned) { li.classList.add('pinned'); }
         const wrapper = document.createElement('div');
         wrapper.className = 'item-content-wrapper';
-
         const isFolder = itemData.type === 'folder';
-        // ★★★ 파일 아이콘 제거 로직 ★★★
         const iconHtml = isFolder ? '<span class="icon-closed">📁</span><span class="icon-open">📂</span>' : '';
         const pinCheckboxHTML = isFolder ? '' : `<input type="checkbox" class="pin-checkbox" ${itemData.isPinned ? 'checked' : ''}>`;
         const pinIndicatorHTML = isFolder ? '' : '<span class="pin-indicator">📌</span>';
-        
-        wrapper.innerHTML = `
-            <span class="drag-handle">⠿</span>
-            ${pinCheckboxHTML}
-            ${pinIndicatorHTML}
-            <span class="item-icon">${iconHtml}</span>
-            <span class="item-title">${itemData.title}</span>
-            ${isFolder ? `<button class="edit-folder-btn" title="폴더 이름 변경">✏️</button><button class="delete-folder-btn" title="폴더 삭제">🗑️</button>` : ''}
-        `;
+        wrapper.innerHTML = `<span class="drag-handle">⠿</span> ${pinCheckboxHTML} ${pinIndicatorHTML} <span class="item-icon">${iconHtml}</span> <span class="item-title">${itemData.title}</span> ${isFolder ? `<button class="edit-folder-btn" title="폴더 이름 변경">✏️</button><button class="delete-folder-btn" title="폴더 삭제">🗑️</button>` : ''}`;
         li.appendChild(wrapper);
-
         if (isFolder) {
             li.classList.add('item-folder');
             const subList = document.createElement('ul');
@@ -213,12 +201,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const batch = db.batch();
         const listItems = normalItemList.querySelectorAll('.list-item:not(.item-folder)');
         let hasChanges = false;
-
         listItems.forEach(li => {
             const postId = li.dataset.id;
             const post = posts.find(p => p.id === postId);
             const checkbox = li.querySelector('.pin-checkbox');
-            
             if (post && checkbox) {
                 const isNowPinned = checkbox.checked;
                 if ((post.isPinned || false) !== isNowPinned) {
@@ -228,17 +214,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
         });
-
         if (hasChanges) {
             try {
                 await batch.commit();
                 showToast('고정 상태가 저장되었습니다.');
                 await fetchPosts(userId);
                 renderList();
-            } catch (error) {
-                console.error("고정 상태 저장 실패:", error);
-                showToast('저장에 실패했습니다.');
-            }
+            } catch (error) { console.error("고정 상태 저장 실패:", error); showToast('저장에 실패했습니다.'); }
         }
     }
 
@@ -247,35 +229,23 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!title) return;
         try {
             const minOrder = posts.length > 0 ? Math.min(0, ...posts.map(p => p.order).filter(o => typeof o === 'number')) : 0;
-            await postsCollection.add({
-                type: 'folder', title: title, content: '', category: currentCategory,
-                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                userId: userId, order: minOrder - 1, parentId: 'root', isPinned: false
-            });
+            await postsCollection.add({ type: 'folder', title: title, content: '', category: currentCategory, createdAt: firebase.firestore.FieldValue.serverTimestamp(), userId: userId, order: minOrder - 1, parentId: 'root', isPinned: false });
             await fetchPosts(userId);
             renderList();
-        } catch(error) {
-            console.error("폴더 추가 실패:", error);
-            showToast('폴더 추가에 실패했습니다.');
-        }
+        } catch(error) { console.error("폴더 추가 실패:", error); showToast('폴더 추가에 실패했습니다.'); }
     }
 
     async function deleteFolder(userId, folderId) {
         const children = posts.filter(p => p.parentId === folderId);
         const batch = db.batch();
-        children.forEach(child => {
-            batch.update(postsCollection.doc(child.id), { parentId: 'root', order: Date.now() });
-        });
+        children.forEach(child => { batch.update(postsCollection.doc(child.id), { parentId: 'root', order: Date.now() }); });
         batch.delete(postsCollection.doc(folderId));
         try {
             await batch.commit();
             showToast('폴더가 삭제되었습니다.');
             await fetchPosts(userId);
             renderList();
-        } catch (error) {
-            console.error("폴더 삭제 실패:", error);
-            showToast('폴더 삭제에 실패했습니다.');
-        }
+        } catch (error) { console.error("폴더 삭제 실패:", error); showToast('폴더 삭제에 실패했습니다.'); }
     }
     
     async function editFolderName(userId, folderId) {
@@ -288,10 +258,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 showToast('폴더 이름이 변경되었습니다.');
                 await fetchPosts(userId);
                 renderList();
-            } catch (error) {
-                console.error("이름 변경 실패:", error);
-                showToast('이름 변경에 실패했습니다.');
-            }
+            } catch (error) { console.error("이름 변경 실패:", error); showToast('이름 변경에 실패했습니다.'); }
         }
     }
 
@@ -303,26 +270,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 const itemId = evt.item.dataset.id;
                 const newParentEl = evt.to;
                 let newParentId = 'root';
-                if (newParentEl.classList.contains('sub-list')) {
-                    newParentId = newParentEl.closest('.list-item').dataset.id;
-                }
+                if (newParentEl.classList.contains('sub-list')) { newParentId = newParentEl.closest('.list-item').dataset.id; }
                 const batch = db.batch();
                 batch.update(postsCollection.doc(itemId), { parentId: newParentId });
                 const involvedLists = new Set([evt.from, evt.to]);
-                involvedLists.forEach(listEl => {
-                    Array.from(listEl.children).forEach((item, index) => {
-                        batch.update(postsCollection.doc(item.dataset.id), { order: index });
-                    });
-                });
+                involvedLists.forEach(listEl => { Array.from(listEl.children).forEach((item, index) => { batch.update(postsCollection.doc(item.dataset.id), { order: index }); }); });
                 try {
                     await batch.commit();
                     await fetchPosts(auth.currentUser.uid);
                     renderList();
-                } catch (error) {
-                    console.error('순서 저장에 실패했습니다:', error);
-                }
+                } catch (error) { console.error('순서 저장에 실패했습니다:', error); }
             }
         });
     }
-
 });
