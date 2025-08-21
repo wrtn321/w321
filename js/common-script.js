@@ -61,19 +61,38 @@ document.addEventListener('DOMContentLoaded', () => {
     initScrollToTopButton();
 
      /**
-     * '뒤로가기' 버튼 기능 초기화
+     * '목록으로 가기' 버튼 기능 
+     * 현재 페이지 위치에 따라 적절한 이전 페이지로 이동시킵니다.
      */
-    const initHistoryBackButton = () => {
+    const initSmartBackButton = () => {
         const backBtn = document.getElementById('history-back-btn');
-        
-        if (backBtn) {
-            backBtn.addEventListener('click', () => {
-                history.back(); // 브라우저의 뒤로가기 기능 실행
-            });
-        }
+        if (!backBtn) return;
+
+        backBtn.addEventListener('click', () => {
+            const path = window.location.pathname;
+
+            if (path.includes('post.html')) {
+                // post.html 에서는 해당 글의 카테고리 목록으로 이동합니다.
+                const category = localStorage.getItem('currentCategory');
+                if (category) {
+                    window.location.href = `list.html?category=${category}`;
+                } else {
+                    window.location.href = 'main.html'; // 카테고리 정보가 없으면 메인으로
+                }
+            } else if (path.includes('chat-viewer.html')) {
+                // chat-viewer.html 에서는 항상 chat-list.html 로 이동합니다.
+                window.location.href = 'chat-list.html';
+            } else if (path.includes('list.html') || path.includes('chat-list.html')) {
+                // 목록 페이지에서는 main.html 로 이동합니다.
+                window.location.href = 'main.html';
+            } else {
+                // 그 외의 경우, 기존처럼 뒤로가기 기능을 수행합니다.
+                history.back();
+            }
+        });
     };
 
     // '뒤로가기' 버튼 기능 실행
-    initHistoryBackButton();
+    initSmartBackButton();
 
 });
