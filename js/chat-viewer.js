@@ -18,12 +18,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const chatLogContainer = document.getElementById('chat-log-container');
     const hamburgerMenuBtn = document.getElementById('hamburger-menu-btn');
     const scrollToBottomBtn = document.getElementById('scroll-to-bottom-btn');
-    // 사이드 패널
     const infoPanelOverlay = document.getElementById('info-panel-overlay');
     const infoPanel = document.getElementById('info-panel');
     const infoPanelCloseBtn = document.getElementById('info-panel-close-btn');
     const infoPanelTabs = document.querySelector('.info-panel-tabs');
-    // 페르소나
     const personaNameEl = document.getElementById('persona-name');
     const personaContent = document.getElementById('persona-content');
     const editPersonaBtn = document.getElementById('edit-persona-btn');
@@ -31,26 +29,21 @@ document.addEventListener('DOMContentLoaded', () => {
     const personaEditMode = document.getElementById('persona-edit-mode');
     const personaInfoEl = document.getElementById('persona-info');
     const personaTextarea = document.getElementById('persona-textarea');
-    // 유저노트
     const usernoteContent = document.getElementById('usernote-content');
     const editUsernoteBtn = document.getElementById('edit-usernote-btn');
     const usernoteViewMode = document.getElementById('usernote-view-mode');
     const usernoteEditMode = document.getElementById('usernote-edit-mode');
     const usernoteInfoEl = document.getElementById('usernote-info');
     const usernoteTextarea = document.getElementById('usernote-textarea');
-    // 메모
     const memoTextarea = document.getElementById('memo-textarea');
     const memoCharCounter = document.getElementById('memo-char-counter');
     const memoSaveBtn = document.getElementById('memo-save-btn');
-    // 파일/삭제
     const downloadJsonBtn = document.getElementById('download-json-btn');
     const downloadTxtBtn = document.getElementById('download-txt-btn');
     const dropdownDeleteBtn = document.getElementById('dropdown-delete-btn');
-    // 채팅 추가 바
     const roleToggleBtn = document.getElementById('role-toggle-btn');
     const newMessageInput = document.getElementById('new-message-input');
     const addMessageBtn = document.getElementById('add-message-btn');
-    // 기타 UI
     let toastTimer;
 
     // --- 초기화 ---
@@ -63,7 +56,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 handleHeaderVisibility();
                 handleScrollToBottomVisibility();
             });
-            handleScrollToBottomVisibility(); // 페이지 로드 시 한 번 실행
+            handleScrollToBottomVisibility();
         }
     });
 
@@ -192,16 +185,28 @@ document.addEventListener('DOMContentLoaded', () => {
 
         downloadJsonBtn.addEventListener('click', (e) => { e.preventDefault(); const title = (currentPost.title.trim() || 'chat').normalize('NFC'); downloadFile(currentPost.content, title + '.json', 'application/json'); closePanel(); });
         downloadTxtBtn.addEventListener('click', (e) => { e.preventDefault(); const title = (currentPost.title.trim() || 'chat').normalize('NFC'); downloadFile(generateTxtFromChat(), title + '.txt', 'text/plain'); closePanel(); });
+        
+        // ▼▼▼ [수정] 삭제 버튼 클릭 이벤트 ▼▼▼
         dropdownDeleteBtn.addEventListener('click', async (e) => {
-            e.preventDefault(); closePanel();
+            e.preventDefault();
+            closePanel();
             if (!currentPost.id) return;
             if (confirm('정말로 이 채팅 기록을 삭제하시겠습니까?')) {
                 try {
+                    // 1. Firestore에서 삭제를 기다립니다.
                     await db.collection('posts').doc(currentPost.id).delete();
+                    
+                    // 2. 관련 로컬 데이터를 지웁니다.
                     localStorage.removeItem('currentPost');
                     localStorage.removeItem(`memo_${currentPost.id}`);
-                    history.back();
-                } catch (error) { console.error("삭제 실패:", error); showToast('삭제에 실패했습니다.'); }
+                    
+                    // 3. 삭제 완료 후, 채팅 목록 페이지로 직접 이동합니다.
+                    window.location.href = 'chat-list.html';
+
+                } catch (error) { 
+                    console.error("삭제 실패:", error); 
+                    showToast('삭제에 실패했습니다.'); 
+                }
             }
         });
 
@@ -224,7 +229,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const autoResizeInput = () => { newMessageInput.style.height = 'auto'; newMessageInput.style.height = newMessageInput.scrollHeight + 'px'; };
         newMessageInput.addEventListener('input', autoResizeInput);
 
-        // 맨 아래로 가기 버튼 클릭 이벤트
         scrollToBottomBtn.addEventListener('click', () => {
             window.scrollTo({
                 top: document.body.scrollHeight,
