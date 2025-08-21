@@ -155,8 +155,6 @@ async function setupMainPage(db, user) {
                     const tabData = { id: doc.id, ...doc.data() };
                     const card = createTabCard(tabData);
                     dashboardContainer.appendChild(card);
-                
-                    // ★★★ 바로 이 부분입니다! if문을 제거했습니다. ★★★
                     loadPinnedItems(db, user, card, tabData.categoryKey, tabData.type);
                 });
             }
@@ -197,12 +195,15 @@ async function setupMainPage(db, user) {
         });
 
         card.querySelector('.delete-btn').addEventListener('click', () => deleteTab(tabData.id, tabData.name));
+        
+        // ▼▼▼ [수정] '+ 새로 만들기' 버튼 클릭 이벤트 ▼▼▼
         card.querySelector('.new-button').addEventListener('click', () => {
+            // 항상 목록 제목을 먼저 저장합니다.
+            localStorage.setItem('currentListTitle', tabData.name);
+            
             if (tabData.type === 'chat-list') {
-                 localStorage.setItem('currentListTitle', tabData.name);
-                 window.location.href = 'chat-list.html';
-            }
-            else {
+                 window.location.href = 'chat-list.html'; // chat-list는 새 글 만들기가 없으므로 목록으로 이동
+            } else {
                 window.location.href = `post.html?category=${tabData.categoryKey}&new=true`;
             }
         });
@@ -337,4 +338,3 @@ async function setupMainPage(db, user) {
 
     loadAndRenderTabs();
 }
-
