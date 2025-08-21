@@ -10,7 +10,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- HTML 요소 가져오기 ---
     const header = document.querySelector('.main-header'); // 헤더 요소
-    // backToListBtn은 이제 common-script.js에서 처리하므로 여기서 제거합니다.
     const viewModeHeader = document.getElementById('view-mode-elements-header');
     const editModeHeader = document.getElementById('edit-mode-elements-header');
     const viewModeContent = document.getElementById('view-mode-elements-content');
@@ -34,7 +33,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!user) {
             window.location.href = 'index.html';
         } else {
-            // 사용자가 로그인 되어 있으면 스크롤 이벤트 리스너 추가
             window.addEventListener('scroll', handleHeaderVisibility);
         }
     });
@@ -45,13 +43,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const isNewPost = params.get('new') === 'true';
         const categoryFromURL = params.get('category');
         
-        // localStorage에 현재 카테고리 저장 (뒤로가기 후 목록 유지를 위해)
         if (categoryFromURL) {
             localStorage.setItem('currentCategory', categoryFromURL);
         }
 
         if (isNewPost && categoryFromURL) {
-            // 새 글일 경우 isPinned 기본값 false로 초기화
             currentPost = { title: '', content: '', category: categoryFromURL, isPinned: false };
             toggleMode('edit');
         } else {
@@ -115,6 +111,7 @@ document.addEventListener('DOMContentLoaded', () => {
     dropdownEditBtn.addEventListener('click', (e) => { e.preventDefault(); toggleMode('edit'); dropdownMenu.hidden = true; });
     dropdownDownloadBtn.addEventListener('click', (e) => { e.preventDefault(); downloadTxtFile(); dropdownMenu.hidden = true; });
 
+    // ▼▼▼ [수정] 삭제 버튼 클릭 이벤트 ▼▼▼
     dropdownDeleteBtn.addEventListener('click', async (e) => {
         e.preventDefault();
         dropdownMenu.hidden = true;
@@ -126,10 +123,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (confirm('정말로 이 게시글을 삭제하시겠습니까?')) {
             try {
+                // 1. Firestore에서 삭제를 요청하고 완료될 때까지 기다립니다.
                 await db.collection('posts').doc(currentPost.id).delete();
+                
+                // 2. 로컬 데이터와 목록으로 돌아갈 카테고리 정보를 가져옵니다.
+                const category = currentPost.category;
                 localStorage.removeItem('currentPost');
                 showToast('게시글이 삭제되었습니다.');
-                history.back(); // 목록으로 돌아가기
+
+                // 3. 삭제가 완료된 후, 해당 카테고리의 목록 페이지로 직접 이동합니다.
+                window.location.href = `list.html?category=${category}`;
+
             } catch (error) {
                 console.error("삭제 실패:", error);
                 showToast('삭제에 실패했습니다.');
@@ -166,14 +170,13 @@ document.addEventListener('DOMContentLoaded', () => {
             title: titleInput.value.trim() || "제목 없음",
             content: contentTextarea.value,
             category: currentPost.category,
-            // ★★★ isPinned 상태를 보존하거나 기본값 false를 부여합니다. ★★★
             isPinned: currentPost.isPinned || false,
         };
 
         try {
-            if (currentPost.id) { // 기존 글 업데이트
+            if (currentPost.id) {
                 await db.collection('posts').doc(currentPost.id).update(dataToSave);
-            } else { // 새 글 생성
+            } else {
                 const docRef = await db.collection('posts').add({
                     ...dataToSave,
                     userId: user.uid,
@@ -185,7 +188,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 currentPost.id = docRef.id;
             }
 
-            // 로컬 데이터도 최신으로 동기화
             currentPost = { ...currentPost, ...dataToSave };
             viewTitle.textContent = currentPost.title;
             viewContent.innerHTML = parseMarkdown(currentPost.content || '');
@@ -202,21 +204,17 @@ document.addEventListener('DOMContentLoaded', () => {
     contentTextarea.addEventListener('input', updateCharCount);
     contentTextarea.addEventListener('input', autoResizeTextarea);
 
-    // --- 인터랙티브 헤더를 위한 함수 ---
     function handleHeaderVisibility() {
         const currentScrollY = window.scrollY;
         if (header) {
             if (currentScrollY > lastScrollY && currentScrollY > header.offsetHeight) {
-                // 아래로 스크롤
                 header.style.transform = 'translateY(-100%)';
             } else {
-                // 위로 스크롤
                 header.style.transform = 'translateY(0)';
             }
         }
         lastScrollY = currentScrollY;
     }
 
-    // --- 최초 실행 ---
     loadPostData();
 });
