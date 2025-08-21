@@ -17,12 +17,22 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     /**
-     * 페이지가 다시 보일 때마다 목록을 새로고침하는 이벤트 리스너
-     * 브라우저의 '뒤로가기' 등으로 이 페이지에 돌아왔을 때 실행됩니다.
+     * [수정] 새로고침 신호를 감지하도록 개선된 이벤트 리스너
+     * 페이지가 다시 보일 때마다 목록을 새로고침합니다.
      */
     window.addEventListener('pageshow', (event) => {
-        // event.persisted가 true이면 BFCache에서 페이지가 로드된 것입니다.
-        // 이 경우, 최신 데이터를 반영하기 위해 목록을 다시 불러옵니다.
+        const shouldRefresh = localStorage.getItem('listShouldRefresh');
+
+        // 1. 삭제/생성 등 명시적인 새로고침 요청이 있을 때
+        if (shouldRefresh) {
+            localStorage.removeItem('listShouldRefresh'); // 플래그 사용 후 즉시 제거
+            if (user) {
+                initializeAndLoadList(user);
+            }
+            return; // 새로고침 했으므로 아래 로직은 건너뜀
+        }
+
+        // 2. BFCache(뒤로가기 캐시)에서 페이지를 불러왔을 때 (기존 로직)
         if (event.persisted && user) {
             initializeAndLoadList(user);
         }
