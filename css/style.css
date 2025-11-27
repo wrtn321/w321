@@ -83,7 +83,7 @@
 .dashboard-container{
     display: flex;
     flex-wrap: wrap;
-    justify-content: left;
+    justify-content: center;
     align-items: stretch;
     padding: 30px 20px;
     gap: 20px;
