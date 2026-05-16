@@ -493,7 +493,7 @@ body.sticky-footer-layout > .main-header .action-btn {
     right: auto;
     left: 50%;
     transform: translateX(-50%);
-    bottom: 80px; /* 채팅 입력창 바로 위에 위치 */
+    bottom: 10px; /* 채팅 입력창 바로 위에 위치 */
     
     width: 35px;
     height: 35px;
