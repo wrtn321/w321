@@ -17,6 +17,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const newFolderBtn = document.querySelector('.new-folder-btn');
     const normalItemList = document.querySelector('.normal-list .item-list');
     const logoutButton = document.querySelector('.logout-button');
+    let folderSection = null;
+    let memoGrid = null;
 
     // --- Firebase 인증 및 데이터 로드 ---
     auth.onAuthStateChanged(async user => {
@@ -78,7 +80,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
         
-        normalItemList.addEventListener('click', e => {
+        document.querySelector('.normal-list').addEventListener('click', e => {
             const li = e.target.closest('.list-item');
             if (!li) return;
             const itemId = li.dataset.id;
@@ -120,9 +122,8 @@ document.addEventListener('DOMContentLoaded', () => {
     function handleFileClick(liElement) {
         const post = posts.find(p => p.id === liElement.dataset.id);
         if (post) {
-            localStorage.setItem('currentPost', JSON.stringify(post));
             localStorage.setItem('currentCategory', currentCategory);
-            window.appNavigate('chat-viewer.html');
+            window.appNavigate(`chat-viewer.html?id=${post.id}`);
         }
     }
 
@@ -204,22 +205,49 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function renderList() {
         if (!normalItemList) return;
+        ensureListLayout();
         const savedState = getSavedListState();
         const savedOpenFolderIds = Array.isArray(savedState.openFolderIds) ? savedState.openFolderIds : [];
         const openFolderIds = new Set([
             ...Array.from(document.querySelectorAll('.list-item.open')).map(li => li.dataset.id),
             ...savedOpenFolderIds
         ]);
-        normalItemList.innerHTML = '';
-        const rootItems = posts.filter(p => !p.parentId || p.parentId === 'root').sort((a, b) => (a.order || 0) - (b.order || 0));
-        rootItems.forEach(item => renderItem(item, normalItemList));
+        folderSection.innerHTML = '';
+        memoGrid.innerHTML = '';
+        const rootItems = posts.filter(p => !p.parentId || p.parentId === 'root').sort(sortRootItems);
+        rootItems.filter(item => item.type === 'folder').forEach(item => renderItem(item, folderSection));
+        rootItems.filter(item => item.type !== 'folder').forEach(item => renderItem(item, memoGrid));
         openFolderIds.forEach(id => {
-            const folderLi = normalItemList.querySelector(`.list-item[data-id="${id}"]`);
+            const folderLi = folderSection.querySelector(`.list-item[data-id="${id}"]`);
             if (folderLi) handleFolderClick(folderLi, false);
         });
         document.querySelectorAll('.sub-list').forEach(initializeSortable);
-        initializeSortable(normalItemList);
+        initializeSortable(folderSection);
+        initializeSortable(memoGrid);
         restoreListScroll();
+    }
+
+    function ensureListLayout() {
+        if (folderSection && memoGrid) return;
+        const normalList = document.querySelector('.normal-list');
+        normalList.innerHTML = `
+            <h4 class="section-title">📂 폴더</h4>
+            <ul class="folder-section item-list"></ul>
+            <h4 class="section-title">📌 고정 및 📝 미분류 채팅</h4>
+            <ul class="memo-grid item-list"></ul>
+        `;
+        folderSection = normalList.querySelector('.folder-section');
+        memoGrid = normalList.querySelector('.memo-grid');
+    }
+
+    function sortRootItems(a, b) {
+        if (a.type === 'folder' && b.type !== 'folder') return -1;
+        if (a.type !== 'folder' && b.type === 'folder') return 1;
+        if (a.type !== 'folder' && b.type !== 'folder') {
+            const pinDiff = Number(Boolean(b.isPinned)) - Number(Boolean(a.isPinned));
+            if (pinDiff) return pinDiff;
+        }
+        return (a.order || 0) - (b.order || 0);
     }
     
     function renderItem(itemData, parentElement) {
@@ -229,7 +257,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (itemData.isPinned) { li.classList.add('pinned'); }
 
         const wrapper = document.createElement('div');
-        wrapper.className = 'item-content-wrapper';
+        wrapper.className = isFolder ? 'item-content-wrapper folder-header' : 'item-content-wrapper memo-item';
 
         const isFolder = itemData.type === 'folder';
         const iconHtml = isFolder ? '<span class="icon-closed">📁</span><span class="icon-open">📂</span>' : '';
@@ -248,8 +276,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (isFolder) {
             li.classList.add('item-folder');
+            li.classList.add('folder-card');
             const subList = document.createElement('ul');
-            subList.className = 'sub-list item-list';
+            subList.className = 'sub-list item-list folder-content';
             li.appendChild(subList);
         }
         parentElement.appendChild(li);
@@ -262,6 +291,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (liElement.classList.contains('open') && subList.children.length === 0) {
             const children = posts.filter(p => p.parentId === liElement.dataset.id).sort((a, b) => (a.order || 0) - (b.order || 0));
             children.forEach(child => renderItem(child, subList));
+            initializeSortable(subList);
         }
         if (withAnimation) saveListState();
     }
@@ -321,7 +351,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function savePinChanges(userId) {
         const batch = db.batch();
-        const listItems = normalItemList.querySelectorAll('.list-item:not(.item-folder)');
+        const listItems = document.querySelectorAll('.normal-list .list-item:not(.item-folder)');
         let hasChanges = false;
         listItems.forEach(li => {
             const postId = li.dataset.id;

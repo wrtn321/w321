@@ -70,7 +70,7 @@ function setupAuthPage(auth) {
     }
 }
 
-async function loadPinnedItems(db, user, cardElement, categoryKey, tabType) {
+async function loadPinnedItems(db, user, cardElement, categoryKey, tabType, tabName) {
     const cardBody = cardElement.querySelector('.card-body');
     if (!cardBody) return;
 
@@ -84,24 +84,27 @@ async function loadPinnedItems(db, user, cardElement, categoryKey, tabType) {
             .where('category', '==', queryCategory)
             .where('isPinned', '==', true)
             .orderBy('order', 'asc')
-            .limit(5)
             .get();
 
-        if (snapshot.empty) {
+        const rootPinnedPosts = snapshot.docs
+            .map(doc => ({ id: doc.id, ...doc.data() }))
+            .filter(post => post.type !== 'folder' && (!post.parentId || post.parentId === 'root'))
+            .slice(0, 5);
+
+        if (rootPinnedPosts.length === 0) {
             cardBody.innerHTML = '<p style="padding: 10px; font-size: 14px; color: #999;">📌 고정된 항목이 없습니다.</p>';
             return;
         }
 
         cardBody.innerHTML = '';
-        snapshot.docs.forEach(doc => {
-            const post = { id: doc.id, ...doc.data() };
+        rootPinnedPosts.forEach(post => {
             const itemLink = document.createElement('a');
             
             if (tabType === 'chat-list') {
-                itemLink.href = 'chat-viewer.html';
+                itemLink.href = `chat-viewer.html?id=${post.id}`;
                 itemLink.textContent = `${post.title}`;
             } else {
-                itemLink.href = 'post.html';
+                itemLink.href = `post.html?id=${post.id}`;
                 itemLink.textContent = `${post.title}`;
             }
 
@@ -112,8 +115,8 @@ async function loadPinnedItems(db, user, cardElement, categoryKey, tabType) {
                     e.preventDefault();
                     return;
                 }
-                localStorage.setItem('currentPost', JSON.stringify(post));
                 localStorage.setItem('currentCategory', queryCategory);
+                localStorage.setItem('currentListTitle', tabName || categoryKey);
             });
             cardBody.appendChild(itemLink);
         });
@@ -155,7 +158,7 @@ async function setupMainPage(db, user) {
                     const tabData = { id: doc.id, ...doc.data() };
                     const card = createTabCard(tabData);
                     dashboardContainer.appendChild(card);
-                    loadPinnedItems(db, user, card, tabData.categoryKey, tabData.type);
+                    loadPinnedItems(db, user, card, tabData.categoryKey, tabData.type, tabData.name);
                 });
             }
         } catch (error) {

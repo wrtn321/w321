@@ -50,7 +50,7 @@ document.addEventListener('DOMContentLoaded', () => {
     auth.onAuthStateChanged(user => {
         if (!user) { window.location.href = 'index.html'; } 
         else {
-            loadChatData();
+            loadChatData(user);
             addPageEventListeners();
             window.addEventListener('scroll', () => {
                 handleHeaderVisibility();
@@ -61,11 +61,34 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // --- 데이터 로드 및 파싱 ---
-    function loadChatData() {
+    async function loadChatData(user) {
+        const params = new URLSearchParams(window.location.search);
+        const postId = params.get('id') || params.get('postId');
+        if (postId) {
+            try {
+                const doc = await db.collection('posts').doc(postId).get();
+                if (!doc.exists || doc.data().userId !== user.uid) {
+                    alert("채팅 기록을 찾을 수 없습니다.");
+                    window.appNavigate('main.html', { replace: true });
+                    return;
+                }
+                currentPost = { id: doc.id, ...doc.data() };
+                localStorage.setItem('currentCategory', currentPost.category || 'chat');
+            } catch (error) {
+                console.error("채팅 기록 로딩 실패:", error);
+                showToast('채팅 기록을 불러오지 못했습니다.');
+                return;
+            }
+        } else {
         const postDataString = localStorage.getItem('currentPost');
-        if (!postDataString) { alert("채팅 기록을 찾을 수 없습니다."); window.location.href = 'main.html'; return; }
+        if (!postDataString) { alert("채팅 기록을 찾을 수 없습니다."); window.appNavigate('main.html', { replace: true }); return; }
 
         currentPost = JSON.parse(postDataString);
+            if (currentPost.id) {
+                window.appNavigate(`chat-viewer.html?id=${currentPost.id}`, { replace: true });
+                return;
+            }
+        }
         viewerTitle.textContent = currentPost.title;
         
         try {
@@ -108,7 +131,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const newContent = JSON.stringify(currentChatData, null, 2);
             await db.collection('posts').doc(currentPost.id).update({ content: newContent });
             currentPost.content = newContent;
-            localStorage.setItem('currentPost', JSON.stringify(currentPost));
             return true;
         } catch (error) {
             console.error("Firestore 업데이트 실패:", error);
@@ -154,7 +176,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     try {
                         await db.collection('posts').doc(currentPost.id).update({ title: newTitle });
                         currentPost.title = newTitle;
-                        localStorage.setItem('currentPost', JSON.stringify(currentPost));
                         showToast('제목이 변경되었습니다.');
                     } catch(err) { showToast('제목 변경에 실패했습니다.'); viewerTitle.textContent = currentTitleText; }
                 }

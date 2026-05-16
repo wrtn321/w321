@@ -227,3 +227,104 @@
     background-color: #f0f0f0;
 }
 
+.section-title {
+    font-size: 14px;
+    color: var(--text-secondary-color);
+    margin: 20px 0 10px 5px;
+    font-weight: 700;
+}
+
+.folder-section {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 15px;
+    margin-bottom: 30px;
+    overflow: visible;
+}
+
+.folder-section > .folder-card {
+    position: relative;
+    padding: 0;
+    border: 1px solid #dce0e4;
+    border-radius: 8px;
+    background: var(--surface-color);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    overflow: visible;
+    z-index: 1;
+}
+
+.folder-section > .folder-card.open {
+    z-index: 20;
+}
+
+.folder-header {
+    min-height: 48px;
+    padding: 12px 14px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.folder-card > .folder-content {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    z-index: 30;
+    max-height: 320px;
+    overflow-y: auto;
+    padding: 10px;
+    border: 1px solid #e1e4e8;
+    border-radius: 8px;
+    background: #f9fafc;
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.12);
+}
+
+.folder-card .sub-list .list-item {
+    padding: 0;
+    border-bottom: none;
+}
+
+.folder-card .sub-list .item-content-wrapper {
+    margin-bottom: 6px;
+    padding: 8px 10px;
+    border: 1px solid #e1e4e8;
+    border-radius: 6px;
+    background: #fff;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+    font-size: 13px;
+}
+
+.memo-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 10px;
+}
+
+.memo-grid > .list-item {
+    padding: 0;
+    border-bottom: none;
+}
+
+.memo-grid .memo-item {
+    min-height: 42px;
+    padding: 10px;
+    border: 1px solid #e1e4e8;
+    border-radius: 8px;
+    background: var(--surface-color);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.memo-grid .list-item.pinned .memo-item {
+    border-color: #ffd54f;
+    background: #fffdf0;
+}
+
+.memo-grid .item-title,
+.folder-card .item-title {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+

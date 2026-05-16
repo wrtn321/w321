@@ -33,15 +33,17 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!user) {
             window.location.href = 'index.html';
         } else {
+            loadPostData(user);
             window.addEventListener('scroll', handleHeaderVisibility);
         }
     });
 
     // --- 페이지 로드 및 데이터 처리 ---
-    function loadPostData() {
+    async function loadPostData(user) {
         const params = new URLSearchParams(window.location.search);
         const isNewPost = params.get('new') === 'true';
         const categoryFromURL = params.get('category');
+        const postId = params.get('id') || params.get('postId');
         
         if (categoryFromURL) {
             localStorage.setItem('currentCategory', categoryFromURL);
@@ -50,16 +52,37 @@ document.addEventListener('DOMContentLoaded', () => {
         if (isNewPost && categoryFromURL) {
             currentPost = { title: '', content: '', category: categoryFromURL, isPinned: false };
             toggleMode('edit');
+        } else if (postId) {
+            try {
+                const doc = await db.collection('posts').doc(postId).get();
+                if (!doc.exists || doc.data().userId !== user.uid) {
+                    alert("게시글 정보를 찾을 수 없습니다.");
+                    window.appNavigate('main.html', { replace: true });
+                    return;
+                }
+                currentPost = { id: doc.id, ...doc.data() };
+                localStorage.setItem('currentCategory', currentPost.category);
+                viewTitle.textContent = currentPost.title;
+                viewContent.innerHTML = parseMarkdown(currentPost.content || '');
+                toggleMode('view');
+            } catch (error) {
+                console.error("게시글 로딩 실패:", error);
+                showToast('게시글을 불러오지 못했습니다.');
+            }
         } else {
             const postDataString = localStorage.getItem('currentPost');
             if (postDataString) {
                 currentPost = JSON.parse(postDataString);
+                if (currentPost.id) {
+                    window.appNavigate(`post.html?id=${currentPost.id}`, { replace: true });
+                    return;
+                }
                 viewTitle.textContent = currentPost.title;
                 viewContent.innerHTML = parseMarkdown(currentPost.content || '');
                 toggleMode('view');
             } else {
                 alert("게시글 정보를 찾을 수 없습니다.");
-                window.location.href = 'main.html';
+                window.appNavigate('main.html', { replace: true });
             }
         }
         updateCharCount();
@@ -191,7 +214,9 @@ document.addEventListener('DOMContentLoaded', () => {
             currentPost = { ...currentPost, ...dataToSave };
             viewTitle.textContent = currentPost.title;
             viewContent.innerHTML = parseMarkdown(currentPost.content || '');
-            localStorage.setItem('currentPost', JSON.stringify(currentPost));
+            if (currentPost.id && !new URLSearchParams(window.location.search).get('id')) {
+                window.history.replaceState(null, '', `post.html?id=${currentPost.id}`);
+            }
             
             showToast('저장되었습니다.');
             toggleMode('view');
@@ -216,5 +241,4 @@ document.addEventListener('DOMContentLoaded', () => {
         lastScrollY = currentScrollY;
     }
 
-    loadPostData();
 });
