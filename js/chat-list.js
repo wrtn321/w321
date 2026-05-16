@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const postsCollection = db.collection('posts');
     const currentCategory = 'chat'; // 이 스크립트는 항상 'chat' 카테고리만 다룹니다.
     let posts = [];
+    let hasRestoredListState = false;
 
     // --- HTML 요소 가져오기 ---
     const listContainer = document.querySelector('.list-container');
@@ -28,6 +29,9 @@ document.addEventListener('DOMContentLoaded', () => {
             window.location.href = 'index.html';
         }
     });
+
+    window.addEventListener('app:beforeNavigate', saveListState);
+    window.addEventListener('pagehide', saveListState);
 
     function initializePage() {
         // localStorage에 저장된 제목이 있으면 사용하고, 없으면 기본 제목을 사용합니다.
@@ -118,8 +122,39 @@ document.addEventListener('DOMContentLoaded', () => {
         if (post) {
             localStorage.setItem('currentPost', JSON.stringify(post));
             localStorage.setItem('currentCategory', currentCategory);
-            window.location.href = 'chat-viewer.html';
+            window.appNavigate('chat-viewer.html');
         }
+    }
+
+    function getListStateKey() {
+        return `listState_${currentCategory}`;
+    }
+
+    function getOpenFolderIds() {
+        return Array.from(document.querySelectorAll('.list-item.item-folder.open')).map(li => li.dataset.id);
+    }
+
+    function getSavedListState() {
+        try {
+            return JSON.parse(localStorage.getItem(getListStateKey()) || '{}');
+        } catch (error) {
+            return {};
+        }
+    }
+
+    function saveListState() {
+        localStorage.setItem(getListStateKey(), JSON.stringify({
+            scrollY: window.scrollY,
+            openFolderIds: getOpenFolderIds()
+        }));
+    }
+
+    function restoreListScroll() {
+        if (hasRestoredListState) return;
+        hasRestoredListState = true;
+        const state = getSavedListState();
+        if (typeof state.scrollY !== 'number') return;
+        requestAnimationFrame(() => window.scrollTo(0, state.scrollY));
     }
     
     function handleJsonUpload() {
@@ -169,7 +204,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function renderList() {
         if (!normalItemList) return;
-        const openFolderIds = new Set(Array.from(document.querySelectorAll('.list-item.open')).map(li => li.dataset.id));
+        const savedState = getSavedListState();
+        const savedOpenFolderIds = Array.isArray(savedState.openFolderIds) ? savedState.openFolderIds : [];
+        const openFolderIds = new Set([
+            ...Array.from(document.querySelectorAll('.list-item.open')).map(li => li.dataset.id),
+            ...savedOpenFolderIds
+        ]);
         normalItemList.innerHTML = '';
         const rootItems = posts.filter(p => !p.parentId || p.parentId === 'root').sort((a, b) => (a.order || 0) - (b.order || 0));
         rootItems.forEach(item => renderItem(item, normalItemList));
@@ -179,6 +219,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         document.querySelectorAll('.sub-list').forEach(initializeSortable);
         initializeSortable(normalItemList);
+        restoreListScroll();
     }
     
     function renderItem(itemData, parentElement) {
@@ -222,6 +263,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const children = posts.filter(p => p.parentId === liElement.dataset.id).sort((a, b) => (a.order || 0) - (b.order || 0));
             children.forEach(child => renderItem(child, subList));
         }
+        if (withAnimation) saveListState();
     }
 
     async function handleNewFolder(userId) {

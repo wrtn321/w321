@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const postsCollection = db.collection('posts');
     let currentCategory = '';
     let posts = [];
+    let hasRestoredListState = false;
     
     // --- HTML 요소 가져오기 ---
     const listContainer = document.querySelector('.list-container');
@@ -29,6 +30,9 @@ document.addEventListener('DOMContentLoaded', () => {
             window.location.href = 'index.html';
         }
     });
+
+    window.addEventListener('app:beforeNavigate', saveListState);
+    window.addEventListener('pagehide', saveListState);
 
     function initializePage() {
         const params = new URLSearchParams(window.location.search);
@@ -71,7 +75,7 @@ document.addEventListener('DOMContentLoaded', () => {
         newFolderBtn.addEventListener('click', () => handleNewFolder(user.uid));
         
         newPostBtn.addEventListener('click', () => {
-            window.location.href = `post.html?category=${currentCategory}&new=true`;
+            window.appNavigate(`post.html?category=${currentCategory}&new=true`);
         });
         
         pinEditBtn.addEventListener('click', () => {
@@ -134,13 +138,50 @@ document.addEventListener('DOMContentLoaded', () => {
         if (post) {
             localStorage.setItem('currentPost', JSON.stringify(post));
             localStorage.setItem('currentCategory', currentCategory);
-            window.location.href = 'post.html';
+            window.appNavigate('post.html');
         }
+    }
+
+    function getListStateKey() {
+        return `listState_${currentCategory || 'unknown'}`;
+    }
+
+    function getOpenFolderIds() {
+        return Array.from(document.querySelectorAll('.list-item.item-folder.open')).map(li => li.dataset.id);
+    }
+
+    function getSavedListState() {
+        try {
+            return JSON.parse(localStorage.getItem(getListStateKey()) || '{}');
+        } catch (error) {
+            return {};
+        }
+    }
+
+    function saveListState() {
+        if (!currentCategory) return;
+        localStorage.setItem(getListStateKey(), JSON.stringify({
+            scrollY: window.scrollY,
+            openFolderIds: getOpenFolderIds()
+        }));
+    }
+
+    function restoreListScroll() {
+        if (hasRestoredListState) return;
+        hasRestoredListState = true;
+        const state = getSavedListState();
+        if (typeof state.scrollY !== 'number') return;
+        requestAnimationFrame(() => window.scrollTo(0, state.scrollY));
     }
 
     function renderList() {
         if (!normalItemList) return;
-        const openFolderIds = new Set(Array.from(document.querySelectorAll('.list-item.open')).map(li => li.dataset.id));
+        const savedState = getSavedListState();
+        const savedOpenFolderIds = Array.isArray(savedState.openFolderIds) ? savedState.openFolderIds : [];
+        const openFolderIds = new Set([
+            ...Array.from(document.querySelectorAll('.list-item.open')).map(li => li.dataset.id),
+            ...savedOpenFolderIds
+        ]);
         normalItemList.innerHTML = '';
         const rootItems = posts.filter(p => !p.parentId || p.parentId === 'root').sort((a, b) => (a.order || 0) - (b.order || 0));
         rootItems.forEach(item => renderItem(item, normalItemList));
@@ -150,6 +191,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         document.querySelectorAll('.sub-list').forEach(initializeSortable);
         initializeSortable(normalItemList);
+        restoreListScroll();
     }
     
     function renderItem(itemData, parentElement) {
@@ -197,6 +239,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const children = posts.filter(p => p.parentId === liElement.dataset.id).sort((a, b) => (a.order || 0) - (b.order || 0));
             children.forEach(child => renderItem(child, subList));
         }
+        if (withAnimation) saveListState();
     }
 
     async function savePinChanges(userId) {

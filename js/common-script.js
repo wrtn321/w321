@@ -2,6 +2,17 @@
 
 document.addEventListener('DOMContentLoaded', () => {
 
+    const normalizePath = (path) => path.replace(/\\/g, '/');
+
+    window.appNavigate = (url, options = {}) => {
+        window.dispatchEvent(new CustomEvent('app:beforeNavigate'));
+        if (options.replace) {
+            window.location.replace(url);
+        } else {
+            window.location.href = url;
+        }
+    };
+
     /**
      * 토스트(Toast) 알림을 화면에 표시하는 전역 함수
      * @param {string} message - 표시할 메시지 내용
@@ -70,24 +81,40 @@ document.addEventListener('DOMContentLoaded', () => {
 
         backBtn.addEventListener('click', () => {
             const path = window.location.pathname;
+            let targetUrl = null;
 
             if (path.includes('post.html')) {
                 // post.html 에서는 해당 글의 카테고리 목록으로 이동합니다.
                 const category = localStorage.getItem('currentCategory');
                 if (category) {
-                    window.location.href = `list.html?category=${category}`;
+                    targetUrl = `list.html?category=${category}`;
                 } else {
-                    window.location.href = 'main.html'; // 카테고리 정보가 없으면 메인으로
+                    targetUrl = 'main.html'; // 카테고리 정보가 없으면 메인으로
                 }
             } else if (path.includes('chat-viewer.html')) {
                 // chat-viewer.html 에서는 항상 chat-list.html 로 이동합니다.
-                window.location.href = 'chat-list.html';
+                targetUrl = 'chat-list.html';
             } else if (path.includes('list.html') || path.includes('chat-list.html')) {
                 // 목록 페이지에서는 main.html 로 이동합니다.
-                window.location.href = 'main.html';
+                targetUrl = 'main.html';
             } else {
                 // 그 외의 경우, 기존처럼 뒤로가기 기능을 수행합니다.
                 history.back();
+                return;
+            }
+
+            const referrer = document.referrer ? new URL(document.referrer, window.location.href) : null;
+            const target = new URL(targetUrl, window.location.href);
+            const cameFromTarget = referrer
+                && referrer.origin === window.location.origin
+                && normalizePath(referrer.pathname) === normalizePath(target.pathname)
+                && referrer.search === target.search;
+
+            if (cameFromTarget && history.length > 1) {
+                window.dispatchEvent(new CustomEvent('app:beforeNavigate'));
+                history.back();
+            } else {
+                window.appNavigate(targetUrl, { replace: true });
             }
         });
     };
