@@ -86,18 +86,24 @@ async function loadPinnedItems(db, user, cardElement, categoryKey, tabType, tabN
             .orderBy('order', 'asc')
             .get();
 
-        const rootPinnedPosts = snapshot.docs
+        const pinnedPosts = snapshot.docs
             .map(doc => ({ id: doc.id, ...doc.data() }))
-            .filter(post => post.type !== 'folder' && (!post.parentId || post.parentId === 'root'))
+            .filter(post => post.type !== 'folder')
+            .sort((a, b) => {
+                const aInFolder = a.parentId && a.parentId !== 'root';
+                const bInFolder = b.parentId && b.parentId !== 'root';
+                if (aInFolder !== bInFolder) return aInFolder ? -1 : 1;
+                return (a.order || 0) - (b.order || 0);
+            })
             .slice(0, 5);
 
-        if (rootPinnedPosts.length === 0) {
+        if (pinnedPosts.length === 0) {
             cardBody.innerHTML = '<p style="padding: 10px; font-size: 14px; color: #999;">📌 고정된 항목이 없습니다.</p>';
             return;
         }
 
         cardBody.innerHTML = '';
-        rootPinnedPosts.forEach(post => {
+        pinnedPosts.forEach(post => {
             const itemLink = document.createElement('a');
             
             if (tabType === 'chat-list') {
@@ -117,6 +123,7 @@ async function loadPinnedItems(db, user, cardElement, categoryKey, tabType, tabN
                 }
                 localStorage.setItem('currentCategory', queryCategory);
                 localStorage.setItem('currentListTitle', tabName || categoryKey);
+                localStorage.setItem('currentListTitleCategory', queryCategory);
             });
             cardBody.appendChild(itemLink);
         });
@@ -194,6 +201,7 @@ async function setupMainPage(db, user) {
                 editTabName(card);
             } else {
                 localStorage.setItem('currentListTitle', tabData.name);
+                localStorage.setItem('currentListTitleCategory', tabData.type === 'chat-list' ? 'chat' : tabData.categoryKey);
             }
         });
 
@@ -203,6 +211,7 @@ async function setupMainPage(db, user) {
         card.querySelector('.new-button').addEventListener('click', () => {
             // 항상 목록 제목을 먼저 저장합니다.
             localStorage.setItem('currentListTitle', tabData.name);
+            localStorage.setItem('currentListTitleCategory', tabData.type === 'chat-list' ? 'chat' : tabData.categoryKey);
             
             if (tabData.type === 'chat-list') {
                  window.location.href = 'chat-list.html'; // chat-list는 새 글 만들기가 없으므로 목록으로 이동

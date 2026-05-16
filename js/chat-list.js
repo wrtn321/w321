@@ -5,9 +5,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const db = firebase.firestore();
 
     const postsCollection = db.collection('posts');
+    const tabsCollection = db.collection('tabs');
     const currentCategory = 'chat'; // 이 스크립트는 항상 'chat' 카테고리만 다룹니다.
     let posts = [];
     let hasRestoredListState = false;
+    let moveTargetsLoaded = false;
 
     // --- HTML 요소 가져오기 ---
     const listContainer = document.querySelector('.list-container');
@@ -37,7 +39,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function initializePage() {
         // localStorage에 저장된 제목이 있으면 사용하고, 없으면 기본 제목을 사용합니다.
-        listTitle.textContent = localStorage.getItem('currentListTitle') || '채팅 목록';
+        const titleCategory = localStorage.getItem('currentListTitleCategory');
+        listTitle.textContent = titleCategory === currentCategory ? localStorage.getItem('currentListTitle') : '채팅 목록';
     }
 
     async function fetchPosts(userId) {
@@ -63,7 +66,9 @@ document.addEventListener('DOMContentLoaded', () => {
             auth.signOut().then(() => window.location.href = 'index.html');
         });
 
-        newFolderBtn.addEventListener('click', () => handleNewFolder(user.uid));
+        newFolderBtn.textContent = '✎';
+        newFolderBtn.title = '이동 및 폴더 편집';
+        newFolderBtn.addEventListener('click', () => toggleMoveEditMode(user.uid));
         newPostBtn.addEventListener('click', handleJsonUpload);
         
         pinEditBtn.addEventListener('click', () => {
@@ -93,6 +98,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 }
                 return; // 편집 모드에서는 페이지 이동 방지
+            }
+
+            if (listContainer.classList.contains('move-edit-mode')) {
+                if (e.target.closest('.move-checkbox')) return;
+                const checkbox = li.querySelector('.move-checkbox');
+                if (checkbox) checkbox.checked = !checkbox.checked;
+                return;
             }
 
             if (e.target.classList.contains('edit-folder-btn')) {
@@ -204,7 +216,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function renderList() {
-        if (!normalItemList) return;
+        if (!document.querySelector('.normal-list')) return;
         ensureListLayout();
         const savedState = getSavedListState();
         const savedOpenFolderIds = Array.isArray(savedState.openFolderIds) ? savedState.openFolderIds : [];
@@ -234,6 +246,11 @@ document.addEventListener('DOMContentLoaded', () => {
             <h4 class="section-title">📂 폴더</h4>
             <ul class="folder-section item-list"></ul>
             <h4 class="section-title">📌 고정 및 📝 미분류 채팅</h4>
+            <div class="move-edit-panel" hidden>
+                <select class="move-target-select"></select>
+                <button type="button" class="move-selected-btn">선택 이동</button>
+                <button type="button" class="create-folder-btn">+ 폴더</button>
+            </div>
             <ul class="memo-grid item-list"></ul>
         `;
         folderSection = normalList.querySelector('.folder-section');
@@ -256,16 +273,16 @@ document.addEventListener('DOMContentLoaded', () => {
         li.dataset.id = itemData.id;
         if (itemData.isPinned) { li.classList.add('pinned'); }
 
+        const isFolder = itemData.type === 'folder';
         const wrapper = document.createElement('div');
         wrapper.className = isFolder ? 'item-content-wrapper folder-header' : 'item-content-wrapper memo-item';
-
-        const isFolder = itemData.type === 'folder';
-        const iconHtml = isFolder ? '<span class="icon-closed">📁</span><span class="icon-open">📂</span>' : '';
+        const iconHtml = isFolder ? '<span class="icon-closed">📁</span><span class="icon-open">📂</span>' : '📝';
         const pinCheckboxHTML = isFolder ? '' : `<input type="checkbox" class="pin-checkbox" ${itemData.isPinned ? 'checked' : ''}>`;
         const pinIndicatorHTML = isFolder ? '' : '<span class="pin-indicator">📌</span>';
         
         wrapper.innerHTML = `
             <span class="drag-handle">⠿</span>
+            <input type="checkbox" class="move-checkbox" data-id="${itemData.id}">
             ${pinCheckboxHTML}
             ${pinIndicatorHTML}
             <span class="item-icon">${iconHtml}</span>
@@ -311,6 +328,107 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch(error) {
             console.error("폴더 추가 실패:", error);
             showToast('폴더 추가에 실패했습니다.');
+        }
+    }
+
+    async function toggleMoveEditMode(userId) {
+        const isEditing = listContainer.classList.toggle('move-edit-mode');
+        const panel = document.querySelector('.move-edit-panel');
+        if (!panel) return;
+        panel.hidden = !isEditing;
+        newFolderBtn.classList.toggle('editing', isEditing);
+        newFolderBtn.textContent = isEditing ? '✓' : '✎';
+
+        if (isEditing) {
+            if (!moveTargetsLoaded) await populateMoveTargets(userId);
+            bindMovePanel(userId);
+        }
+    }
+
+    async function populateMoveTargets(userId) {
+        const select = document.querySelector('.move-target-select');
+        if (!select) return;
+        select.innerHTML = '<option value="root">현재 탭 / 미분류</option>';
+
+        posts
+            .filter(post => post.type === 'folder')
+            .sort((a, b) => (a.order || 0) - (b.order || 0))
+            .forEach(folder => select.appendChild(new Option(`현재 탭 / ${folder.title}`, `${currentCategory}|${folder.id}`)));
+
+        try {
+            const tabSnapshot = await tabsCollection.where('userId', '==', userId).orderBy('order', 'asc').get();
+            for (const tabDoc of tabSnapshot.docs) {
+                const tab = tabDoc.data();
+                const category = tab.type === 'chat-list' ? 'chat' : tab.categoryKey;
+                if (!category || category === currentCategory) continue;
+                select.appendChild(new Option(`${tab.name} / 미분류`, `${category}|root`));
+
+                const folderSnapshot = await postsCollection
+                    .where('userId', '==', userId)
+                    .where('category', '==', category)
+                    .where('type', '==', 'folder')
+                    .orderBy('order', 'asc')
+                    .get();
+                folderSnapshot.docs.forEach(doc => {
+                    const folder = doc.data();
+                    select.appendChild(new Option(`${tab.name} / ${folder.title}`, `${category}|${doc.id}`));
+                });
+            }
+        } catch (error) {
+            console.error('이동 대상 로딩 실패:', error);
+        }
+
+        moveTargetsLoaded = true;
+    }
+
+    function bindMovePanel(userId) {
+        const panel = document.querySelector('.move-edit-panel');
+        if (!panel || panel.dataset.bound) return;
+        panel.dataset.bound = 'true';
+        panel.querySelector('.move-selected-btn').addEventListener('click', () => moveSelectedItems(userId));
+        panel.querySelector('.create-folder-btn').addEventListener('click', async () => {
+            await handleNewFolder(userId);
+            moveTargetsLoaded = false;
+            await populateMoveTargets(userId);
+        });
+    }
+
+    async function moveSelectedItems(userId) {
+        const selectedIds = Array.from(document.querySelectorAll('.move-checkbox:checked')).map(input => input.dataset.id);
+        if (selectedIds.length === 0) {
+            showToast('이동할 항목을 선택해주세요.');
+            return;
+        }
+
+        const select = document.querySelector('.move-target-select');
+        const [targetCategory, targetParentId] = (select.value === 'root' ? `${currentCategory}|root` : select.value).split('|');
+        if (selectedIds.includes(targetParentId)) {
+            showToast('선택한 폴더 안으로 자기 자신을 이동할 수 없습니다.');
+            return;
+        }
+        const batch = db.batch();
+        selectedIds.forEach((id, index) => {
+            batch.update(postsCollection.doc(id), {
+                category: targetCategory,
+                parentId: targetParentId,
+                order: Date.now() + index
+            });
+            const selectedItem = posts.find(post => post.id === id);
+            if (selectedItem?.type === 'folder') {
+                posts
+                    .filter(post => post.parentId === id)
+                    .forEach(child => batch.update(postsCollection.doc(child.id), { category: targetCategory }));
+            }
+        });
+
+        try {
+            await batch.commit();
+            showToast('선택한 항목을 이동했습니다.');
+            await fetchPosts(userId);
+            renderList();
+        } catch (error) {
+            console.error('항목 이동 실패:', error);
+            showToast('이동에 실패했습니다.');
         }
     }
 

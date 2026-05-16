@@ -1,10 +1,10 @@
-// js/chat-viewer.js (맨 아래로 가기 버튼 기능까지 모두 통합된 최종 완성본)
+﻿// js/chat-viewer.js (留??꾨옒濡?媛湲?踰꾪듉 湲곕뒫源뚯? 紐⑤몢 ?듯빀??理쒖쥌 ?꾩꽦蹂?
 
 document.addEventListener('DOMContentLoaded', () => {
     const auth = firebase.auth();
     const db = firebase.firestore();
 
-    // --- 전역 변수 ---
+    // --- ?꾩뿭 蹂??---
     let currentPost = null;
     let currentChatData = {};
     let lastScrollY = 0;
@@ -12,7 +12,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let longPressTimer;
     let currentRole = 'user';
 
-    // --- HTML 요소 가져오기 ---
+    // --- HTML ?붿냼 媛?몄삤湲?---
     const header = document.querySelector('.main-header');
     const viewerTitle = document.getElementById('viewer-title');
     const chatLogContainer = document.getElementById('chat-log-container');
@@ -46,7 +46,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const addMessageBtn = document.getElementById('add-message-btn');
     let toastTimer;
 
-    // --- 초기화 ---
+    // --- 珥덇린??---
     auth.onAuthStateChanged(user => {
         if (!user) { window.location.href = 'index.html'; } 
         else {
@@ -60,7 +60,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // --- 데이터 로드 및 파싱 ---
+    // --- ?곗씠??濡쒕뱶 諛??뚯떛 ---
     async function loadChatData(user) {
         const params = new URLSearchParams(window.location.search);
         const postId = params.get('id') || params.get('postId');
@@ -68,20 +68,20 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 const doc = await db.collection('posts').doc(postId).get();
                 if (!doc.exists || doc.data().userId !== user.uid) {
-                    alert("채팅 기록을 찾을 수 없습니다.");
+                    alert("梨꾪똿 湲곕줉??李얠쓣 ???놁뒿?덈떎.");
                     window.appNavigate('main.html', { replace: true });
                     return;
                 }
                 currentPost = { id: doc.id, ...doc.data() };
                 localStorage.setItem('currentCategory', currentPost.category || 'chat');
             } catch (error) {
-                console.error("채팅 기록 로딩 실패:", error);
-                showToast('채팅 기록을 불러오지 못했습니다.');
+                console.error("梨꾪똿 湲곕줉 濡쒕뵫 ?ㅽ뙣:", error);
+                showToast('梨꾪똿 湲곕줉??遺덈윭?ㅼ? 紐삵뻽?듬땲??');
                 return;
             }
         } else {
         const postDataString = localStorage.getItem('currentPost');
-        if (!postDataString) { alert("채팅 기록을 찾을 수 없습니다."); window.appNavigate('main.html', { replace: true }); return; }
+        if (!postDataString) { alert("梨꾪똿 湲곕줉??李얠쓣 ???놁뒿?덈떎."); window.appNavigate('main.html', { replace: true }); return; }
 
         currentPost = JSON.parse(postDataString);
             if (currentPost.id) {
@@ -99,21 +99,23 @@ document.addEventListener('DOMContentLoaded', () => {
             renderInfoPanel();
 
             const savedMemo = localStorage.getItem(`memo_${currentPost.id}`) || '';
-            memoTextarea.value = savedMemo;
-            memoCharCounter.textContent = `${savedMemo.length}자`;
+            if (memoTextarea && memoCharCounter) {
+                memoTextarea.value = savedMemo;
+                memoCharCounter.textContent = `${savedMemo.length}자`;
+            }
 
         } catch (error) {
-            console.error("채팅 데이터 파싱 오류:", error);
-            chatLogContainer.innerHTML = `<p style="text-align: center; color: red;">채팅 기록을 불러올 수 없습니다.</p>`;
+            console.error("梨꾪똿 ?곗씠???뚯떛 ?ㅻ쪟:", error);
+            chatLogContainer.innerHTML = `<p style="text-align: center; color: red;">梨꾪똿 湲곕줉??遺덈윭?????놁뒿?덈떎.</p>`;
         }
     }
     
-    // --- 렌더링 함수 ---
+    // --- ?뚮뜑留??⑥닔 ---
     function renderInfoPanel() {
         personaNameEl.textContent = currentChatData.userPersona?.name || '프로필';
         personaInfoEl.textContent = currentChatData.userPersona?.information || '정보 없음';
         personaTextarea.value = currentChatData.userPersona?.information || '';
-        usernoteInfoEl.textContent = currentChatData.userNote || '유저노트가 없습니다.';
+        usernoteInfoEl.textContent = currentChatData.userNote || '유저 노트가 없습니다.';
         usernoteTextarea.value = currentChatData.userNote || '';
     }
 
@@ -125,7 +127,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- 데이터 저장 함수 ---
+    // --- ?곗씠??????⑥닔 ---
     async function updateFirestoreContent() {
         try {
             const newContent = JSON.stringify(currentChatData, null, 2);
@@ -133,13 +135,13 @@ document.addEventListener('DOMContentLoaded', () => {
             currentPost.content = newContent;
             return true;
         } catch (error) {
-            console.error("Firestore 업데이트 실패:", error);
-            showToast('저장에 실패했습니다.');
+            console.error("Firestore ?낅뜲?댄듃 ?ㅽ뙣:", error);
+            showToast('??μ뿉 ?ㅽ뙣?덉뒿?덈떎.');
             return false;
         }
     }
 
-    // --- 이벤트 리스너 설정 ---
+    // --- ?대깽??由ъ뒪???ㅼ젙 ---
     function addPageEventListeners() {
         const openPanel = () => { infoPanelOverlay.classList.remove('hidden'); infoPanel.classList.remove('hidden'); };
         const closePanel = () => { infoPanelOverlay.classList.add('hidden'); infoPanel.classList.add('hidden'); };
@@ -157,8 +159,10 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
         
-        memoTextarea.addEventListener('input', () => { memoCharCounter.textContent = `${memoTextarea.value.length}자`; });
-        memoSaveBtn.addEventListener('click', () => { localStorage.setItem(`memo_${currentPost.id}`, memoTextarea.value); showToast('메모가 저장되었습니다!'); });
+        if (memoTextarea && memoCharCounter && memoSaveBtn) {
+            memoTextarea.addEventListener('input', () => { memoCharCounter.textContent = `${memoTextarea.value.length}자`; });
+            memoSaveBtn.addEventListener('click', () => { localStorage.setItem(`memo_${currentPost.id}`, memoTextarea.value); showToast('메모가 저장되었습니다!'); });
+        }
         
         viewerTitle.addEventListener('click', () => {
             if (document.querySelector('.title-edit-input')) return;
@@ -176,8 +180,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     try {
                         await db.collection('posts').doc(currentPost.id).update({ title: newTitle });
                         currentPost.title = newTitle;
-                        showToast('제목이 변경되었습니다.');
-                    } catch(err) { showToast('제목 변경에 실패했습니다.'); viewerTitle.textContent = currentTitleText; }
+                        showToast('?쒕ぉ??蹂寃쎈릺?덉뒿?덈떎.');
+                    } catch(err) { showToast('?쒕ぉ 蹂寃쎌뿉 ?ㅽ뙣?덉뒿?덈떎.'); viewerTitle.textContent = currentTitleText; }
                 }
             };
             input.addEventListener('blur', saveNewTitle);
@@ -194,46 +198,46 @@ document.addEventListener('DOMContentLoaded', () => {
         personaContent.querySelector('#save-persona-btn').addEventListener('click', async () => {
             if (!currentChatData.userPersona) { currentChatData.userPersona = { name: '프로필', information: '' }; }
             currentChatData.userPersona.information = personaTextarea.value;
-            if (await updateFirestoreContent()) { renderInfoPanel(); toggleEditMode('view', 'persona'); showToast('프로필 정보가 저장되었습니다.'); }
+            if (await updateFirestoreContent()) { renderInfoPanel(); toggleEditMode('view', 'persona'); showToast('?꾨줈???뺣낫媛 ??λ릺?덉뒿?덈떎.'); }
         });
 
         editUsernoteBtn.addEventListener('click', () => toggleEditMode('edit', 'usernote'));
         usernoteContent.querySelector('#cancel-usernote-btn').addEventListener('click', () => { renderInfoPanel(); toggleEditMode('view', 'usernote'); });
         usernoteContent.querySelector('#save-usernote-btn').addEventListener('click', async () => {
             currentChatData.userNote = usernoteTextarea.value;
-            if (await updateFirestoreContent()) { renderInfoPanel(); toggleEditMode('view', 'usernote'); showToast('유저노트가 저장되었습니다.'); }
+            if (await updateFirestoreContent()) { renderInfoPanel(); toggleEditMode('view', 'usernote'); showToast('?좎??명듃媛 ??λ릺?덉뒿?덈떎.'); }
         });
 
         downloadJsonBtn.addEventListener('click', (e) => { e.preventDefault(); const title = (currentPost.title.trim() || 'chat').normalize('NFC'); downloadFile(currentPost.content, title + '.json', 'application/json'); closePanel(); });
         downloadTxtBtn.addEventListener('click', (e) => { e.preventDefault(); const title = (currentPost.title.trim() || 'chat').normalize('NFC'); downloadFile(generateTxtFromChat(), title + '.txt', 'text/plain'); closePanel(); });
         
-        // ▼▼▼ [수정] 삭제 버튼 클릭 이벤트 ▼▼▼
         dropdownDeleteBtn.addEventListener('click', async (e) => {
             e.preventDefault();
             closePanel();
             if (!currentPost.id) return;
-            if (confirm('정말로 이 채팅 기록을 삭제하시겠습니까?')) {
+            if (confirm('?뺣쭚濡???梨꾪똿 湲곕줉????젣?섏떆寃좎뒿?덇퉴?')) {
                 try {
-                    // 1. Firestore에서 삭제를 기다립니다.
+                    // 1. Firestore?먯꽌 ??젣瑜?湲곕떎由쎈땲??
                     await db.collection('posts').doc(currentPost.id).delete();
                     
-                    // 2. 관련 로컬 데이터를 지웁니다.
+                    // 2. 愿??濡쒖뺄 ?곗씠?곕? 吏?곷땲??
                     localStorage.removeItem('currentPost');
                     localStorage.removeItem(`memo_${currentPost.id}`);
                     
-                    // 3. 삭제 완료 후, 채팅 목록 페이지로 직접 이동합니다.
+                    // 3. ??젣 ?꾨즺 ?? 梨꾪똿 紐⑸줉 ?섏씠吏濡?吏곸젒 ?대룞?⑸땲??
                     window.location.href = 'chat-list.html';
 
                 } catch (error) { 
-                    console.error("삭제 실패:", error); 
-                    showToast('삭제에 실패했습니다.'); 
+                    console.error("??젣 ?ㅽ뙣:", error); 
+                    showToast('??젣???ㅽ뙣?덉뒿?덈떎.'); 
                 }
             }
         });
 
+        if (roleToggleBtn && addMessageBtn && newMessageInput) {
         roleToggleBtn.addEventListener('click', () => {
-            if (currentRole === 'user') { currentRole = 'assistant'; roleToggleBtn.textContent = '🤖'; roleToggleBtn.title = '역할 전환 (현재: 어시스턴트)'; } 
-            else { currentRole = 'user'; roleToggleBtn.textContent = '👤'; roleToggleBtn.title = '역할 전환 (현재: 유저)'; }
+            if (currentRole === 'user') { currentRole = 'assistant'; roleToggleBtn.textContent = '?쨼'; roleToggleBtn.title = '??븷 ?꾪솚 (?꾩옱: ?댁떆?ㅽ꽩??'; } 
+            else { currentRole = 'user'; roleToggleBtn.textContent = '?뫀'; roleToggleBtn.title = '??븷 ?꾪솚 (?꾩옱: ?좎?)'; }
         });
         addMessageBtn.addEventListener('click', async () => {
             const messageText = newMessageInput.value.trim();
@@ -244,11 +248,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 newMessageInput.value = '';
                 autoResizeInput();
                 window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
-                showToast('메시지가 추가되었습니다.');
+                showToast('硫붿떆吏媛 異붽??섏뿀?듬땲??');
             }
         });
         const autoResizeInput = () => { newMessageInput.style.height = 'auto'; newMessageInput.style.height = newMessageInput.scrollHeight + 'px'; };
         newMessageInput.addEventListener('input', autoResizeInput);
+        }
 
         scrollToBottomBtn.addEventListener('click', () => {
             window.scrollTo({
@@ -258,7 +263,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- 동적 UI 생성 및 이벤트 바인딩 ---
+    // --- ?숈쟻 UI ?앹꽦 諛??대깽??諛붿씤??---
     function createMessageBubble(message, index) {
         const bubble = document.createElement('div');
         bubble.className = `message-bubble ${message.role}-message`;
@@ -271,10 +276,10 @@ document.addEventListener('DOMContentLoaded', () => {
         editContent.value = message.content || '';
         const editActions = document.createElement('div');
         editActions.className = 'edit-actions';
-        editActions.innerHTML = `<button class="save-edit-btn" title="저장">✓</button><button class="cancel-edit-btn" title="취소">✕</button>`;
+        editActions.innerHTML = `<button class="save-edit-btn" title="저장">✓</button><button class="cancel-edit-btn" title="취소">×</button>`;
         const deleteBtn = document.createElement('button');
         deleteBtn.className = 'delete-bubble-btn';
-        deleteBtn.textContent = '🗑️';
+        deleteBtn.textContent = '×';
         deleteBtn.title = '메시지 삭제';
         
         bubble.appendChild(deleteBtn);
@@ -284,9 +289,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         deleteBtn.addEventListener('click', async (e) => {
             e.stopPropagation();
-            if (confirm(`이 메시지를 정말 삭제하시겠습니까?\n\n내용: "${message.content.substring(0, 30)}..."`)) {
+            if (confirm(`??硫붿떆吏瑜??뺣쭚 ??젣?섏떆寃좎뒿?덇퉴?\n\n?댁슜: "${message.content.substring(0, 30)}..."`)) {
                 currentChatData.messages.splice(index, 1);
-                if (await updateFirestoreContent()) { renderMessages(); showToast('메시지가 삭제되었습니다.'); }
+                if (await updateFirestoreContent()) { renderMessages(); showToast('硫붿떆吏媛 ??젣?섏뿀?듬땲??'); }
             }
         });
 
@@ -299,7 +304,7 @@ document.addEventListener('DOMContentLoaded', () => {
         bubble.addEventListener('touchend', cancelPress);
 
         viewContent.addEventListener('dblclick', () => {
-            if (activeEditingIndex !== null) { showToast('먼저 다른 항목의 수정을 완료해주세요.'); return; }
+            if (activeEditingIndex !== null) { showToast('癒쇱? ?ㅻⅨ ??ぉ???섏젙???꾨즺?댁＜?몄슂.'); return; }
             activeEditingIndex = index;
             bubble.classList.add('editing');
             editContent.style.height = viewContent.offsetHeight + 'px';
@@ -319,7 +324,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 editContent.style.display = 'none';
                 editActions.style.display = 'none';
                 activeEditingIndex = null;
-                showToast('메시지가 수정되었습니다.');
+                showToast('硫붿떆吏媛 ?섏젙?섏뿀?듬땲??');
             }
         });
         editActions.querySelector('.cancel-edit-btn').addEventListener('click', () => {
@@ -334,10 +339,10 @@ document.addEventListener('DOMContentLoaded', () => {
         return bubble;
     }
     
-    // --- 헬퍼 함수 ---
+    // --- ?ы띁 ?⑥닔 ---
     const showToast = message => { const toastNotification = document.getElementById('toast-notification'); const toastMessage = toastNotification ? toastNotification.querySelector('.toast-message') : null; if (!toastNotification || !toastMessage) return; clearTimeout(toastTimer); toastMessage.textContent = message; toastNotification.classList.add('show'); toastTimer = setTimeout(() => { toastNotification.classList.remove('show'); }, 3000); };
     function downloadFile(content, filename, contentType) { const blob = new Blob([content], { type: contentType }); const link = document.createElement("a"); const url = URL.createObjectURL(blob); link.href = url; link.download = filename; document.body.appendChild(link); link.click(); document.body.removeChild(link); URL.revokeObjectURL(url); }
-    function generateTxtFromChat() { return currentChatData.messages.map(msg => `${msg.role === 'user' ? 'USER' : 'ASSISTANT'}:\n${msg.content}`).join('\n\n') || "채팅 기록이 없습니다."; }
+    function generateTxtFromChat() { return currentChatData.messages.map(msg => `${msg.role === 'user' ? 'USER' : 'ASSISTANT'}:\n${msg.content}`).join('\n\n') || "梨꾪똿 湲곕줉???놁뒿?덈떎."; }
     function autoResizeTextarea(event) { const textarea = event.target; textarea.style.height = 'auto'; textarea.style.height = (textarea.scrollHeight) + 'px'; }
     function handleHeaderVisibility() { if (header) { const currentScrollY = window.scrollY; header.style.transform = (currentScrollY > lastScrollY && currentScrollY > header.offsetHeight) ? 'translateY(-100%)' : 'translateY(0)'; lastScrollY = currentScrollY; } }
     
@@ -350,3 +355,4 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 });
+
