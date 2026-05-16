@@ -1,105 +1,119 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0, minimum-scale=1.0">
-    <title>梨꾪똿 酉곗뼱</title>
+    <title>채팅 뷰어</title>
     <link rel="stylesheet" href="css/common.css">
     <link rel="stylesheet" href="css/chat-viewer-style.css">
 </head>
 <body class="sticky-footer-layout">
 
-    <!-- ?ㅻ뜑 (?쒕∼?ㅼ슫 硫붾돱媛 ?섏젙?⑸땲?? -->
+    <!-- 헤더 (드롭다운 메뉴가 수정됩니다) -->
     <header class="main-header">
         <button id="history-back-btn" class="back-button"><</button>
-        <h1 id="viewer-title">梨꾪똿 湲곕줉</h1>
-        <button id="hamburger-menu-btn" class="action-btn" title="硫붾돱 ?닿린">??/button>
+        <h1 id="viewer-title">채팅 기록</h1>
+        <button id="hamburger-menu-btn" class="action-btn" title="메뉴 열기">☰</button>
     </header>
 
-    <!-- 硫붿씤 而⑦뀗痢?-->
+    <!-- 메인 컨텐츠 -->
     <main id="chat-log-container" class="chat-log-container">
-        <!-- ?먮컮?ㅽ겕由쏀듃媛 ?ш린??留덊겕?ㅼ슫?쇰줈 蹂?섎맂 梨꾪똿??異붽??⑸땲?? -->
+        <!-- 자바스크립트가 여기에 마크다운으로 변환된 채팅을 추가합니다. -->
     </main>
     
-    <!-- ?명꽣 -->
+    <!-- 푸터 -->
     <footer class="site-footer">
-        <p>짤 2025. ?쇱씠?? All rights reserved.</p>
+        <p>© 2025. 삼이일. All rights reserved.</p>
     </footer>
 
-    <!-- ?붾㈃ ?꾩껜瑜???뒗 諛섑닾紐??ㅻ쾭?덉씠 (?⑤꼸 ?대졇???? -->
+    <!-- 화면 전체를 덮는 반투명 오버레이 (패널 열렸을 때) -->
     <div id="info-panel-overlay" class="hidden"></div>
     <div id="info-panel" class="hidden">
         <div class="info-panel-header">
-            <h2>????뺣낫</h2>
-            <button id="info-panel-close-btn">횞</button>
+            <h2>대화 정보</h2>
+            <button id="info-panel-close-btn">×</button>
         </div>
         
-        <!-- ??硫붾돱 -->
+        <!-- 탭 메뉴 -->
         <div class="info-panel-tabs">
-            <button class="tab-link active" data-tab="persona">?꾨줈??/button>
-            <button class="tab-link" data-tab="usernote">?명듃</button>
-            <button class="tab-link" data-tab="file">?뚯씪</button> 
+            <button class="tab-link active" data-tab="persona">프로필</button>
+            <button class="tab-link" data-tab="usernote">노트</button>
+            <button class="tab-link" data-tab="memo">메모</button>
+            <button class="tab-link" data-tab="file">파일</button> 
         </div>
 
-        <!-- ??肄섑뀗痢?-->
+        <!-- 탭 콘텐츠 -->
         <div class="info-panel-body">
-            <!-- 1. ????꾨줈??(?섎Ⅴ?뚮굹) 肄섑뀗痢?-->
+            <!-- 1. 대화 프로필 (페르소나) 콘텐츠 -->
             <div id="persona-content" class="tab-content active">
                 <div class="content-header">
                     <h3 id="persona-name"></h3>
-                    <!-- ?쇄뼹???섏젙 踰꾪듉 異붽? ?쇄뼹??-->
-                    <button id="edit-persona-btn" class="panel-edit-btn">?륅툘</button>
+                    <!-- ▼▼▼ 수정 버튼 추가 ▼▼▼ -->
+                    <button id="edit-persona-btn" class="panel-edit-btn">✏️</button>
                 </div>
-                <!-- ?쇄뼹??蹂닿린 紐⑤뱶? ?섏젙 紐⑤뱶瑜??섎닎 ?쇄뼹??-->
+                <!-- ▼▼▼ 보기 모드와 수정 모드를 나눔 ▼▼▼ -->
                 <div id="persona-view-mode">
                     <div id="persona-info" class="content-box"></div>
                 </div>
                 <div id="persona-edit-mode" hidden>
                     <textarea id="persona-textarea"></textarea>
                     <div class="edit-actions">
-                        <button id="save-persona-btn" class="panel-save-btn">???/button>
-                        <button id="cancel-persona-btn" class="panel-cancel-btn">痍⑥냼</button>
+                        <button id="save-persona-btn" class="panel-save-btn">저장</button>
+                        <button id="cancel-persona-btn" class="panel-cancel-btn">취소</button>
                     </div>
                 </div>
             </div>
 
-            <!-- 2. ?좎??명듃 肄섑뀗痢?-->
+            <!-- 2. 유저노트 콘텐츠 -->
             <div id="usernote-content" class="tab-content">
                  <div class="content-header">
-                    <h3>?좎??명듃</h3>
-                     <!-- ?쇄뼹???섏젙 踰꾪듉 異붽? ?쇄뼹??-->
-                    <button id="edit-usernote-btn" class="panel-edit-btn">?륅툘</button>
+                    <h3>유저노트</h3>
+                     <!-- ▼▼▼ 수정 버튼 추가 ▼▼▼ -->
+                    <button id="edit-usernote-btn" class="panel-edit-btn">✏️</button>
                 </div>
-                <!-- ?쇄뼹??蹂닿린 紐⑤뱶? ?섏젙 紐⑤뱶瑜??섎닎 ?쇄뼹??-->
+                <!-- ▼▼▼ 보기 모드와 수정 모드를 나눔 ▼▼▼ -->
                 <div id="usernote-view-mode">
                     <div id="usernote-info" class="content-box"></div>
                 </div>
                 <div id="usernote-edit-mode" hidden>
                     <textarea id="usernote-textarea"></textarea>
                     <div class="edit-actions">
-                        <button id="save-usernote-btn" class="panel-save-btn">???/button>
-                        <button id="cancel-usernote-btn" class="panel-cancel-btn">痍⑥냼</button>
+                        <button id="save-usernote-btn" class="panel-save-btn">저장</button>
+                        <button id="cancel-usernote-btn" class="panel-cancel-btn">취소</button>
                     </div>
                 </div>
             </div>
 
-            <!-- 4. ?뚯씪??肄섑뀗痢?-->
+            <!-- 3. 메모 콘텐츠 -->
+            <div id="memo-content" class="tab-content">
+                <textarea id="memo-textarea" placeholder="자유롭게 메모를 남겨보세요..."></textarea>
+                <div class="memo-footer">
+                    <span id="memo-char-counter">0자</span>
+                    <button id="memo-save-btn">저장</button>
+                </div>
+            </div>
+            <!-- 4. 파일탭 콘텐츠 -->
             <div id="file-content" class="tab-content">
-                <a href="#" id="download-json-btn" class="panel-action-link">?뮶 JSON ?쇰줈 ???/a>
-                <a href="#" id="download-txt-btn" class="panel-action-link">?뱞 TXT 濡????/a>
-                <a href="#" id="dropdown-delete-btn" class="panel-action-link danger">?뿊截???梨꾪똿 ??젣</a>
+                <a href="#" id="download-json-btn" class="panel-action-link">💾 JSON 으로 저장</a>
+                <a href="#" id="download-txt-btn" class="panel-action-link">📄 TXT 로 저장</a>
+                <a href="#" id="dropdown-delete-btn" class="panel-action-link danger">🗑️ 이 채팅 삭제</a>
             </div>
         </div>
     </div>
 
-    <!-- ?좎뒪???뚮┝??-->
+    <!-- 토스트 알림용 -->
     <div id="toast-notification">
         <p class="toast-message"></p>
     </div>
 
-    <button id="scroll-to-top-btn" title="留??꾨줈 媛湲?>??/button>
-    <button id="scroll-to-bottom-btn" title="留??꾨옒濡?媛湲?>??/button>
+    <button id="scroll-to-top-btn" title="맨 위로 가기">↑</button>
+    <button id="scroll-to-bottom-btn" title="맨 아래로 가기">↓</button>
 
+    <div id="chat-input-bar">
+        <button id="role-toggle-btn" title="역할 전환 (현재: 유저)">👤</button>
+        <textarea id="new-message-input" placeholder="메시지 추가..." rows="1"></textarea>
+        <button id="add-message-btn" title="추가">▶️</button>
+    </div>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
