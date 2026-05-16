@@ -216,7 +216,7 @@ document.addEventListener('DOMContentLoaded', () => {
         normalList.innerHTML = `
             <h4 class="section-title">📂 폴더</h4>
             <ul class="folder-section item-list"></ul>
-            <h4 class="section-title">📌 고정 및 📝 미분류 메모</h4>
+            <h4 class="section-title">📝 미분류</h4>
             <div class="move-edit-panel" hidden>
                 <select class="move-target-select"></select>
                 <button type="button" class="move-selected-btn">선택 이동</button>
